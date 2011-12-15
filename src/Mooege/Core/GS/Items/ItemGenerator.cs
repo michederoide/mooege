@@ -18,11 +18,10 @@
 
 using System;
 using System.Linq;
-using Mooege.Common;
-using Mooege.Common.Helpers;
 using System.Collections.Generic;
 using Mooege.Common.Helpers.Hash;
 using Mooege.Common.Helpers.Math;
+using Mooege.Common.Logging;
 using Mooege.Core.GS.Players;
 using Mooege.Net.GS.Message;
 using Mooege.Common.MPQ.FileFormats;
@@ -224,6 +223,11 @@ namespace Mooege.Core.GS.Items
             //player.GroundItems[item.DynamicID] = item;
 
             return item;
+        }
+
+        public static ItemTable GetItemDefinition(int gbid)
+        {
+            return (Items.ContainsKey(gbid)) ? Items[gbid] : null;
         }
 
         public static Item CreateGold(Player player, int amount)

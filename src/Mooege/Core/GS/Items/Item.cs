@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-using Mooege.Common;
 using Mooege.Common.Helpers.Math;
+using Mooege.Common.Logging;
 using Mooege.Core.GS.Actors;
 using Mooege.Core.GS.Common.Types.Math;
 using Mooege.Core.GS.Players;
@@ -27,9 +27,10 @@ using Mooege.Net.GS.Message.Fields;
 using Mooege.Net.GS.Message.Definitions.Effect;
 using Mooege.Net.GS.Message;
 using Mooege.Common.MPQ.FileFormats;
-using Mooege.Common.Helpers;
 using Actor = Mooege.Core.GS.Actors.Actor;
 using World = Mooege.Core.GS.Map.World;
+using Mooege.Core.GS.Common.Types.TagMap;
+using Mooege.Core.GS.Common.Types.SNO;
 
 // TODO: This entire namespace belongs in GS. Bnet only needs a certain representation of items whereas nearly everything here is GS-specific
 
@@ -80,6 +81,26 @@ namespace Mooege.Core.GS.Items
             }
         }
 
+        public SNOHandle SnoFlippyActory
+        {
+            get
+            {
+                return ActorData.TagMap.ContainsKey(ActorKeys.Flippy) ? ActorData.TagMap[ActorKeys.Flippy] : null;
+            }
+        }
+
+        public SNOHandle SnoFlippyParticle
+        {
+            get
+            {
+                return ActorData.TagMap.ContainsKey(ActorKeys.FlippyParticle) ? ActorData.TagMap[ActorKeys.FlippyParticle] : null;
+            }
+        }
+
+
+            
+
+
         public override bool HasWorldLocation
         {
             get { return this.Owner == null; }
@@ -96,6 +117,11 @@ namespace Mooege.Core.GS.Items
                     InventoryLocation = this.InventoryLocation
                 };
             }
+        }
+
+        public bool IsStackable()
+        {
+            return ItemDefinition.MaxStackAmount > 1;
         }
 
         public InvLoc InvLoc
@@ -123,7 +149,7 @@ namespace Mooege.Core.GS.Items
             this.EquipmentSlot = 0;
             this.InventoryLocation = new Vector2D { X = 0, Y = 0 };
             this.Scale = 1.0f;
-            this.FacingAngle = 0.0f;
+            this.RotationW = 0.0f;
             this.RotationAxis.Set(0.0f, 0.0f, 1.0f);
             this.CurrentState = ItemState.Normal;
             this.Field2 = 0x00000000;
@@ -142,15 +168,8 @@ namespace Mooege.Core.GS.Items
             if(this.ItemType.Flags.HasFlag(ItemFlags.AtLeastMagical) && Attributes[GameAttribute.Item_Quality_Level] < 3)
                 Attributes[GameAttribute.Item_Quality_Level] = 3;
 
+            Attributes[GameAttribute.ItemStackQuantityLo] = 1;
             Attributes[GameAttribute.Seed] = RandomHelper.Next(); //unchecked((int)2286800181);
-
-            /*
-            List<IItemAttributeCreator> attributeCreators = new AttributeCreatorFactory().Create(this.ItemType);
-            foreach (IItemAttributeCreator creator in attributeCreators)
-            {
-                creator.CreateAttributes(this);
-            }
-            */
 
             RandomGenerator = new ItemRandomHelper(Attributes[GameAttribute.Seed]);
             RandomGenerator.Next();
@@ -375,18 +394,11 @@ namespace Mooege.Core.GS.Items
 
         public override bool Reveal(Player player)
         {
-            if (this.CurrentState == ItemState.PickingUp)
+            if (this.CurrentState == ItemState.PickingUp && HasWorldLocation)
                 return false;
 
             if (!base.Reveal(player))
                 return false;
-
-            // Drop effect/sound? TODO find out
-            player.InGameClient.SendMessage(new PlayEffectMessage()
-            {
-                ActorId = this.DynamicID,
-                Effect = Effect.SecondaryRessourceEffect
-            });
 
             var affixGbis = new int[AffixList.Count];
             for (int i = 0; i < AffixList.Count; i++)

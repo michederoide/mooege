@@ -11,6 +11,7 @@ using Mooege.Common.MPQ.FileFormats;
 using Mooege.Core.GS.Items;
 using System.Text.RegularExpressions;
 using Mooege.Core.GS.Common.Types.TagMap;
+using Mooege.Common.Logging;
 
 namespace Mooege.Common.MPQ
 {
@@ -129,7 +130,7 @@ namespace Mooege.Common.MPQ
                         Log("{0}[{1}].SNOFile: {2}", tagMapName, counter, StringSNO(tgm.Int));
                         break;
                     case 4:
-                        Log("{0}[{1}].OpCodeName: {2}", tagMapName, counter, Encoding.ASCII.GetString(tgm.ScriptFormula.OpCodeName).TrimEnd('\0'));
+                        Log("{0}[{1}].OpCodeName: {2}", tagMapName, counter, tgm.ScriptFormula.OpCodeName);
                         break;
                     default:
                         Log("{0}[{1}].Int? {2}", tagMapName, counter, tgm.Int);
@@ -189,7 +190,7 @@ namespace Mooege.Common.MPQ
                                 Log("   detail 2: {0}", power.ScriptFormulaDetails[sf_n].CharArray2);
                             }
 
-                            Log("   opname: {0}", Encoding.ASCII.GetString(tagEntry.ScriptFormula.OpCodeName).TrimEnd('\0'));
+                            Log("   opname: {0}", tagEntry.ScriptFormula.OpCodeName);
 
                             if (!simple)
                             {
@@ -269,7 +270,7 @@ namespace Mooege.Common.MPQ
 
         public static void OnMPQLoaded()
         {
-            LogPowerScripts(true);
+            DumpInterestingSNOS();
 
             Logger.Debug("OnMPQLoaded() finished!");
         }

@@ -21,27 +21,33 @@ using System.Text;
 namespace Mooege.Net.GS.Message.Definitions.Conversation
 {
     /// <summary>
-    /// Sent to the client
+    /// Server -> Client
+    /// 
     /// TODO What does this message actually do? sending it not changes nothing. - farmy
     /// </summary>
     [Message(Opcodes.EndConversationMessage)]
     public class EndConversationMessage : GameMessage
     {
-        public int Field0;          // seems to be a running number across conversationlines. StopConvLine.Field0 == EndConvLine.Field0 == PlayConvLine.PlayLineParams.Field14 for a conversation
+        /// <summary>
+        /// SNO of the conversation
+        /// </summary>
         public int SNOConversation;
-        public uint ActorId;         // Actor that begun conversation in PlayConvLine
+
+        /// <summary>
+        /// Id of the actor that started the conversation
+        /// </summary>
+        public uint ActorId;
+
         public EndConversationMessage() : base(Opcodes.EndConversationMessage) { }
 
         public override void Parse(GameBitBuffer buffer)
         {
-            Field0 = buffer.ReadInt(32);
             SNOConversation = buffer.ReadInt(32);
             ActorId = buffer.ReadUInt(32);
         }
 
         public override void Encode(GameBitBuffer buffer)
         {
-            buffer.WriteInt(32, Field0);
             buffer.WriteInt(32, SNOConversation);
             buffer.WriteUInt(32, ActorId);
         }
@@ -52,7 +58,6 @@ namespace Mooege.Net.GS.Message.Definitions.Conversation
             b.AppendLine("EndConversationMessage:");
             b.Append(' ', pad++);
             b.AppendLine("{");
-            b.Append(' ', pad); b.AppendLine("Field0: 0x" + Field0.ToString("X8") + " (" + Field0 + ")");
             b.Append(' ', pad); b.AppendLine("SNOConversation: 0x" + SNOConversation.ToString("X8") + " (" + SNOConversation + ")");
             b.Append(' ', pad); b.AppendLine("ActorID: 0x" + ActorId.ToString("X8") + " (" + ActorId + ")");
             b.Append(' ', --pad);

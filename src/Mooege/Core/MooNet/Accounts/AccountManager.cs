@@ -20,17 +20,17 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
-using Mooege.Common;
+using Mooege.Common.Logging;
 using Mooege.Common.Storage;
-using Mooege.Core.MooNet.Commands;
-using Mooege.Core.MooNet.Online;
 
 namespace Mooege.Core.MooNet.Accounts
 {
     public static class AccountManager
     {
         private static readonly Logger Logger = LogManager.CreateLogger();
+
         private static readonly Dictionary<string, Account> Accounts = new Dictionary<string, Account>();
+        public static List<Account> AccountsList { get { return Accounts.Values.ToList(); } }
 
         public static int TotalAccounts
         {
@@ -39,10 +39,6 @@ namespace Mooege.Core.MooNet.Accounts
 
         static AccountManager()
         {
-            //Accounts.Add(CommandHandlerAccount.Instance.Email, CommandHandlerAccount.Instance); // Hackish command handler account that we can send server commands. /raist
-            //CommandHandlerAccount.Instance.LoggedInClient.CurrentToon = CommandHandlerToon.Instance;
-            //PlayerManager.OnlinePlayers.Add(CommandHandlerAccount.Instance.LoggedInClient);
-
             LoadAccounts();
         }
 
