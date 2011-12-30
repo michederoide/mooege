@@ -262,38 +262,34 @@ namespace Mooege.Core.GS.Powers.Implementations
             if (Rune_B > 0)
             {
                 Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(8) / 5f, (int)ScriptFormula(5));
+                
+                var proj1 = new Projectile(this, 99567, User.Position);
+                proj1.Launch(projDestinations[0], ScriptFormula(4));
+                proj1.OnCollision = (hit) =>
+                {
+                    SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                    proj1.Destroy();
+                    WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                };
 
-                for (int i = 0; i < projDestinations.Length; i++)
+                for (int i = 1; i < projDestinations.Length; i++)
                 {
                     Int32 j = 1;
-                    if (i == 0)//First missile goes off right away.
-                    {
-                        var proj = new Projectile(this, 99567, User.Position);
-                        proj.OnCollision = (hit) =>
+
+                        for (j = 1; j < 12000001; j++) //This will generate a 40ms delay over each projectile launch.
                         {
-                            SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                            proj.Destroy();
-                            WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
-                        };
-                        proj.Launch(projDestinations[i], ScriptFormula(4));
-                    }
-                    else
-                    {
-                        for (j = 1; j < 4000001; j++) //This will generate a 40ms delay over each projectile launch.
-                        {
-                            if (j % 4000000 == 0)
+                            if (j % 12000000 == 0)
                             {
                                 var proj = new Projectile(this, 99567, User.Position);
+                                proj.Launch(projDestinations[i], ScriptFormula(4));
                                 proj.OnCollision = (hit) =>
                                 {
                                     SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
                                     proj.Destroy();
                                     WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
                                 };
-                                proj.Launch(projDestinations[i], ScriptFormula(4));
                             }
                         }
-                    }
                 }
             }
 
