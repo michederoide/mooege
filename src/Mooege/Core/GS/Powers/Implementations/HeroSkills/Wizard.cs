@@ -1307,16 +1307,16 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
                 //gameattribute damage reduction, Absorb should do the same thing?
-                Target.Attributes[GameAttribute.Damage_Absorb_Percent] += ScriptFormula(14);
-                Target.Attributes.BroadcastChangedIfRevealed();
+                //Target.Attributes[GameAttribute.Damage_Absorb_Percent] += ScriptFormula(14);
+                //Target.Attributes.BroadcastChangedIfRevealed();
                 return true;
             }
 
             public override void Remove()
             {
                 base.Remove();
-                Target.Attributes[GameAttribute.Damage_Absorb_Percent] -= ScriptFormula(14);
-                Target.Attributes.BroadcastChangedIfRevealed();
+                //Target.Attributes[GameAttribute.Damage_Absorb_Percent] -= ScriptFormula(14);
+                //Target.Attributes.BroadcastChangedIfRevealed();
 
             }
         }
@@ -1720,6 +1720,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (Rune_D > 0)
                 {
                     User.Attributes[GameAttribute.Resource_Cost_Reduction_Amount] += 7;
+                    User.Attributes.BroadcastChangedIfRevealed();
                 }
                 return true;
             }
@@ -1748,6 +1749,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (Rune_D > 0)
                 {
                     User.Attributes[GameAttribute.Resource_Cost_Reduction_Amount] -= 7;
+                    User.Attributes.BroadcastChangedIfRevealed();
                 }
                 base.Remove();
             }
@@ -1796,13 +1798,13 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Rune_B+C:Done
-    //TODO:Rune_A,C
+    //Rune_B+D+E:Done
+    //TODO:Rune_A -> reflects damage
+    //TODO:NoRune + Rune_C -> Absorbtion, C: increases absorbtion, done within ScriptFormula(0)
     #region DiamondSkin
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.DiamondSkin)]
     public class DiamondSkin : Skill
     {
-        //gameattribute[Breakable Shield HP] + Invulnerable or No Damage?
         public override IEnumerable<TickTimer> Main()
         {
             StartDefaultCooldown();
@@ -1816,7 +1818,6 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             public override void Init()
             {
-                //Rune_B is here
                 Timeout = WaitSeconds(ScriptFormula(5));
             }
 
@@ -1825,10 +1826,12 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
                 User.Attributes[Mooege.Net.GS.Message.GameAttribute.Look_Override] = 0x061F7489;
-
+                //User.Attributes[GameAttribute.Breakable_Shield_HP] += ScriptFormula(0);
+                User.Attributes.BroadcastChangedIfRevealed();
                 if (Rune_D > 0)
                 {
                     User.Attributes[GameAttribute.Resource_Cost_Reduction_Amount] += (int)ScriptFormula(4);
+                    User.Attributes.BroadcastChangedIfRevealed();
                 }
                 return true;
             }
@@ -1850,10 +1853,12 @@ namespace Mooege.Core.GS.Powers.Implementations
                 base.Remove();
                 User.Attributes[Mooege.Net.GS.Message.GameAttribute.Look_Override] = 0;
                 User.PlayEffectGroup(RuneSelect(93077, 187716, 187805, 187822, 187831, 187851));
+                //User.Attributes[GameAttribute.Breakable_Shield_HP] -= ScriptFormula(0);
+                User.Attributes.BroadcastChangedIfRevealed();
                 if (Rune_D > 0)
                 {
-                    //reduce all arcane costs by sf(4) while storm armor is active
                     User.Attributes[GameAttribute.Resource_Cost_Reduction_Amount] -= (int)ScriptFormula(4);
+                    User.Attributes.BroadcastChangedIfRevealed();
                 }
                 if (Rune_E > 0)
                 {
@@ -1881,10 +1886,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: make sure that when AI works, that the SlowTime Bubble is the only area that gets the effects and not from the user's position.
-    //TODO: SlowBubbleDeBuff = Slowed Enemies, their Attack speed and Projectile Speeds are decreased.
-    //TODO:Rune_A,B,C,E
-    //TODO: Change buffs into Debuff.cs
+    //TODO: make sure things in Update() don't get created over and over again.
+    //TODO:Rune_B: create an outer ring and only get that outer ring of targets.
     #region SlowTime
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.SlowTime)]
     public class SlowTime : Skill
@@ -1899,7 +1902,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 yield break;
             }
             else
-            StartCooldown(ScriptFormula(15));
+                StartCooldown(ScriptFormula(15));
             UsePrimaryResource(25f);
             AddBuff(User, new SlowTimeBuff());
             yield break;
@@ -1924,68 +1927,40 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             public override bool Update()
             {
-                if (Rune_C > 0)
+                if (base.Update())
                 {
-                    if (base.Update())
-                    {
-                        Target.Attributes[GameAttribute.Slow] = false;
-                        return true;
-                    }
-                    var Rune_Ctargets = GetEnemiesInRadius(User.Position, 10f);
-                    if (Rune_Ctargets.Actors.Count > 0)
-                    {
-                        //Slowed Enemies, their Attack speed and Projectile Speeds are decreased.
-                        Target.Attributes[GameAttribute.Slow] = true;
-
-                    }
-                    return false;
+                    return true;
                 }
-                else if (Rune_E > 0)
-                {
-                    if (base.Update())
-                    {
-                        Target.Attributes[GameAttribute.Slow] = false;
-                        return true;
-                    }
-                    var enemytargets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
-                    if (enemytargets.Actors.Count > 0)
-                    {
-                        //Slowed Enemies, their Attack speed and Projectile Speeds are decreased.
-                        Target.Attributes[GameAttribute.Slow] = true;
-                    }
-                    var friendlytargets = GetAlliesInRadius(User.Position, ScriptFormula(2));
-                    if (friendlytargets.Actors.Count > 0)
-                    {
-                        //speed up time for friendlies by increasing attack speed by 140%
-                    }
-                    return false;
-                }
-                else
-
-                    if (base.Update())
-                    {
-                        Target.Attributes[GameAttribute.Slow] = false;
-                        return true;
-                    }
                 var targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
                 if (targets.Actors.Count > 0)
                 {
-                    if (Rune_A > 0)
+                    foreach (Actor actor in targets.Actors)
                     {
-                        //Slowed Enemies, their Attack speed and Projectile Speeds are decreased.
-                        Target.Attributes[GameAttribute.Slow] = true;
-                        //Take 140% more damage.
+                        AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(0))));
+                        if (Rune_A > 0)
+                        {
+                            AddBuff(actor, new AttackDamageBuff());
+                        }
                     }
-                    if (Rune_B > 0)
+                }
+                if (Rune_E > 0)
+                {
+                    var friendlytargets = GetAlliesInRadius(User.Position, ScriptFormula(2));
+                    if (friendlytargets.Actors.Count > 0)
                     {
-                        //Slowed Enemies, their Attack speed and Projectile Speeds are decreased.
-                        Target.Attributes[GameAttribute.Slow] = true;
-                        //Once Enemies out of range of bubble or bubble ended, 14 more seconds on slow time effect.
-                        //maybe add this to remove()?
+                        foreach (Actor actor in friendlytargets.Actors)
+                        {
+                            AddBuff(actor, new SpeedBuff(ScriptFormula(16), WaitSeconds(ScriptFormula(0))));
+                        }
                     }
-
-                        //Slowed Enemies, their Attack speed and Projectile Speeds are decreased.
-                        Target.Attributes[GameAttribute.Slow] = true;
+                }
+                if (Rune_B > 0)
+                {
+                    var OutOfRangeTargets = GetAlliesInRadius(User.Position, ScriptFormula(2) + 2f);
+                    foreach (Actor actor in OutOfRangeTargets.Actors)
+                    {
+                        AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(7))));
+                    }
                 }
                 return false;
             }
@@ -1996,10 +1971,31 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             }
         }
+        [ImplementsPowerBuff(1)]
+        class AttackDamageBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(0));
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                Target.Attributes[GameAttribute.Attack_Bonus_Percent] += ScriptFormula(8);
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Attack_Bonus_Percent] -= ScriptFormula(8);
+            }
+        }
     }
     #endregion
 
-    //TODO: All Runes
+    //TODO: finish OnPayload
     #region EnergyArmor
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.EnergyArmor)]
     public class EnergyArmor : Skill
@@ -2017,32 +2013,14 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             public override void Init()
             {
-                Timeout = WaitSeconds(120f);
+                Timeout = WaitSeconds(ScriptFormula(0));
             }
 
             public override bool Apply()
             {
                 if (!base.Apply())
                     return false;
-                if (Rune_A > 0)
-                {
-                    //increasing your Defense by 20% but lowers your maximum Arcane Power by 20.
-                    //increase resistance
-                    return true;
-                }
-                if (Rune_B > 0)
-                {
-                    //increasing your Defense by 20%
-                    //increase max resource by 40
-                    return true;
-                }
-                if (Rune_E > 0)
-                {
-                    //increase percision by 40%
-                    //increasing your Defense by 20% but lowers your maximum Arcane Power by 20.
-                    return true;
-                }
-                //increasing your Defense by 20% but lowers your maximum Arcane Power by 20.
+                AddBuff(User, new EnergyArmorPowers(WaitSeconds(ScriptFormula(0))));
                 return true;
             }
 
@@ -2054,6 +2032,9 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         //ScriptFormula(8) = % of Wizard Total Health -> 0.54 - (Rune_C * 0.04)
                         //Math.Min(Total Damage incoming/Maximum Life, 26% of Maximum Life)
+                        float HPamount = User.Attributes[GameAttribute.Hitpoints_Max_Total];
+                        float TargetHit = payload.Context.Target.Attributes[GameAttribute.Get_Hit_Current];
+                        float NewDamage = Math.Min(TargetHit / HPamount, ScriptFormula(8) / HPamount);
                     }
                     if (Rune_D > 0)
                     {
@@ -2063,15 +2044,9 @@ namespace Mooege.Core.GS.Powers.Implementations
                             GeneratePrimaryResource(ScriptFormula(11));
                         }
                     }
+
                     //drain __ primary resource for every 1% of your maximum Life absorbed.
                 }
-            }
-
-            public override bool Update()
-            {
-                if (base.Update())
-                    return true;
-                return false;
             }
 
             public override void Remove()
@@ -2114,7 +2089,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: All Runes
+    //Rune_C and D are complete.. Rune_B looks complete, it's just taken from electrocute with new ScriptFormulas.
+    //TODO: Rune_A, E
+    //TODO: WHY DONT YOU WORK ATTACKPAYLOAD!
     #region MagicWeapon
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.MagicWeapon)]
     public class MagicWeapon : Skill
@@ -2124,6 +2101,82 @@ namespace Mooege.Core.GS.Powers.Implementations
             StartDefaultCooldown();
             UsePrimaryResource(25f);
             AddBuff(User, new MagicWeaponBuff());
+
+            /*AttackPayload attack = new AttackPayload(this);
+            attack.Target = Target;
+            attack.AddWeaponDamage(0f, DamageType.Physical);
+            attack.OnHit = hitPayload =>
+            {
+                if (Rune_A > 0)
+                {
+                    //ScriptFormula(3 & 4 & 5)
+                    //poison enemies for 3 seconds, dealing 70% of weapon damage
+                }
+                if (Rune_B > 0)
+                {
+                    //formulas didn't say the chance.
+                    if (Rand.NextDouble() < 1)
+                    {
+                        IList<Actor> targets = new List<Actor>() { Target };
+                        Actor ropeSource = User;
+                        Actor curTarget = Target;
+                        float damage = ScriptFormula(7);
+                        while (targets.Count < ScriptFormula(6)) // original target + bounce 2 times
+                        {
+                            if (ropeSource.World == null)
+                                ropeSource = SpawnProxy(ropeSource.Position);
+
+                            if (curTarget.World != null)
+                            {
+                                ropeSource.AddRopeEffect(186883, curTarget);
+                                ropeSource = curTarget;
+
+                                WeaponDamage(curTarget, damage, DamageType.Lightning);
+                            }
+                            else
+                            {
+                                // early out if monster to be bounced died prematurely
+                                break;
+                            }
+
+                            curTarget = GetEnemiesInRadius(curTarget.Position, 10f, (int)ScriptFormula(6)).Actors.FirstOrDefault(t => !targets.Contains(t));
+                            if (curTarget != null)
+                            {
+                                targets.Add(curTarget);
+                            }
+                            else
+                            {
+                                break;
+                            } 
+                        }
+                    }
+                }
+                if (Rune_C > 0)
+                {
+                    if (Rand.NextDouble() < ScriptFormula(9))
+                    {
+                        AddBuff(hitPayload.Target, new KnockbackBuff(ScriptFormula(10)));
+                    }
+                }
+                if (Rune_D > 0)
+                {
+                    //formulas didn't say the chance.
+                    if (Rand.NextDouble() < .10)
+                    {
+                        GeneratePrimaryResource(ScriptFormula(11));
+                    }
+                }
+                if (Rune_E > 0)
+                {
+                    //formulas didn't say the chance.
+                    if (Rand.NextDouble() < .10)
+                    {
+                        //RuneE Leech Perc ofDamage Done - ScriptFormula(12)
+                    }
+                }
+            };
+            attack.Apply();*/
+
             yield break;
         }
 
@@ -2139,83 +2192,21 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (!base.Apply())
                     return false;
-                User.PlayEffectGroup(RuneSelect(218923, 219289, 219306, 219390, 219396,219338));
+                User.PlayEffectGroup(RuneSelect(218923, 219289, 219306, 219390, 219396, 219338));
+                    User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] += ScriptFormula(14);
                 return true;
-            }
-            public override bool Update()
-            {
-                if (base.Update())
-                    return true;
-                /*
-                AttackPayload attack = new AttackPayload(this);
-                if (Rune_A > 0)
-                {
-                    attack.OnHit = (hitPayload) =>
-                    {
-                        //ScriptFormula(3 & 4 & 5)
-                        //poison enemies for 3 seconds, dealing 70% of weapon damage
-                    };
-                }
-                if (Rune_B > 0)
-                {
-                    attack.OnHit = (hitPayload) =>
-                    {
-                        //formulas didn't say the chance.
-                        if (Rand.NextDouble() < .10)
-                        {
-                            //lightning arcs
-                            //ScriptFormula(6 & 7)
-                        }
-                    };
-                }
-                if (Rune_C > 0)
-                {
-                    attack.OnHit = (hitPayload) =>
-                    {
-                        //damage increase bonus percent - ScriptFormula(8)
-                        if (Rand.NextDouble() < ScriptFormula(9))
-                        {
-                            AddBuff(hitPayload.Target, new KnockbackBuff(ScriptFormula(10)));
-                        }
-                    };
-                }
-                if (Rune_D > 0)
-                {
-                    attack.OnHit = (hitPayload) =>
-                    {
-                        //formulas didn't say the chance.
-                        if (Rand.NextDouble() < .10)
-                        {
-                            //restore arcane power ScriptFormula(11)
-                        }
-                    };
-                }
-                if (Rune_E > 0)
-                {
-                    attack.OnHit = (hitPayload) =>
-                    {
-                        //formulas didn't say the chance.
-                        if (Rand.NextDouble() < .10)
-                        {
-                            //RuneE Leech Perc ofDamage Done - ScriptFormula(12)
-                        }
-                    };
-                }
-                //increase physical damage by 20% - ScriptFormula(0)
-                attack.Apply();
-                */
-                return false;
             }
 
             public override void Remove()
             {
-                base.Remove();
+                base.Remove(); 
+                    User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] -= ScriptFormula(14);
             }
         }
     }
     #endregion
 
-
+    //Broken
     #region Archon
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.Archon)]
     public class Archon : Skill
