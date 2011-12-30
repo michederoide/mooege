@@ -50,7 +50,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             // HACK: mooege's 100ms update rate is a little to slow for the impact to appear right on time so
             // an 100ms is shaved off the wait time
-            TickTimer waitForImpact = WaitSeconds(ScriptFormula(4) - 0.1f);  
+            TickTimer waitForImpact = WaitSeconds(ScriptFormula(4) - 0.1f);
 
             List<Vector3D> impactPositions = new List<Vector3D>();
             int meteorCount = Rune_B > 0 ? (int)ScriptFormula(9) : 1;
@@ -93,7 +93,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                             poolTime = WaitSeconds(ScriptFormula(7));
                         }
                     }
-                    else 
+                    else
                     {
                         poolTime = WaitSeconds(ScriptFormula(5));
                     }
@@ -131,7 +131,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         }
     }
 
-#endregion
+    #endregion
 
     //TODO: The charged bolts work, but regular electrocution does not.
     #region Electrocute
@@ -244,9 +244,10 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
-    //TODO: Rune_B: projectiles come out of wizard one at a time but very fast, not all at the same time.
+    //Rune_B: much better(thanks Wesko), do you also see the weird order of missiles?
+    //        btw, I sped up the missiles even more to seem closer to the animation/video.
     //TODO: also figure out Rune_E homing missile
     #region MagicMissile
     [ImplementsPowerSNO(Skills.Skills.Wizard.Signature.MagicMissile)]
@@ -259,20 +260,42 @@ namespace Mooege.Core.GS.Powers.Implementations
             User.PlayEffectGroup(19305); // cast effect
             if (Rune_B > 0)
             {
-                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(8)/3f, (int)ScriptFormula(5));
+                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(8) / 5f, (int)ScriptFormula(5));
 
-                foreach (Vector3D missilePos in projDestinations)
+                for (int i = 0; i < projDestinations.Length; i++)
                 {
-                    var proj = new Projectile(this, 99567, User.Position);
-                    proj.OnCollision = (hit) =>
+                    Int32 j = 1;
+                    if (i == 0)//First missile goes off right away.
                     {
-                        SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                        proj.Destroy();
-                        WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
-                    };
-                    proj.Launch(missilePos, ScriptFormula(4));
+                        var proj = new Projectile(this, 99567, User.Position);
+                        proj.OnCollision = (hit) =>
+                        {
+                            SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                            proj.Destroy();
+                            WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                        };
+                        proj.Launch(projDestinations[i], ScriptFormula(4));
+                    }
+                    else
+                    {
+                        for (j = 1; j < 4000001; j++) //This will generate a 40ms delay over each projectile launch.
+                        {
+                            if (j % 4000000 == 0)
+                            {
+                                var proj = new Projectile(this, 99567, User.Position);
+                                proj.OnCollision = (hit) =>
+                                {
+                                    SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                                    proj.Destroy();
+                                    WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                                };
+                                proj.Launch(projDestinations[i], ScriptFormula(4));
+                            }
+                        }
+                    }
                 }
             }
+
             /*else if (Rune_E > 0)
             {
                 var projectile = new Projectile(this, 99567, User.Position);
@@ -300,7 +323,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         GeneratePrimaryResource(ScriptFormula(16));
                     }
-                    
+
                     if (Rune_C > 0)
                     {
                         if (Rand.NextDouble() < ScriptFormula(12))
@@ -310,26 +333,26 @@ namespace Mooege.Core.GS.Powers.Implementations
                         projectile.Destroy();
                     }
                     else
-                    projectile.Destroy();
+                        projectile.Destroy();
                 };
                 projectile.Launch(TargetPosition, ScriptFormula(4));
             }
-            
+
             yield break;
         }
     }
-#endregion
+    #endregion
 
     //Very Imcomplete
     //Hydras are (most likely) Pets so this is incorrect
     #region Hydra
     [ImplementsPowerSNO(Skills.Skills.Wizard.Offensive.Hydra)]
-        //No Rune = Default
-        //Rune_A = Hydra_Frost
-        //Rune_B = Hydra_Lightning
-        //Rune_C = Hydra_Acid
-        //Rune_D = Hydra_Big
-        //Rune_E = Hydra_Arcane
+    //No Rune = Default
+    //Rune_A = Hydra_Frost
+    //Rune_B = Hydra_Lightning
+    //Rune_C = Hydra_Acid
+    //Rune_D = Hydra_Big
+    //Rune_E = Hydra_Arcane
 
     public class WizardHydra : Skill
     {
@@ -348,7 +371,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             var timeout = WaitSeconds(ScriptFormula(0));
 
             var lavapool = SpawnEffect(RuneSelect(81103, 83028, 81238, 77112, 83964, 81239), TargetPosition, 0, timeout); //Lava Pool Spawn
-                lavapool.PlayEffectGroup(RuneSelect(81102, 82995, 82116, -1, 86328, 81301));
+            lavapool.PlayEffectGroup(RuneSelect(81102, 82995, 82116, -1, 86328, 81301));
 
             int[] actorSNOs = new int[] {   RuneSelect(80745, 82972, 82109, 82111, -1, 81515), 
                                             RuneSelect(80757, 83024, 81229, 81226, -1, 81231), 
@@ -356,12 +379,12 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             if (Rune_D > 0)
             {
-                
+
                 //big hydra -> this throws an exception once spawned.
                 var hydra1 = new EffectActor(this, 83959, spawnPoints[0]);
                 hydra1.Scale = 2f;
                 hydra1.Spawn();
-                hydra1.UpdateDelay = 3f; 
+                hydra1.UpdateDelay = 3f;
                 hydra1.OnUpdate = () =>
                 {
                     var target = GetEnemiesInRadius(hydra1.Position, 50f).GetClosestTo(hydra1.Position);
@@ -455,7 +478,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield return timeout;
         }
     }
-#endregion
+    #endregion
 
     //Complete
     #region ArcaneOrb
@@ -479,27 +502,27 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
             else
 
-            foreach (Vector3D position in targetDirs)
-            {
-                var proj = new Projectile(this, RuneSelect(6515, 130073, 215555, -1, 216040, 75650), User.Position);
-                proj.Position.Z += 5f;  // fix height
-                proj.OnCollision = (hit) =>
+                foreach (Vector3D position in targetDirs)
                 {
-                    hit.PlayEffectGroup(RuneSelect(19308, 130020, 215580, -1, 216056, -1));
-                    WeaponDamage(GetEnemiesInRadius(proj.Position, ScriptFormula(5)), ScriptFormula(3), DamageType.Arcane);
-
-                    if (Rune_E > 0)
+                    var proj = new Projectile(this, RuneSelect(6515, 130073, 215555, -1, 216040, 75650), User.Position);
+                    proj.Position.Z += 5f;  // fix height
+                    proj.OnCollision = (hit) =>
                     {
-                    }
-                    else
-                    {
-                        proj.Destroy();
-                    }
-                };
-                proj.Launch(position, ScriptFormula(2));
+                        hit.PlayEffectGroup(RuneSelect(19308, 130020, 215580, -1, 216056, -1));
+                        WeaponDamage(GetEnemiesInRadius(proj.Position, ScriptFormula(5)), ScriptFormula(3), DamageType.Arcane);
 
-                yield return WaitSeconds(2f);
-            }
+                        if (Rune_E > 0)
+                        {
+                        }
+                        else
+                        {
+                            proj.Destroy();
+                        }
+                    };
+                    proj.Launch(position, ScriptFormula(2));
+
+                    yield return WaitSeconds(2f);
+                }
         }
 
         abstract class OrbitBase : PowerBuff
@@ -566,7 +589,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //Very Imcomplete
     #region EnergyTwister
@@ -582,23 +605,23 @@ namespace Mooege.Core.GS.Powers.Implementations
             // cast effect
             AddBuff(Target, new Twister());
             //SpawnEffect(RuneSelect(6560, 215311, 6560, 6560, 215324, 210804), TargetPosition);
-                
+
             //Tornados need to move randomdirections at first, if the tornado is heading towards an enemy close by,
             // it will move towards the enemies.
 
-                //Seems like it's classified as a buff (Buff Group 3)
+            //Seems like it's classified as a buff (Buff Group 3)
 
-                //and leave trail behind them (79940), think actor already does this.
+            //and leave trail behind them (79940), think actor already does this.
 
-                    // NoRune = Unleash a twister, deals 60% weapon damage per second Arcane to everything caught within it. 
-                    // Rune_E = Stationary = deals damage but does not move
-                    // Rune_A = Increase Damage
-                    // Rune_C = 5 regular twisters to charge up, 
-                    //          then User needs to cast signature spell, then One Big Tornado
-                    // Rune_B = Normal Twisters, if two touch, they merge with increased AoE
-                    // Rune_D = Reduced cost of casting resource
-                
-                yield return WaitSeconds(2f);
+            // NoRune = Unleash a twister, deals 60% weapon damage per second Arcane to everything caught within it. 
+            // Rune_E = Stationary = deals damage but does not move
+            // Rune_A = Increase Damage
+            // Rune_C = 5 regular twisters to charge up, 
+            //          then User needs to cast signature spell, then One Big Tornado
+            // Rune_B = Normal Twisters, if two touch, they merge with increased AoE
+            // Rune_D = Reduced cost of casting resource
+
+            yield return WaitSeconds(2f);
         }
 
         [ImplementsPowerBuff(3)]
@@ -636,13 +659,13 @@ namespace Mooege.Core.GS.Powers.Implementations
         //unknown hitfx_override.efg
         //--------------------------------------------------------------------------------------------
         //Rune_A -> Damage increases slowly over time to inflict a maximum of 4620% weapon damage as Arcane.
-             //(10) - Chargeup Time, (11) - Dmg Modifier
+        //(10) - Chargeup Time, (11) - Dmg Modifier
         //Rune_C -> The beam fractures into a short ranged cone causing 239400% weapon damage per second as Arcane.
-             //ScriptFormula(2) - Damage Modifier, (4) - Range, (15) - Tick Period
+        //ScriptFormula(2) - Damage Modifier, (4) - Range, (15) - Tick Period
         //Rune_D -> When casting the beam you become charged with energy that spits out at nearby enemies doing 5700% weapon damage as Arcane.
-             //(7) - AOE Weapon Dmg Scalar, (8) - AOE Radius, (21) - Cost Reduction
+        //(7) - AOE Weapon Dmg Scalar, (8) - AOE Radius, (21) - Cost Reduction
         //Rune_E -> Enemies killed by the beam have a 35% chance to explode causing 12800% weapon damage as Arcane to all enemies within 8 yards.
-             //(9) - Weapon dmg Scalar, (12) - Chance, (25) - Explosion Radius
+        //(9) - Weapon dmg Scalar, (12) - Chance, (25) - Explosion Radius
 
         const float BeamLength = 40f;
 
@@ -693,11 +716,11 @@ namespace Mooege.Core.GS.Powers.Implementations
                     }
                 }
                 else
-                if (PowerMath.PointInBeam(actor.Position, User.Position, TargetPosition, 3f))
-                {
-                    //ScriptFormula(1)
-                    WeaponDamage(actor, ScriptFormula(1) * EffectsPerSecond, DamageType.Arcane);
-                }
+                    if (PowerMath.PointInBeam(actor.Position, User.Position, TargetPosition, 3f))
+                    {
+                        //ScriptFormula(1)
+                        WeaponDamage(actor, ScriptFormula(1) * EffectsPerSecond, DamageType.Arcane);
+                    }
             }
 
             yield break;
@@ -740,7 +763,8 @@ namespace Mooege.Core.GS.Powers.Implementations
             attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(1));
             attack.AddWeaponDamage(ScriptFormula(2), DamageType.Physical);
             //TODO: Script 6,7,8,9 (repels projectiles)
-            attack.OnHit = hitPayload => {
+            attack.OnHit = hitPayload =>
+            {
                 Knockback(hitPayload.Target, ScriptFormula(0), ScriptFormula(4), ScriptFormula(5));
                 AddBuff(hitPayload.Target, new DebuffSlowed(ScriptFormula(18), WaitSeconds(ScriptFormula(17))));
                 if (Rune_C > 0)
@@ -760,7 +784,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 {
                     Knockback(hitPayload.Target, ScriptFormula(0) + ScriptFormula(11), ScriptFormula(4), ScriptFormula(5));
                     AddBuff(hitPayload.Target, new DebuffStunned(WaitSeconds(ScriptFormula(10))));
-                    
+
                 }
                 if (Rune_B > 0)
                 {
@@ -812,17 +836,17 @@ namespace Mooege.Core.GS.Powers.Implementations
                 User.PlayEffectGroup(89449);
             }
 
-                yield return WaitSeconds(ScriptFormula(5));
+            yield return WaitSeconds(ScriptFormula(5));
 
-                if (Rune_C > 0)
-                {
-                    SpawnEffect(61419, blastspot);
-                    AttackPayload attack = new AttackPayload(this);
-                    attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
-                    attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
-                    attack.Apply();
-                    yield break;
-                }
+            if (Rune_C > 0)
+            {
+                SpawnEffect(61419, blastspot);
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
+                attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                attack.Apply();
+                yield break;
+            }
             IEnumerable<TickTimer> subScript;
             if (Rune_E > 0)
                 subScript = _RuneE();
@@ -978,7 +1002,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         //Rune_A - Enemies take 110% more damage while frozen or chilled by Frost Nova.
         //Rune_B - frozen enemy that is killed has a 21% chance of exploding another frost nova.
         //Rune_E - If Frost Nova hits at least 5 targets, you gain 45% chance to critically hit for 12 seconds
-       public override IEnumerable<TickTimer> Run()
+        public override IEnumerable<TickTimer> Run()
         {
             if (Rune_C > 0)
             {
@@ -1039,20 +1063,20 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
             yield break;
         }
-       [ImplementsPowerBuff(5)]
-       class FrostNova_Alabaster_Buff : PowerBuff
-       {
-           //crit hit stuff goes here.
+        [ImplementsPowerBuff(5)]
+        class FrostNova_Alabaster_Buff : PowerBuff
+        {
+            //crit hit stuff goes here.
 
-           public override void Init()
-           {
-               Timeout = WaitSeconds(2f);
-           }
-       }
+            public override void Init()
+            {
+                Timeout = WaitSeconds(2f);
+            }
+        }
     }
     #endregion
 
-    //TODO: Crit Strike Chance bonus to Rune_E
+    //Complete
     #region Blizzard
     [ImplementsPowerSNO(Skills.Skills.Wizard.Offensive.Blizzard)]
     public class WizardBlizzard : PowerScript
@@ -1061,15 +1085,12 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Run()
         {
-            //Rune_D
             UsePrimaryResource(ScriptFormula(19));
 
             SpawnEffect(Wizard_Blizzard, TargetPosition);
 
-            //Rune_A
             for (int i = 0; i < ScriptFormula(4); ++i)
             {
-                //Rune_B
                 AttackPayload attack = new AttackPayload(this);
                 attack.Targets = GetEnemiesInRadius(TargetPosition, ScriptFormula(3));
                 attack.AddWeaponDamage(ScriptFormula(0), DamageType.Cold);
@@ -1080,10 +1101,11 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                     if (Rune_E > 0)
                     {
+                        //Crit Strike Chance(ScriptFormula(9)) -> there is no Crit Strike Chance, so i've used Crit Damage Percent..
+                        AddBuff(User, new BlizzardPowers(WaitSeconds(3f)));
                         if (Rand.NextDouble() < ScriptFormula(10))
                         {
                             {
-                                //TODO:Crit Strike Chance(ScriptFormula(9)) with BLizzard
                                 AddBuff(hit.Target, new DebuffFrozen(WaitSeconds(3f)));
                             }
                         }
@@ -1148,8 +1170,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             if (_target != null)
                 _target.Destroy();
-            
-            
+
+
         }
 
         public override void OnChannelUpdated()
@@ -1158,7 +1180,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             User.TranslateFacing(TargetPosition);
             // client updates target actor position
         }
-        
+
         public override IEnumerable<TickTimer> Main()
         {
             //Rune_D
@@ -1173,7 +1195,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                         //takes 1.5 seconds to reach the new maximum dmg(SF(20)) from the minimum dmg(base?)
                         //Slows targets movement by 40%
                         //targets attack speed by 30% for 5 seconds
-                        
+
                     }
                     else if (Rune_C > 0)
                     {
@@ -1233,7 +1255,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             if (Rune_D > 0)
             {
                 TeleRevertBuff buff = User.World.BuffManager.GetFirstBuff<TeleRevertBuff>(User);
-                if (buff != null) 
+                if (buff != null)
                 {
                     User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
                     yield return WaitSeconds(0.3f);
@@ -1302,16 +1324,16 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
                 //gameattribute damage reduction, Absorb should do the same thing?
-                //Target.Attributes[GameAttribute.Damage_Absorb_Percent] += ScriptFormula(14);
-                //Target.Attributes.BroadcastChangedIfRevealed();
+                Target.Attributes[GameAttribute.Damage_Absorb_Percent] += ScriptFormula(14);
+                Target.Attributes.BroadcastChangedIfRevealed();
                 return true;
             }
 
             public override void Remove()
             {
                 base.Remove();
-                //Target.Attributes[GameAttribute.Damage_Absorb_Percent] -= ScriptFormula(14);
-                //Target.Attributes.BroadcastChangedIfRevealed();
+                Target.Attributes[GameAttribute.Damage_Absorb_Percent] -= ScriptFormula(14);
+                Target.Attributes.BroadcastChangedIfRevealed();
 
             }
         }
@@ -1371,7 +1393,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Run()
         {
-            
+
             UsePrimaryResource(15f);
             //these are changed around to actually identify with their rune color : visual effects
             User.PlayEffectGroup(RuneSelect(19343, 189477, 19343, 189413, 188944, 189362));
@@ -1389,7 +1411,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 {
                     if (Rune_A > 0)
                     {
-                       AddBuff(hitPayload.Target, new BleedEffect());
+                        AddBuff(hitPayload.Target, new BleedEffect());
                     }
 
                     if (Rune_C > 0)
@@ -1422,7 +1444,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             public override void Init()
             {
-                Timeout = WaitSeconds(ScriptFormula(6)); 
+                Timeout = WaitSeconds(ScriptFormula(6));
             }
             public override bool Update()
             {
@@ -1432,9 +1454,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                 AttackPayload bleed = new AttackPayload(this);
                 //Script for damage may be off. please check.
                 bleed.AddWeaponDamage(ScriptFormula(4), DamageType.Physical);
-                bleed.OnHit = (hit) =>
-                {
-                };
                 bleed.Apply();
                 return false;
             }
@@ -1456,7 +1475,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             AddBuff(User, new IceArmorBuff());
             if (Rune_C > 0)
             {
-                User.PlayEffectGroup(87899); 
+                User.PlayEffectGroup(87899);
                 AttackPayload chillingAura = new AttackPayload(this);
                 chillingAura.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
                 chillingAura.AddWeaponDamage(ScriptFormula(9), DamageType.Cold);
@@ -1549,7 +1568,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 User.Attributes.BroadcastChangedIfRevealed();
                 User.PlayEffectGroup(19326);
                 User.PlayEffectGroup(185652);
-                
+
             }
 
             private void _AddArmor()
@@ -1620,11 +1639,11 @@ namespace Mooege.Core.GS.Powers.Implementations
                 Id = 118,
                 Field0 = (int)eff.DynamicID,
                 Field1 = 1, // 0 - crashes client
-                            // 1 - random scuttle (charged bolt effect)
-                            // 2 - random movement, random movement pauses (toads hopping)
-                            // 3 - clockwise spiral
-                            // 4 - counter-clockwise spiral
-                            // >=5 - nothing it seems
+                // 1 - random scuttle (charged bolt effect)
+                // 2 - random movement, random movement pauses (toads hopping)
+                // 3 - clockwise spiral
+                // 4 - counter-clockwise spiral
+                // >=5 - nothing it seems
                 Field2 = Rand.Next(), // RNG seed for style 1 and 2
                 Field3 = Rand.Next(), // RNG seed for style 1 and 2
                 Field4 = new Vector3D(0.0f, 0.3f, 0),  // length of this vector is amount moved for style 1 and 2, 
@@ -1679,12 +1698,11 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                     WaitSeconds(ScriptFormula(25));
                 }*/
-            
+
         }
     }
     #endregion
 
-    
     //TODO: Rune_C and Rune_E
     //TODO: shock range and melee attacks for weapon damage as lightning (not in update. make your own update in Main())
     #region StormArmor
@@ -1908,7 +1926,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             public override void Init()
             {
-                Timeout = WaitSeconds(ScriptFormula(0));
+                Timeout = WaitSeconds(ScriptFormula(11));
             }
 
             public override bool Apply()
@@ -2097,7 +2115,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             UsePrimaryResource(25f);
             AddBuff(User, new MagicWeaponBuff());
 
-            AttackPayload attack = new AttackPayload(this);
+            /*AttackPayload attack = new AttackPayload(this);
             attack.Target = Target;
             attack.AddWeaponDamage(0f, DamageType.Physical);
             attack.OnHit = hitPayload =>
@@ -2170,11 +2188,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     }
                 }
             };
-            if (attack != null)
-            {
-                System.Console.WriteLine("Why Hello Thar");
-                attack.Apply();
-            }
+            attack.Apply();*/
 
             yield break;
         }
@@ -2192,14 +2206,14 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
                 User.PlayEffectGroup(RuneSelect(218923, 219289, 219306, 219390, 219396, 219338));
-                    User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] += ScriptFormula(14);
+                User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] += ScriptFormula(14);
                 return true;
             }
 
             public override void Remove()
             {
-                base.Remove(); 
-                    User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] -= ScriptFormula(14);
+                base.Remove();
+                User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] -= ScriptFormula(14);
             }
         }
     }
@@ -2303,22 +2317,22 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-        //[Hard Skills TODO] Mirror Image, Familiar, Archon
-        //14 passive skills
-        /*
-         * Power Hungry
-         * Temporal Flux
-         * Glass Cannon
-         * Prodigy
-         * Virtuoso
-         * Astral Presence
-         * Illusionist
-         * Conflagration
-         * Glavanizing Ward
-         * Blur
-         * Arcane Dynamo
-         * Critical Mass
-         * Evocation
-         * Unstable Anomal
-         */
+    //[Hard Skills TODO] Mirror Image, Familiar, Archon
+    //14 passive skills
+    /*
+     * Power Hungry
+     * Temporal Flux
+     * Glass Cannon
+     * Prodigy
+     * Virtuoso
+     * Astral Presence
+     * Illusionist
+     * Conflagration
+     * Glavanizing Ward
+     * Blur
+     * Arcane Dynamo
+     * Critical Mass
+     * Evocation
+     * Unstable Anomal
+     */
 }
