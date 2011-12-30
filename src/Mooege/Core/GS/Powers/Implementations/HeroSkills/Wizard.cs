@@ -1218,7 +1218,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     #endregion
 
     //TODO: Rune_B -> mirror images
-    //TODO: Rune_D -> isnt teleporting back to original Spot, and groundportals arent going away.
     #region Teleport
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.Teleport)]
     public class WizardTeleport : PowerScript
@@ -1288,10 +1287,6 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 AddBuff(User, new TeleDmgReductionBuff());
             }
-            /*if (Rune_D > 0)
-            {
-                AddBuff(User, new TeleRevertBuff());
-            }*/
             if (Rune_E > 0)
             {
                 AddBuff(User, new TeleCoolDownBuff());
@@ -2102,7 +2097,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             UsePrimaryResource(25f);
             AddBuff(User, new MagicWeaponBuff());
 
-            /*AttackPayload attack = new AttackPayload(this);
+            AttackPayload attack = new AttackPayload(this);
             attack.Target = Target;
             attack.AddWeaponDamage(0f, DamageType.Physical);
             attack.OnHit = hitPayload =>
@@ -2175,7 +2170,11 @@ namespace Mooege.Core.GS.Powers.Implementations
                     }
                 }
             };
-            attack.Apply();*/
+            if (attack != null)
+            {
+                System.Console.WriteLine("Why Hello Thar");
+                attack.Apply();
+            }
 
             yield break;
         }
