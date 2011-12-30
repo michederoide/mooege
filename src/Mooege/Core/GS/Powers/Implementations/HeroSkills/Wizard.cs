@@ -2102,9 +2102,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Rune_C and D are complete.. Rune_B looks complete, it's just taken from electrocute with new ScriptFormulas.
     //TODO: Rune_A, E
-    //TODO: WHY DONT YOU WORK ATTACKPAYLOAD!
     #region MagicWeapon
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.MagicWeapon)]
     public class MagicWeapon : Skill
@@ -2114,82 +2112,6 @@ namespace Mooege.Core.GS.Powers.Implementations
             StartDefaultCooldown();
             UsePrimaryResource(25f);
             AddBuff(User, new MagicWeaponBuff());
-
-            /*AttackPayload attack = new AttackPayload(this);
-            attack.Target = Target;
-            attack.AddWeaponDamage(0f, DamageType.Physical);
-            attack.OnHit = hitPayload =>
-            {
-                if (Rune_A > 0)
-                {
-                    //ScriptFormula(3 & 4 & 5)
-                    //poison enemies for 3 seconds, dealing 70% of weapon damage
-                }
-                if (Rune_B > 0)
-                {
-                    //formulas didn't say the chance.
-                    if (Rand.NextDouble() < 1)
-                    {
-                        IList<Actor> targets = new List<Actor>() { Target };
-                        Actor ropeSource = User;
-                        Actor curTarget = Target;
-                        float damage = ScriptFormula(7);
-                        while (targets.Count < ScriptFormula(6)) // original target + bounce 2 times
-                        {
-                            if (ropeSource.World == null)
-                                ropeSource = SpawnProxy(ropeSource.Position);
-
-                            if (curTarget.World != null)
-                            {
-                                ropeSource.AddRopeEffect(186883, curTarget);
-                                ropeSource = curTarget;
-
-                                WeaponDamage(curTarget, damage, DamageType.Lightning);
-                            }
-                            else
-                            {
-                                // early out if monster to be bounced died prematurely
-                                break;
-                            }
-
-                            curTarget = GetEnemiesInRadius(curTarget.Position, 10f, (int)ScriptFormula(6)).Actors.FirstOrDefault(t => !targets.Contains(t));
-                            if (curTarget != null)
-                            {
-                                targets.Add(curTarget);
-                            }
-                            else
-                            {
-                                break;
-                            } 
-                        }
-                    }
-                }
-                if (Rune_C > 0)
-                {
-                    if (Rand.NextDouble() < ScriptFormula(9))
-                    {
-                        AddBuff(hitPayload.Target, new KnockbackBuff(ScriptFormula(10)));
-                    }
-                }
-                if (Rune_D > 0)
-                {
-                    //formulas didn't say the chance.
-                    if (Rand.NextDouble() < .10)
-                    {
-                        GeneratePrimaryResource(ScriptFormula(11));
-                    }
-                }
-                if (Rune_E > 0)
-                {
-                    //formulas didn't say the chance.
-                    if (Rand.NextDouble() < .10)
-                    {
-                        //RuneE Leech Perc ofDamage Done - ScriptFormula(12)
-                    }
-                }
-            };
-            attack.Apply();*/
-
             yield break;
         }
 
@@ -2214,6 +2136,80 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 base.Remove();
                 User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] -= ScriptFormula(14);
+            }
+
+            public override void OnPayload(Payload payload)
+            {
+                if (User != null && payload.Target != null 
+                    && payload.Context.Target != null 
+                    && payload.Context.User != null)
+                {
+                    if (payload is AttackPayload && !payload.Context.Target.Equals(User) 
+                        && payload.Context.User.Equals(User) && (payload.Context.PowerSNO.CompareTo(0x00007780) == 0)) 
+                        //TODO: add detection for ranged attacks here, if Magic Weapon affects wands.
+                    {
+                        AttackPayload lastAttack = (AttackPayload)payload;
+                        
+                        if (Rune_A > 0)
+                        {
+                            //TODO:
+                            //ScriptFormula(3 & 4 & 5)
+                            //poison enemies for 3 seconds, dealing 70% of weapon damage
+                        }
+                        if (Rune_B > 0) //Note: this implementation presumes that all lightning arcs will start at the soruce target, and then go only to their respective targets.
+                                        //If it turns out that it's instead a chain-lightning-like mechanic, just redesign so that after each iteration, ropeSource becomes curTarget.
+                        {
+                            //TODO: find correct chance, formulas didn't specify.
+                            if (Rand.NextDouble() < 1)
+                            {
+                                //TODO: find correct radius for "nearby".
+                                TargetList targets = GetEnemiesInRadius(lastAttack.Context.Target.Position, 10f);
+                                Actor ropeSource = lastAttack.Context.Target;
+                                Actor curTarget;
+                                float damage = ScriptFormula(7);
+                                int affectedTargets = 0;
+                                while (affectedTargets < ScriptFormula(6))
+                                {
+                                    if (ropeSource.World == null)
+                                        ropeSource = SpawnProxy(ropeSource.Position);
+
+                                    curTarget = targets.GetClosestTo(ropeSource.Position);
+                                    targets.Actors.Remove(curTarget);
+
+                                    if (curTarget.World != null)
+                                    {
+                                        ropeSource.AddRopeEffect(186883, curTarget);
+                                        WeaponDamage(curTarget, damage, DamageType.Lightning);
+                                    }
+                                    affectedTargets++;
+                                }
+                            }
+                        }
+                        if (Rune_C > 0)
+                        {
+                            if (Rand.NextDouble() < ScriptFormula(9))
+                            {
+                                AddBuff(lastAttack.Context.Target, new KnockbackBuff(ScriptFormula(10)));
+                            }
+                        }
+                        if (Rune_D > 0)
+                        {
+                            //TODO: find correct chance, formulas didn't specify.
+                            if (Rand.NextDouble() < 1)
+                            {
+                                GeneratePrimaryResource(ScriptFormula(11));
+                            }
+                        }
+                        if (Rune_E > 0)
+                        {
+                            foreach (AttackPayload.DamageEntry dmg in lastAttack.DamageEntries)
+                            {
+                                //TODO: figure this out :)
+                                //lastAttack.Context.User.Attributes[GameAttribute.Hitpoints_Cur] += Math.Min(getDamageDone(), lastAttack.Context.User.Attributes[GameAttribute.Hitpoints_Max]);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
