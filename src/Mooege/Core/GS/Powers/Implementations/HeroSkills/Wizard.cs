@@ -246,12 +246,10 @@ namespace Mooege.Core.GS.Powers.Implementations
 #endregion
 
     //TODO: Rune_B: Implement a proper timer for projectile delay.
-    //TODO: also figure out Rune_E homing missile
     #region MagicMissile
     [ImplementsPowerSNO(Skills.Skills.Wizard.Signature.MagicMissile)]
     public class WizardMagicMissile : Skill
     {
-        //TODO:Rune_E - ScriptFormula(10 -> Seek Angle Rotate(36),11 -> Seek Update Rate(.15)) -> tracks to nearest target
         public override IEnumerable<TickTimer> Main()
         {
             UsePrimaryResource(ScriptFormula(7));
@@ -293,22 +291,34 @@ namespace Mooege.Core.GS.Powers.Implementations
                     }
                 }
             }
-            
-            /*else if (Rune_E > 0)
+            //TODO: Proper implementation for homing missiles (Ussing only 1 missile and modify its trayectory till reaches target?).
+            //TODO: Rune_E - ScriptFormula(10 -> Seek Angle Rotate(36),11 -> Seek Update Rate(.15)) -> tracks to nearest target
+            else if (Rune_E > 0)
             {
+                Int32 j = 1;
                 var projectile = new Projectile(this, 99567, User.Position);
-                projectile.OnUpdate = () =>
+                var target = GetEnemiesInArcDirection(User.Position, TargetPosition, 60f, 60f).GetClosestTo(User.Position);
+                projectile.Launch(TargetPosition, ScriptFormula(4));
+                for (j = 1; j < 50000001; j++) //This will generate a ~150ms delay over each projectile launch.
                 {
-                    Target = GetEnemiesInRadius(projectile.Position, 8f).GetClosestTo(projectile.Position);
-                    if (Target != null)
+                    if (j % 50000000 == 0)
                     {
-                        SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                        projectile.Destroy();
-                        WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                        if (target != null)
+                        {
+                            var projectile2 = new Projectile(this, 99567, projectile.Position);
+                            projectile2.Launch(target.Position, ScriptFormula(4));
+                            projectile.Destroy();
+                            projectile2.OnCollision = (hit) =>
+                            {
+                                SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                                projectile2.Destroy();
+                                WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                            };
+                        }
                     }
-                };
-                projectile.Launch(Target.Position, ScriptFormula(4));
-            }*/
+                }
+            }
+
             else
             {
                 var projectile = new Projectile(this, 99567, User.Position);
