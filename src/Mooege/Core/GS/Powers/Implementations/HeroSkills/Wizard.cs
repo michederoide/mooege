@@ -267,7 +267,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         var proj = new Projectile(this, 99567, User.Position);
                         proj.Launch(projDestinations[i], ScriptFormula(4));
-                        Console.WriteLine("{0}", i);
                         proj.OnCollision = (hit) =>
                         {
                             SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
@@ -277,15 +276,12 @@ namespace Mooege.Core.GS.Powers.Implementations
                     }
                     else
                     {
-                        //Console.WriteLine("[WESKO] NEW PROJECTILE DESTINATION. Delayer Value: {0}", j);
                         for (j = 1; j < 12000001; j++) //This will generate a 40ms delay over each projectile launch.
                         {
                             if (j % 12000000 == 0)
                             {
-                                //Console.WriteLine("[WESKO] Delayer value: {0} TRIGGERED PROJECTILE. {1}",j,DateTime.Now.Millisecond);
                                 var proj = new Projectile(this, 99567, User.Position);
                                 proj.Launch(projDestinations[i], ScriptFormula(4));
-                                Console.WriteLine("{0}", i);
                                 proj.OnCollision = (hit) =>
                                 {
                                     SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
