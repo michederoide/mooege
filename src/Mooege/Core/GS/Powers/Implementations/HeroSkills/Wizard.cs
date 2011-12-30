@@ -249,6 +249,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     //Rune_B: much better(thanks Wesko), do you also see the weird order of missiles?
     //        btw, I sped up the missiles even more to seem closer to the animation/video.
     //TODO: also figure out Rune_E homing missile
+    //TODO: Proper implementation for homing missiles (RuneE) (Ussing only 1 missile and modify its trayectory till reaches target?).
     #region MagicMissile
     [ImplementsPowerSNO(Skills.Skills.Wizard.Signature.MagicMissile)]
     public class WizardMagicMissile : Skill
