@@ -2136,6 +2136,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 base.Remove();
                 User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] -= ScriptFormula(14);
+<<<<<<< HEAD
             }
 
             public override void OnPayload(Payload payload)
@@ -2210,6 +2211,8 @@ namespace Mooege.Core.GS.Powers.Implementations
                         }
                     }
                 }
+=======
+>>>>>>> wetwlly/master
             }
         }
     }
