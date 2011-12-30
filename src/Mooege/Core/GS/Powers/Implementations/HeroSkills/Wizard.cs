@@ -258,7 +258,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             User.PlayEffectGroup(19305); // cast effect
             if (Rune_B > 0)
             {
-                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(8)/4f, (int)ScriptFormula(5));
+                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(8)/5f, (int)ScriptFormula(5));
 
                 for (int i = 0; i < projDestinations.Length; i++)
                 {
