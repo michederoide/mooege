@@ -299,7 +299,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 var projectile = new Projectile(this, 99567, User.Position);
                 var target = GetEnemiesInArcDirection(User.Position, TargetPosition, 60f, 60f).GetClosestTo(User.Position);
                 projectile.Launch(TargetPosition, ScriptFormula(4));
-                for (j = 1; j < 50000001; j++) //This will generate a ~150ms delay over each projectile launch.
+                for (j = 1; j < 50000001; j++) //This will generate a ~150ms delay and then search for a target.
                 {
                     if (j % 50000000 == 0)
                     {
