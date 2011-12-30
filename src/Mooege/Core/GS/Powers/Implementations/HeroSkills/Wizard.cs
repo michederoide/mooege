@@ -1225,31 +1225,36 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Run()
         {
-
-            Vector3D OrigSpot = new Vector3D(User.Position.X, User.Position.Y, User.Position.Z);
-            Actor OrigTele = SpawnProxy(OrigSpot);
-
             UsePrimaryResource(15f);
-            if (Rune_E > 0 || Rune_D > 0)
+            if (!(Rune_E > 0 || Rune_D > 0))
             {
-            }
-            else
-            { 
-                StartCooldown(WaitSeconds(ScriptFormula(20))); 
+                StartCooldown(WaitSeconds(ScriptFormula(20)));
             }
 
             if (Rune_D > 0)
             {
-                if (AddBuff(User, new TeleRevertBuff()))
+                TeleRevertBuff buff = User.World.BuffManager.GetFirstBuff<TeleRevertBuff>(User);
+                if (buff != null) 
                 {
-                    User.Teleport(OrigSpot);
-                    User.PlayEffectGroup(206679);
+                    User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
+                    yield return WaitSeconds(0.3f);
+                    User.Teleport(buff.OrigSpot);
+                    User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
+                    buff.Remove(); // Ensures that you can only revert the teleport once.
                 }
                 else
-                OrigTele.PlayEffectGroup(RuneSelect(170231, 205685, 205684, 191913, 192074, 192151));
-                yield return WaitSeconds(0.3f);
-                User.Teleport(TargetPosition);
-                User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
+                {
+                    Vector3D OrigSpot;
+                    Actor OrigTele;
+                    OrigSpot = new Vector3D(User.Position.X, User.Position.Y, User.Position.Z);
+                    OrigTele = SpawnProxy(OrigSpot, WaitSeconds(ScriptFormula(18)));
+                    OrigTele.PlayEffectGroup(RuneSelect(170231, 205685, 205684, 191913, 192074, 192151));
+                    OrigTele.PlayEffectGroup(206679);
+                    AddBuff(User, new TeleRevertBuff(OrigSpot, OrigTele));
+                    yield return WaitSeconds(0.3f);
+                    User.Teleport(TargetPosition);
+                    User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
+                }
 
             }
             else
@@ -1283,10 +1288,10 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 AddBuff(User, new TeleDmgReductionBuff());
             }
-            if (Rune_D > 0)
+            /*if (Rune_D > 0)
             {
                 AddBuff(User, new TeleRevertBuff());
-            }
+            }*/
             if (Rune_E > 0)
             {
                 AddBuff(User, new TeleCoolDownBuff());
@@ -1318,6 +1323,15 @@ namespace Mooege.Core.GS.Powers.Implementations
         [ImplementsPowerBuff(5)]
         class TeleRevertBuff : PowerBuff
         {
+            public Vector3D OrigSpot;
+            public Actor OrigTele;
+
+            public TeleRevertBuff(Vector3D OrigSpot, Actor OrigTele)
+            {
+                this.OrigSpot = OrigSpot;
+                this.OrigTele = OrigTele;
+            }
+
             public override void Init()
             {
                 Timeout = WaitSeconds(ScriptFormula(18));
@@ -1330,6 +1344,10 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
             public override void Remove()
             {
+                Timeout.Stop();
+                //OrigTele.Destroy();  --   Removes the voidzone effect as though, but also throws an exception. 
+                //                          Perhaps one cannot Destroy() a proxy actor, 
+                //                          but is there any other way to quit the effectgroup early?
                 base.Remove();
                 StartCooldown(WaitSeconds(ScriptFormula(20)));
             }
