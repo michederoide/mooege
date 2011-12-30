@@ -258,29 +258,46 @@ namespace Mooege.Core.GS.Powers.Implementations
             User.PlayEffectGroup(19305); // cast effect
             if (Rune_B > 0)
             {
-                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(8)/3f, (int)ScriptFormula(5));
+                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(8)/4f, (int)ScriptFormula(5));
 
-                for (int i = 0; i < projDestinations.Length; i++) 
+                for (int i = 0; i < projDestinations.Length; i++)
                 {
-                     Int32 j = 1;
-                     //Console.WriteLine("[WESKO] NEW PROJECTILE DESTINATION. Delayer Value: {0}", j);
-                     for (j = 1; j < 18000001; j++) //This will generate a 60ms delay over each projectile launch.
-                     {
-                         if (j % 18000000 == 0)
-                         {
-                             //Console.WriteLine("[WESKO] Delayer value: {0} TRIGGERED PROJECTILE. {1}",j,DateTime.Now.Millisecond);
-                             var proj = new Projectile(this, 99567, User.Position);
-                             proj.Launch(projDestinations[i], ScriptFormula(4));
-                             proj.OnCollision = (hit) =>
-                             {
-                                 SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                                 proj.Destroy();
-                                 WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
-                             };
-                         }
-                     }
+                    Int32 j = 1;
+                    if (i == 0)//First missile goes off right away.
+                    {
+                        var proj = new Projectile(this, 99567, User.Position);
+                        proj.Launch(projDestinations[i], ScriptFormula(4));
+                        Console.WriteLine("{0}", i);
+                        proj.OnCollision = (hit) =>
+                        {
+                            SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                            proj.Destroy();
+                            WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                        };
+                    }
+                    else
+                    {
+                        //Console.WriteLine("[WESKO] NEW PROJECTILE DESTINATION. Delayer Value: {0}", j);
+                        for (j = 1; j < 12000001; j++) //This will generate a 40ms delay over each projectile launch.
+                        {
+                            if (j % 12000000 == 0)
+                            {
+                                //Console.WriteLine("[WESKO] Delayer value: {0} TRIGGERED PROJECTILE. {1}",j,DateTime.Now.Millisecond);
+                                var proj = new Projectile(this, 99567, User.Position);
+                                proj.Launch(projDestinations[i], ScriptFormula(4));
+                                Console.WriteLine("{0}", i);
+                                proj.OnCollision = (hit) =>
+                                {
+                                    SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                                    proj.Destroy();
+                                    WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                                };
+                            }
+                        }
+                    }
                 }
             }
+            
             /*else if (Rune_E > 0)
             {
                 var projectile = new Projectile(this, 99567, User.Position);
