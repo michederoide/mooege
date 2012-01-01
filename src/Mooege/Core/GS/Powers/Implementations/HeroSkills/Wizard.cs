@@ -249,6 +249,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     //Rune_B: much better(thanks Wesko), do you also see the weird order of missiles?
     //        btw, I sped up the missiles even more to seem closer to the animation/video.
     //TODO: also figure out Rune_E homing missile
+    //TODO: Proper implementation for homing missiles (RuneE) (Ussing only 1 missile and modify its trayectory till reaches target?).
     #region MagicMissile
     [ImplementsPowerSNO(Skills.Skills.Wizard.Signature.MagicMissile)]
     public class WizardMagicMissile : Skill
@@ -262,55 +263,59 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(8) / 5f, (int)ScriptFormula(5));
 
-                for (int i = 0; i < projDestinations.Length; i++)
+                var proj1 = new Projectile(this, 99567, User.Position);
+                proj1.Launch(projDestinations[0], ScriptFormula(4));
+                proj1.OnCollision = (hit) =>
+                {
+                    SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                    proj1.Destroy();
+                    WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                };
+
+                for (int i = 1; i < projDestinations.Length; i++)
                 {
                     Int32 j = 1;
-                    if (i == 0)//First missile goes off right away.
+                    for (j = 1; j < 12000001; j++) //This will generate a 40ms delay over each projectile launch.
                     {
-                        var proj = new Projectile(this, 99567, User.Position);
-                        proj.OnCollision = (hit) =>
+                        if (j % 12000000 == 0)
                         {
-                            SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                            proj.Destroy();
-                            WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
-                        };
-                        proj.Launch(projDestinations[i], ScriptFormula(4));
-                    }
-                    else
-                    {
-                        for (j = 1; j < 4000001; j++) //This will generate a 40ms delay over each projectile launch.
-                        {
-                            if (j % 4000000 == 0)
+                            var proj = new Projectile(this, 99567, User.Position);
+                            proj.Launch(projDestinations[i], ScriptFormula(4));
+                            proj.OnCollision = (hit) =>
                             {
-                                var proj = new Projectile(this, 99567, User.Position);
-                                proj.OnCollision = (hit) =>
-                                {
-                                    SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                                    proj.Destroy();
-                                    WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
-                                };
-                                proj.Launch(projDestinations[i], ScriptFormula(4));
-                            }
+                                SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                                proj.Destroy();
+                                WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                            };
                         }
                     }
                 }
             }
-
-            /*else if (Rune_E > 0)
-            {
+            else if (Rune_E > 0)
+            {                
+                Int32 j = 1;
                 var projectile = new Projectile(this, 99567, User.Position);
-                projectile.OnUpdate = () =>
+                var target = GetEnemiesInArcDirection(User.Position, TargetPosition, 60f, 60f).GetClosestTo(User.Position);
+                projectile.Launch(TargetPosition, ScriptFormula(4));
+                for (j = 1; j < 50000001; j++) //This will generate a ~150ms delay and then search for a target.
                 {
-                    Target = GetEnemiesInRadius(projectile.Position, 8f).GetClosestTo(projectile.Position);
-                    if (Target != null)
+                    if (j % 50000000 == 0)
                     {
-                        SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                        projectile.Destroy();
-                        WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                        if (target != null)
+                        {
+                            var projectile2 = new Projectile(this, 99567, projectile.Position);
+                            projectile2.Launch(target.Position, ScriptFormula(4));
+                            projectile.Destroy();
+                            projectile2.OnCollision = (hit) =>
+                            {
+                                SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                                projectile2.Destroy();
+                                WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                            };
+                        }
                     }
-                };
-                projectile.Launch(Target.Position, ScriptFormula(4));
-            }*/
+                }
+            }
             else
             {
                 var projectile = new Projectile(this, 99567, User.Position);
@@ -2140,21 +2145,17 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             public override void OnPayload(Payload payload)
             {
-                System.Console.WriteLine("Inside payload");
                 if (User != null && payload.Target != null 
                     && payload.Context.Target != null 
                     && payload.Context.User != null)
                 {
-                    System.Console.WriteLine("Inside payload not null");
                     if (payload is AttackPayload && !payload.Context.Target.Equals(User) 
                         && payload.Context.User.Equals(User) && (payload.Context.PowerSNO.CompareTo(0x00007780) == 0)) 
                         //TODO: add detection for ranged attacks here, if Magic Weapon affects wands.
                     {
                         AttackPayload lastAttack = (AttackPayload)payload;
-                        System.Console.WriteLine("Inside payload if is true");
                         if (Rune_A > 0)
                         {
-                            System.Console.WriteLine("Inside payload Rune_A");
                             //TODO:
                             //ScriptFormula(3 & 4 & 5)
                             //poison enemies for 3 seconds, dealing 70% of weapon damage
@@ -2162,7 +2163,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                         if (Rune_B > 0) //Note: this implementation presumes that all lightning arcs will start at the soruce target, and then go only to their respective targets.
                                         //If it turns out that it's instead a chain-lightning-like mechanic, just redesign so that after each iteration, ropeSource becomes curTarget.
                         {
-                            System.Console.WriteLine("Inside payload Rune_B");
                             //TODO: find correct chance, formulas didn't specify.
                             if (/*Rand.NextDouble() < 1*/true)
                             {
@@ -2198,7 +2198,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                         }
                         if (Rune_C > 0)
                         {
-                            System.Console.WriteLine("Inside payload Rune_C");
                             if (/*Rand.NextDouble() < ScriptFormula(9)*/true)
                             {
                                 AddBuff(lastAttack.Context.Target, new KnockbackBuff(ScriptFormula(10)));
@@ -2206,7 +2205,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                         }
                         if (Rune_D > 0)
                         {
-                            System.Console.WriteLine("Inside payload Rune_D");
                             //TODO: find correct chance, formulas didn't specify.
                             if (/*Rand.NextDouble() < 1*/true)
                             {
@@ -2215,7 +2213,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                         }
                         if (Rune_E > 0)
                         {
-                            System.Console.WriteLine("Inside payload Rune_E");
                             foreach (AttackPayload.DamageEntry dmg in lastAttack.DamageEntries)
                             {
                                 //TODO: figure this out :)
