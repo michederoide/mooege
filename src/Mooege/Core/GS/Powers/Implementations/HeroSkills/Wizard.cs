@@ -2136,23 +2136,25 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 base.Remove();
                 User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] -= ScriptFormula(14);
-<<<<<<< HEAD
             }
 
             public override void OnPayload(Payload payload)
             {
+                System.Console.WriteLine("Inside payload");
                 if (User != null && payload.Target != null 
                     && payload.Context.Target != null 
                     && payload.Context.User != null)
                 {
+                    System.Console.WriteLine("Inside payload not null");
                     if (payload is AttackPayload && !payload.Context.Target.Equals(User) 
                         && payload.Context.User.Equals(User) && (payload.Context.PowerSNO.CompareTo(0x00007780) == 0)) 
                         //TODO: add detection for ranged attacks here, if Magic Weapon affects wands.
                     {
                         AttackPayload lastAttack = (AttackPayload)payload;
-                        
+                        System.Console.WriteLine("Inside payload if is true");
                         if (Rune_A > 0)
                         {
+                            System.Console.WriteLine("Inside payload Rune_A");
                             //TODO:
                             //ScriptFormula(3 & 4 & 5)
                             //poison enemies for 3 seconds, dealing 70% of weapon damage
@@ -2160,8 +2162,9 @@ namespace Mooege.Core.GS.Powers.Implementations
                         if (Rune_B > 0) //Note: this implementation presumes that all lightning arcs will start at the soruce target, and then go only to their respective targets.
                                         //If it turns out that it's instead a chain-lightning-like mechanic, just redesign so that after each iteration, ropeSource becomes curTarget.
                         {
+                            System.Console.WriteLine("Inside payload Rune_B");
                             //TODO: find correct chance, formulas didn't specify.
-                            if (Rand.NextDouble() < 1)
+                            if (/*Rand.NextDouble() < 1*/true)
                             {
                                 //TODO: find correct radius for "nearby".
                                 TargetList targets = GetEnemiesInRadius(lastAttack.Context.Target.Position, 10f);
@@ -2175,34 +2178,44 @@ namespace Mooege.Core.GS.Powers.Implementations
                                         ropeSource = SpawnProxy(ropeSource.Position);
 
                                     curTarget = targets.GetClosestTo(ropeSource.Position);
-                                    targets.Actors.Remove(curTarget);
-
-                                    if (curTarget.World != null)
+                                    if (curTarget != null)
                                     {
-                                        ropeSource.AddRopeEffect(186883, curTarget);
-                                        WeaponDamage(curTarget, damage, DamageType.Lightning);
+                                        targets.Actors.Remove(curTarget);
+
+                                        if (curTarget.World != null)
+                                        {
+                                            ropeSource.AddRopeEffect(186883, curTarget);
+                                            WeaponDamage(curTarget, damage, DamageType.Lightning);
+                                        }
+                                        affectedTargets++;
                                     }
-                                    affectedTargets++;
+                                    else
+                                    {
+                                        break;
+                                    }
                                 }
                             }
                         }
                         if (Rune_C > 0)
                         {
-                            if (Rand.NextDouble() < ScriptFormula(9))
+                            System.Console.WriteLine("Inside payload Rune_C");
+                            if (/*Rand.NextDouble() < ScriptFormula(9)*/true)
                             {
                                 AddBuff(lastAttack.Context.Target, new KnockbackBuff(ScriptFormula(10)));
                             }
                         }
                         if (Rune_D > 0)
                         {
+                            System.Console.WriteLine("Inside payload Rune_D");
                             //TODO: find correct chance, formulas didn't specify.
-                            if (Rand.NextDouble() < 1)
+                            if (/*Rand.NextDouble() < 1*/true)
                             {
                                 GeneratePrimaryResource(ScriptFormula(11));
                             }
                         }
                         if (Rune_E > 0)
                         {
+                            System.Console.WriteLine("Inside payload Rune_E");
                             foreach (AttackPayload.DamageEntry dmg in lastAttack.DamageEntries)
                             {
                                 //TODO: figure this out :)
@@ -2211,8 +2224,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                         }
                     }
                 }
-=======
->>>>>>> wetwlly/master
             }
         }
     }
