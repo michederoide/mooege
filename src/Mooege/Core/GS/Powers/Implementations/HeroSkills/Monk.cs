@@ -662,7 +662,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Below are just the classes and are being worked on.
+    //Below are just the classes and are being worked on. 
 
     //Complete
     #region LashingTailKick
