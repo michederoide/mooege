@@ -35,6 +35,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 {
     //22 skills, 3 done by mdz, 2(vault and fan of knives) by velocityx, 8 started by wetwlly
 
+    //TODO: Rune_E only right?
     #region BolaShot
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredGenerators.BolaShot)]
     public class DemonHunterBolaShot : Skill
@@ -141,6 +142,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //Complete
     #region Grenades
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredGenerators.Grenades)]
     public class DemonHunterGrenades : Skill
@@ -242,6 +244,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //Complete
     #region RainOfVengeance
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.RainOfVengeance)]
     public class DemonHunterRainOfVengeance : Skill
@@ -1353,7 +1356,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //buff
+    //Complete
     #region Preparation
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.Preparation)]
     public class Preparation : Skill

@@ -32,6 +32,7 @@ using Mooege.Core.GS.Powers.Payloads;
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
+    #region DeadlyReach
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.DeadlyReach)]
     public class MonkDeadlyReach : ComboSkill
     {
@@ -71,7 +72,9 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield break;
         }
     }
+    #endregion
 
+    #region FistsOfThunder
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.FistsOfThunder)]
     public class MonkFistsOfThunder : ComboSkill
     {
@@ -130,7 +133,9 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
+    #endregion
 
+    #region SevenSidedStrike
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.SevenSidedStrike)]
     public class MonkSevenSidedStrike : Skill
     {
@@ -171,7 +176,9 @@ namespace Mooege.Core.GS.Powers.Implementations
             groundEffect.Destroy();
         }
     }
+    #endregion
 
+    #region CripplingWave
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.CripplingWave)]
     public class MonkCripplingWave : ComboSkill
     {
@@ -212,7 +219,9 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield break;
         }
     }
+    #endregion
 
+    #region ExplodingPalm
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.ExplodingPalm)]
     public class MonkExplodingPalm : ComboSkill
     {
@@ -372,7 +381,9 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
+    #endregion
 
+    #region SweepingWind
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.SweepingWind)]
     public class MonkSweepingWind : ComboSkill
     {
@@ -386,7 +397,9 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield break;
         }
     }
+    #endregion
 
+    #region WayOfTheHundredFists
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.WayOfTheHundredFists)]
     public class MonkWayOfTheHundredFists : ComboSkill
     {
@@ -401,7 +414,9 @@ namespace Mooege.Core.GS.Powers.Implementations
             return 0f;
         }
     }
+    #endregion
 
+    #region DashingStrike
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.DashingStrike)]
     public class MonkDashingStrike : Skill
     {
@@ -488,7 +503,9 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
+    #endregion
 
+    #region MantraOfEvasion
     [ImplementsPowerSNO(Skills.Skills.Monk.Mantras.MantraOfEvasion)]
     public class MonkMantraOfEvasion : Skill
     {
@@ -590,7 +607,9 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
+    #endregion
 
+    #region BlindingFlash
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.BlindingFlash)]
     public class MonkBlindingFlash : Skill
     {
@@ -641,4 +660,129 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
+    #endregion
+
+    //Below are just the classes and are being worked on.
+
+    //attack
+    #region LashingTailKick
+    [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.LashingTailKick)]
+    public class LashingTailKick : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion
+
+    //healing buffs?
+    #region BreathOfHeaven
+    [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.BreathOfHeaven)]
+    public class BreathOfHeaven : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion
+
+    //buff
+    #region MantraOfRetribution
+    [ImplementsPowerSNO(Skills.Skills.Monk.Mantras.MantraOfRetribution)]
+    public class MantraOfRetribution : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion
+
+    //buff
+    #region InnerSanctuary
+    [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.InnerSanctuary)]
+    public class InnerSanctuary : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion
+
+    //buff
+    #region MantraOfHealing
+    [ImplementsPowerSNO(Skills.Skills.Monk.Mantras.MantraOfHealing)]
+    public class MantraOfHealing : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion
+
+    //Channeled Spell
+    #region TempestRush
+    [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.TempestRush)]
+    public class TempestRush : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion
+
+    //buff
+    #region Serenity
+    [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.Serenity)]
+    public class Serenity : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion
+
+    //buff
+    #region MantraOfConviction
+    [ImplementsPowerSNO(Skills.Skills.Monk.Mantras.MantraOfConviction)]
+    public class MantraOfConviction : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion
+
+    //Pet Class
+    #region MysticAlly
+    [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.MysticAlly)]
+    public class MysticAlly : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion
+
+    //AoE Attack
+    #region WaveOfLight
+    [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.WaveOfLight)]
+    public class WaveOfLight : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion
+
+    //11 Passives
 }
