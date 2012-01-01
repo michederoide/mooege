@@ -1057,41 +1057,244 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //projectile
+    //Complete, look over Rune_e's effect..
     #region Multishot
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.Multishot)]
     public class Multishot : Skill
     {
-
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(ScriptFormula(14));
+
+            User.PlayEffectGroup(RuneSelect(77647, 154203, 154204, 154208, 154211, 154212));
+            AttackPayload attack = new AttackPayload(this);
+            attack.Targets = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(21), ScriptFormula(23));
+            attack.AddWeaponDamage(ScriptFormula(0), 
+                RuneSelect(DamageType.Physical, DamageType.Physical, DamageType.Physical, DamageType.Physical, 
+                DamageType.Lightning, DamageType.Physical));
+            if (Rune_E > 0)
+            {
+                attack.OnHit = HitPayload =>
+                {
+                    //Every enemy hit grants 1 Discipline. Each volley can gain up to SF(10) Discipline in this way.
+                    GenerateSecondaryResource(Math.Min(ScriptFormula(9), ScriptFormula(10)));
+                };
+            }
+            attack.Apply();
+
+            if (Rune_B > 0)
+            {
+                User.PlayEffectGroup(154409);
+                WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(2)), ScriptFormula(1), DamageType.Arcane);
+            }
+            yield return WaitSeconds(ScriptFormula(17));
+
+            if (Rune_C > 0)
+            {
+                Vector3D[] targetDirs;
+                targetDirs = new Vector3D[(int)ScriptFormula(3)];
+
+                int takenPos = 0;
+                foreach (Actor actor in GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(4), ScriptFormula(23)).Actors)
+                {
+                    targetDirs[takenPos] = actor.Position;
+                    ++takenPos;
+                    if (takenPos >= targetDirs.Length)
+                        break;
+                }
+
+                if (takenPos < targetDirs.Length)
+                {
+                    PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, 10f, targetDirs.Length - takenPos)
+                             .CopyTo(targetDirs, takenPos);
+                }
+
+                foreach (Vector3D position in targetDirs)
+                {
+                    var proj = new Projectile(this, 154939, User.Position);
+                    proj.Position.Z += 5f;  // fix height
+                    proj.OnCollision = (hit) =>
+                    {
+                        // hit effect
+                        hit.PlayEffectGroup(196636);
+
+                        if (Rune_B > 0)
+                            WeaponDamage(hit, ScriptFormula(6), DamageType.Fire);
+
+                        proj.Destroy();
+                    };
+                    proj.Launch(position, ScriptFormula(20));
+                }
+            }
+
             yield break;
         }
     }
     #endregion
 
-    //hidden attribute
+    //TODO:Rune_A -> cloud isnt working for some reason..
     #region SmokeScreen
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.SmokeScreen)]
     public class SmokeScreen : Skill
     {
-
         public override IEnumerable<TickTimer> Main()
         {
+            StartDefaultCooldown();
+            UseSecondaryResource(ScriptFormula(2));
+            
+            AddBuff(User, new SmokeScreenBuff());
+                
+            //AddBuff(GroundArea, new SmokeScreenCloud());
+
             yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class SmokeScreenCloud : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(4));
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+                    if (GetEnemiesInRadius(Target.Position, ScriptFormula(3)) != null)
+                    {
+                        AttackPayload attack = new AttackPayload(this);
+                        attack.Targets = GetEnemiesInRadius(Target.Position, ScriptFormula(3));
+                        attack.AddWeaponDamage(ScriptFormula(5), DamageType.Physical);
+                        attack.Apply();
+                    }
+                }
+
+                return false;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+            }
+        }
+        [ImplementsPowerBuff(2)]
+        class SmokeScreenBuff : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(0));
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                User.Attributes[GameAttribute.Untargetable] = true;
+                
+                if (Rune_E > 0)
+                {
+                    User.Attributes[GameAttribute.Movement_Bonus_Run_Speed] += ScriptFormula(12);
+                }
+                return true;
+            }
+
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (Rune_C > 0)
+                {
+                    if (_damageTimer == null || _damageTimer.TimedOut)
+                    {
+                        _damageTimer = WaitSeconds(_damageRate);
+
+                        GeneratePrimaryResource(ScriptFormula(10));
+                    }
+                }
+
+                return false;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                User.Attributes[GameAttribute.Untargetable] = false;
+
+                if (Rune_E > 0)
+                {
+                    User.Attributes[GameAttribute.Movement_Bonus_Run_Speed] -= ScriptFormula(12);
+                }
+            }
         }
     }
     #endregion
 
-    //onchanneled spell
+    //TODO: possibly redo, this is a concept.
     #region Strafe
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredGenerators.Strafe)]
-    public class Strafe : Skill
+    public class Strafe : ChanneledSkill
     {
+        private Actor _target = null;
+
+        public override void OnChannelOpen()
+        {
+            EffectsPerSecond = 0.25f;
+            //User.PlayEffectGroup(150049); //unknown where this could go.
+            User.Attributes[GameAttribute.Projectile_Speed] = User.Attributes[GameAttribute.Projectile_Speed] * ScriptFormula(13);
+            User.Attributes[GameAttribute.Movement_Bonus_Run_Speed] += ScriptFormula(8);
+            User.Attributes.BroadcastChangedIfRevealed();
+        }
+
+        public override void OnChannelClose()
+        {
+            if (_target != null)
+                _target.Destroy();
+            User.Attributes[GameAttribute.Projectile_Speed] = User.Attributes[GameAttribute.Projectile_Speed] / ScriptFormula(13);
+            User.Attributes[GameAttribute.Movement_Bonus_Run_Speed] -= ScriptFormula(8);
+            User.Attributes.BroadcastChangedIfRevealed();
+        }
+
+        public override void OnChannelUpdated()
+        {
+            User.TranslateFacing(TargetPosition);
+            // client updates target actor position
+        }
 
         public override IEnumerable<TickTimer> Main()
         {
-            yield break;
+            //"Use SpecialWalk Steering"
+
+            UsePrimaryResource(ScriptFormula(19));
+            //projectiles
+            var Target = GetEnemiesInRadius(User.Position, ScriptFormula(2)).GetClosestTo(User.Position);
+            //todo:else should it fire if there are no mobs? seems like it should but unknown how that should work.  
+
+            var proj1 = new Projectile(this, 149790, User.Position);
+            proj1.Position.Z += 6f;
+            proj1.Launch(Target.Position, ScriptFormula(10));
+            proj1.OnCollision = (hit) =>
+            {
+                SpawnEffect(218504, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 6f)); // impact effect (fix height)
+                proj1.Destroy();
+                WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
+            };
+
+            yield return WaitSeconds(ScriptFormula(1));
         }
     }
     #endregion
@@ -1109,7 +1312,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //debuff to enemy.
+    //Main skill complete, TODO: Runes.
     #region MarkedForDeath
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.MarkedForDeath)]
     public class MarkedForDeath : Skill
@@ -1117,7 +1320,35 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
+            UseSecondaryResource(EvalTag(PowerKeys.ResourceCost));
+            //StartDefaultCooldown();
+
+                
+                AddBuff(Target, new DeathMarkBuff());
+
+
             yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class DeathMarkBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(0));
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                Target.Attributes[GameAttribute.Defense_Reduction_Percent] += ScriptFormula(1);
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Defense_Reduction_Percent] -= ScriptFormula(1);
+            }
         }
     }
     #endregion
@@ -1130,12 +1361,97 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
+            User.PlayEffectGroup(RuneSelect(132466, 148872, 148873, 148874, 148875, 148876));
+            if (Rune_A > 0)
+            {
+                UseSecondaryResource(ScriptFormula(0));
+                GeneratePrimaryResource(999f);
+            }
+            else if (Rune_D > 0)
+            {
+                StartCooldown(WaitSeconds(120f));
+                GenerateSecondaryResource(999f);
+                //Restore 55% of life
+            }
+            else if (Rune_E > 0)
+            {
+                if (Rand.NextDouble() < ScriptFormula(7))
+                {
+                    User.PlayEffectGroup(158497);
+                    GenerateSecondaryResource(999f);
+                }
+                else
+                    StartCooldown(WaitSeconds(120f));
+                    GenerateSecondaryResource(999f);
+            }
+            else
+            {
+                StartCooldown(WaitSeconds(120f));
+                GenerateSecondaryResource(999f);
+                if (Rune_B > 0)
+                {
+                    AddBuff(User, new IndigoBuff());
+                }
+                if (Rune_C > 0)
+                {
+                    AddBuff(User, new ObsidianBuff());
+                }
+            }
             yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class IndigoBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(2));
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                //is there no bonus for discipline?
+                Target.Attributes[GameAttribute.Resource_Max_Bonus] += ScriptFormula(1);
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Resource_Max_Bonus] -= ScriptFormula(1);
+            }
+        }
+        [ImplementsPowerBuff(1)]
+        class ObsidianBuff : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(5));
+            }
+
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    GenerateSecondaryResource(ScriptFormula(4) / ScriptFormula(5));
+                }
+
+                return false;
+            }
         }
     }
     #endregion
 
-    //like grenade, but with more grenades
+    //TODO: project and main explosion work, need baby grenades bouncing fixed and then baby explosion should be okay.
     #region ClusterArrow
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.ClusterArrow)]
     public class ClusterArrow : Skill
@@ -1143,8 +1459,65 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
+            var GroundSpot = SpawnProxy(TargetPosition);
+
+            var proj = new Projectile(this, RuneSelect(129603, 166549, 166550, 167218, 166636, 166621), User.Position);
+            proj.Position.Z += 5f;  // fix height
+            proj.Launch(GroundSpot.Position, ScriptFormula(3));
+            proj.OnArrival = () =>
+            {
+                //main explosion
+                proj.Destroy();
+                var Impact = SpawnEffect(129787, GroundSpot.Position);
+                WeaponDamage(GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(1)), ScriptFormula(0), DamageType.Fire);
+            };
+
+
+
+            /*TickTimer timeout = WaitSeconds(2f);
+            Projectile[] grenades = new Projectile[4];
+            for (int i = 0; i < grenades.Length; ++i)
+            {
+                var projectile = new Projectile(this, 129621, GroundSpot.Position);
+                projectile.Timeout = timeout;
+                grenades[i] = projectile;
+            }
+
+            Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(GroundSpot.Position, RandomDirection(GroundSpot.Position, 5f), 90f, grenades.Length);
+            // launch and bounce grenades
+            yield return WaitTicks(1);  // helps make bounce timings more consistent
+
+            float bounceOffset = 5f;
+            float minHeight = ScriptFormula(24);
+            float height = minHeight + ScriptFormula(25);
+            float bouncePercent = 0.3f; // ScriptFormula(23);
+            while (!timeout.TimedOut)
+            {
+                for (int i = 0; i < grenades.Length; ++i)
+                {
+                    grenades[i].LaunchArc(PowerMath.TranslateDirection2D(projDestinations[i], GroundSpot.Position, projDestinations[i], 5f - 0.3f * bounceOffset), height, ScriptFormula(32), ScriptFormula(34));
+                }
+
+                height *= bouncePercent;
+                bounceOffset *= 0.3f;
+
+                yield return grenades[0].ArrivalTime;
+            }
+            foreach (var grenade in grenades)
+            {
+                var grenadeN = grenade;
+
+                SpawnEffect(129788, grenade.Position);
+
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetEnemiesInRadius(grenade.Position, ScriptFormula(6));
+                attack.AddWeaponDamage(ScriptFormula(5), DamageType.Fire);
+                attack.Apply();
+            }*/
             yield break;
         }
     }
     #endregion
+
+    //12 Passive Skills
 }
