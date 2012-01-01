@@ -2013,7 +2013,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: finish OnPayload
+    //TODO: finish OnPayload 
     #region EnergyArmor
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.EnergyArmor)]
     public class EnergyArmor : Skill

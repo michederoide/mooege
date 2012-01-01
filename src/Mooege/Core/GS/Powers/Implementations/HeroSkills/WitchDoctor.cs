@@ -41,7 +41,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 proj.Position.Z += 3f;
                 proj.OnCollision = (hit) =>
                 {
-                    // TODO: fix positioning of hit actors. possibly increase model scale?
+                    // TODO: fix positioning of hit actors. possibly increase model scale? 
                     SpawnEffect(RuneSelect(112327, 112338, 112327, 112345, 112347, 112311), proj.Position);
 
                     proj.Destroy();
