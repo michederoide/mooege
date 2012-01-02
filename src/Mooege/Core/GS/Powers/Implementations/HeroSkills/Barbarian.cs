@@ -65,14 +65,32 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
-    //TODO: Runes
+    //TODO: Rune_B, fix up Rune_A
     #region LeapAttack
+    //Rune_A(Partially done): Shockwaves burst forth from the ground at the destination and knock enemies toward you from 33.8 yards away.
+    //Rune_B(Needs Collission): Send enemies hurtling 6 yards into other nearby enemies who suffer 30% weapon damage and are pushed back in a chain up to 2 times.
+    //Rune_C(DONE): Jump into the air with such great force that enemies within 7.5 yards of the origin of the jump take 182% weapon damage.
+    //Rune_D(DONE): Gain 400% additional armor for 4 seconds after landing.
+    //Rune_E(DONE): Land with such force that enemies suffer a 70% chance to become stunned for 3 seconds.
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.LeapAttack)]
     public class BarbarianLeap : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            bool hitAnything = false;
             //StartCooldown(WaitSeconds(10f));
+            if (Rune_C > 0)
+            {
+                AttackPayload launch = new AttackPayload(this);
+                launch.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(31));
+                launch.AddWeaponDamage(ScriptFormula(30), DamageType.Physical);
+                launch.OnHit = hitPayload =>
+                {
+                    hitAnything = true;
+                };
+                launch.Apply();
+                User.PlayEffectGroup(165924); //Not sure if this is the only effect to be displayed in this case
+            }
 
             ActorMover mover = new ActorMover(User);
             mover.MoveArc(TargetPosition, 10, -0.1f, new ACDTranslateArcMessage
@@ -90,20 +108,88 @@ namespace Mooege.Core.GS.Powers.Implementations
             // extra wait for leap to finish
             yield return WaitTicks(1);
 
+            if (Rune_D > 0)
+            {
+                AddBuff(User, new LeapAttackArmorBuff());
+            }
+
             // ground smash effect
             User.PlayEffectGroup(162811);
 
-            bool hitAnything = false;
             AttackPayload attack = new AttackPayload(this);
-            attack.Targets = GetEnemiesInRadius(TargetPosition, 8f);
+            attack.Targets = GetEnemiesInRadius(TargetPosition, ScriptFormula(0));
+            //ScriptFormula(1) states "% of willpower Damage", perhaps the damage should be calculated that way instead.
             attack.AddWeaponDamage(0.70f, DamageType.Physical);
-            attack.OnHit = hitPayload => { hitAnything = true; };
+            attack.OnHit = hitPayload => 
+                { 
+                    hitAnything = true;
+                    if (Rune_E > 0)
+                    {
+                        if (Rand.NextDouble() < ScriptFormula(37))
+                        {
+                            AddBuff(hitPayload.Target, new DebuffStunned(WaitSeconds(ScriptFormula(38))));
+                        }
+                    }
+                };
             attack.Apply();
 
             if (hitAnything)
                 GeneratePrimaryResource(15f);
 
+            //TODO: Eventually att visuals, and check if the current uber-drag is really intended :P
+            if (Rune_A > 0)
+            {
+                TargetList targets = GetEnemiesInRadius(User.Position, ScriptFormula(3));
+                Actor curTarget;
+                int affectedTargets = 0;
+                while (affectedTargets < ScriptFormula(12)) //SF(11) states  "Min number to Knockback", and is 5, what can that mean?
+                {
+                    curTarget = targets.GetClosestTo(User.Position);
+                    if (curTarget != null)
+                    {
+                        targets.Actors.Remove(curTarget);
+
+                        if (curTarget.World != null)
+                        {
+                            Knockback(curTarget, ScriptFormula(8), ScriptFormula(9), ScriptFormula(10));
+                        }
+                        affectedTargets++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
             yield break;
+        }
+        [ImplementsPowerBuff(2)]
+        class LeapAttackArmorBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(36));
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+
+                User.Attributes[GameAttribute.Armor_Bonus_Percent] += ScriptFormula(33);
+                User.Attributes.BroadcastChangedIfRevealed();
+
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+
+                User.Attributes[GameAttribute.Armor_Bonus_Percent] -= ScriptFormula(33);
+                User.Attributes.BroadcastChangedIfRevealed();
+            }
         }
     }
 #endregion
@@ -1295,7 +1381,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
-    //TODO: All Runes
+    //TODO: E, B (check/fix A and C)
     #region Overpower
     [ImplementsPowerSNO(Skills.Skills.Barbarian.Situational.Overpower)]
     public class Overpower : Skill
@@ -1319,11 +1405,17 @@ namespace Mooege.Core.GS.Powers.Implementations
                 {
                     if (Rune_C > 0)
                     {
-                        //Heal 18% of your maximum Life for every enemy hit.
+                        //TODO: is this the intended way to heal?
+                        User.Attributes[GameAttribute.Hitpoints_Cur] =
+                            Math.Min(User.Attributes[GameAttribute.Hitpoints_Cur] + 
+                            ScriptFormula(23) * User.Attributes[GameAttribute.Hitpoints_Max],
+                            User.Attributes[GameAttribute.Hitpoints_Max]);
+
+                        User.Attributes.BroadcastChangedIfRevealed();
                     } 
                     if (Rune_D > 0)
                     {
-                        //Overpower generates 7 Fury for every enemy hit.
+                        GeneratePrimaryResource(ScriptFormula(28));
                     }
                     if (HitPayload.IsCriticalHit)
                     {
@@ -1380,14 +1472,18 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (!base.Apply())
                     return false;
-                //increase critical hit
-                //SF(9)
+                //TODO: is this the intended way to increase critical hit chance?
+                User.Attributes[GameAttribute.Crit_Percent_Base] += (int)ScriptFormula(9);
+                User.Attributes.BroadcastChangedIfRevealed();
+
                 return true;
             }
 
             public override void Remove()
             {
                 base.Remove();
+                User.Attributes[GameAttribute.Crit_Percent_Base] -= (int)ScriptFormula(9);
+                User.Attributes.BroadcastChangedIfRevealed();
             }
         }
     }
