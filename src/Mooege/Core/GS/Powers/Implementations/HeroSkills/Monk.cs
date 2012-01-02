@@ -1452,19 +1452,33 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //buff
+    //Rune_A -> Healing
+    //Rune_E -> OnPayload HitTarget collect all damage that would have been done to you, Remove() of Buff, grab that number and get (SF(4)) of damage.
+    //          Deal that much damage (Max of ___  % of your max life)
     #region Serenity
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.Serenity)]
     public class Serenity : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartDefaultCooldown();
+            UsePrimaryResource(ScriptFormula(6));
+
+            AddBuff(User, new SerenityBuff(WaitSeconds(ScriptFormula(0))));
+
+            if (Rune_D > 0)
+            {
+                foreach (Actor ally in GetAlliesInRadius(User.Position, ScriptFormula(12)).Actors)
+                {
+                    AddBuff(ally, new SerenityAlliesBuff(WaitSeconds(ScriptFormula(11))));
+                }
+            }
             yield break;
         }
-        [ImplementsPowerBuff(5)]
-        class MainEffect1Buff : PowerBuff
+        [ImplementsPowerBuff(0)]
+        class SerenityBuff : PowerBuff
         {
-            public MainEffect1Buff(TickTimer timeout)
+            public SerenityBuff(TickTimer timeout)
             {
                 Timeout = timeout;
             }
@@ -1474,7 +1488,15 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
 
-                Target.Attributes[GameAttribute.Hit_Chance] -= ScriptFormula(8);
+                //If(Rune_A) -> Heal ScriptFormula(1)
+                if (Rune_B > 0)
+                {
+                    Target.Attributes[GameAttribute.Projectile_Reflect_Chance] += ScriptFormula(2);
+                    Target.Attributes[GameAttribute.Thorns_Percent] += ScriptFormula(2);
+                }
+
+                Target.Attributes[GameAttribute.Gethit_Immune] = true;
+                Target.Attributes[GameAttribute.Immunity] = true;
                 Target.Attributes.BroadcastChangedIfRevealed();
                 return true;
             }
@@ -1482,14 +1504,20 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Remove()
             {
                 base.Remove();
-                Target.Attributes[GameAttribute.Hit_Chance] += ScriptFormula(8);
+                if (Rune_B > 0)
+                {
+                    Target.Attributes[GameAttribute.Projectile_Reflect_Chance] -= ScriptFormula(2);
+                    Target.Attributes[GameAttribute.Thorns_Percent] -= ScriptFormula(2);
+                }
+                Target.Attributes[GameAttribute.Gethit_Immune] = false;
+                Target.Attributes[GameAttribute.Immunity] = false;
                 Target.Attributes.BroadcastChangedIfRevealed();
             }
         }
-        [ImplementsPowerBuff(5)]
-        class MainEffect2Buff : PowerBuff
+        [ImplementsPowerBuff(1)]
+        class SerenityAlliesBuff : PowerBuff
         {
-            public MainEffect2Buff(TickTimer timeout)
+            public SerenityAlliesBuff(TickTimer timeout)
             {
                 Timeout = timeout;
             }
@@ -1499,7 +1527,8 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
 
-                Target.Attributes[GameAttribute.Hit_Chance] -= ScriptFormula(8);
+                Target.Attributes[GameAttribute.Gethit_Immune] = true;
+                Target.Attributes[GameAttribute.Immunity] = true;
                 Target.Attributes.BroadcastChangedIfRevealed();
                 return true;
             }
@@ -1507,35 +1536,97 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Remove()
             {
                 base.Remove();
-                Target.Attributes[GameAttribute.Hit_Chance] += ScriptFormula(8);
+                Target.Attributes[GameAttribute.Gethit_Immune] = false;
+                Target.Attributes[GameAttribute.Immunity] = false;
                 Target.Attributes.BroadcastChangedIfRevealed();
             }
         }
     }
     #endregion
-    //buff
+
+    //TODO: Make sure enemies cannot come back into bubble
     #region InnerSanctuary
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.InnerSanctuary)]
     public class InnerSanctuary : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            var GroundSpot = SpawnProxy(User.Position);
+            var Sanctuary = SpawnEffect(RuneSelect(98557, 98823, 149848, 142312, 98559, 142305), GroundSpot.Position, 0, WaitSeconds(ScriptFormula(0)));
+            AttackPayload attack = new AttackPayload(this);
+            attack.Targets = GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(1));
+            attack.OnHit = hit =>
+                {
+                    if (Rune_A > 0)
+                    {
+                        WeaponDamage(hit.Target, ScriptFormula(10), DamageType.Holy);
+                    }
+                    AddBuff(hit.Target, new DebuffFeared(WaitSeconds(ScriptFormula(2))));
+                    Knockback(hit.Target, ScriptFormula(3), ScriptFormula(4), ScriptFormula(5));
+                };
+            attack.Apply();
+            if (Rune_D > 0 || Rune_C > 0)
+            {
+                Sanctuary.UpdateDelay = 0.3f;
+                Sanctuary.OnUpdate = () =>
+                    {
+
+                        if (!AddBuff(User, new RegenBuff()))
+                        {
+                            AddBuff(User, new RegenBuff());
+                        }
+                        foreach (Actor ally in GetAlliesInRadius(GroundSpot.Position, ScriptFormula(1)).Actors)
+                        {
+                            if (!AddBuff(User, new RegenAllyBuff()))
+                            {
+                                AddBuff(User, new RegenAllyBuff());
+                            }
+                        }
+                    };
+            }
+            //outer proxy
+            SpawnEffect(RuneSelect(142719, 142851, 149849, 142788, 142737, 142845), GroundSpot.Position, 0, WaitSeconds(ScriptFormula(7)));
+
+            if (Rune_E > 0)
+            {
+                yield return WaitSeconds(ScriptFormula(0));
+                var PreSanctified = SpawnEffect(149851, GroundSpot.Position, 0, WaitSeconds(ScriptFormula(31)));
+                PreSanctified.UpdateDelay = 0.3f;
+                PreSanctified.OnUpdate = () =>
+                    {
+                        foreach (Actor enemy in GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(1)).Actors)
+                        {
+                            if (!AddBuff(enemy, new DebuffSlowed(ScriptFormula(30), WaitSeconds(ScriptFormula(31)))))
+                            {
+                            AddBuff(enemy, new DebuffSlowed(ScriptFormula(30), WaitSeconds(ScriptFormula(31))));
+                            }
+                        }
+                    };
+            }
+
             yield break;
         }
-        [ImplementsPowerBuff(5)]
-        class MainEffect1Buff : PowerBuff
+        [ImplementsPowerBuff(0)]
+        class RegenBuff : PowerBuff
         {
-            public MainEffect1Buff(TickTimer timeout)
+            public override void Init()
             {
-                Timeout = timeout;
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(13));
             }
 
             public override bool Apply()
             {
                 if (!base.Apply())
                     return false;
-
-                Target.Attributes[GameAttribute.Hit_Chance] -= ScriptFormula(8);
+                if (Rune_C > 0)
+                {
+                    Target.Attributes[GameAttribute.Defense_Bonus_Percent] += ScriptFormula(20);
+                }
+                if (Rune_D > 0)
+                {
+                    Target.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] += ScriptFormula(25);
+                }
                 Target.Attributes.BroadcastChangedIfRevealed();
                 return true;
             }
@@ -1543,87 +1634,60 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Remove()
             {
                 base.Remove();
-                Target.Attributes[GameAttribute.Hit_Chance] += ScriptFormula(8);
+                if (Rune_C > 0)
+                {
+                    Target.Attributes[GameAttribute.Defense_Bonus_Percent] -= ScriptFormula(20);
+                }
+                if (Rune_D > 0)
+                {
+                    Target.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] -= ScriptFormula(25);
+                }
                 Target.Attributes.BroadcastChangedIfRevealed();
             }
         }
-        [ImplementsPowerBuff(5)]
-        class MainEffect2Buff : PowerBuff
+        [ImplementsPowerBuff(1)]
+        class RegenAllyBuff : PowerBuff
         {
-            public MainEffect2Buff(TickTimer timeout)
+            public override void Init()
             {
-                Timeout = timeout;
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(13));
             }
 
             public override bool Apply()
             {
                 if (!base.Apply())
                     return false;
-
-                Target.Attributes[GameAttribute.Hit_Chance] -= ScriptFormula(8);
+                if (Rune_C > 0)
+                {
+                    Target.Attributes[GameAttribute.Defense_Bonus_Percent] += ScriptFormula(20);
+                }
+                if (Rune_D > 0)
+                {
+                    Target.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] += ScriptFormula(25);
+                }
                 Target.Attributes.BroadcastChangedIfRevealed();
+
                 return true;
             }
 
             public override void Remove()
             {
                 base.Remove();
-                Target.Attributes[GameAttribute.Hit_Chance] += ScriptFormula(8);
-                Target.Attributes.BroadcastChangedIfRevealed();
-            }
-        }
-        [ImplementsPowerBuff(5)]
-        class MainEffect3Buff : PowerBuff
-        {
-            public MainEffect3Buff(TickTimer timeout)
-            {
-                Timeout = timeout;
-            }
-
-            public override bool Apply()
-            {
-                if (!base.Apply())
-                    return false;
-
-                Target.Attributes[GameAttribute.Hit_Chance] -= ScriptFormula(8);
-                Target.Attributes.BroadcastChangedIfRevealed();
-                return true;
-            }
-
-            public override void Remove()
-            {
-                base.Remove();
-                Target.Attributes[GameAttribute.Hit_Chance] += ScriptFormula(8);
-                Target.Attributes.BroadcastChangedIfRevealed();
-            }
-        }
-        [ImplementsPowerBuff(5)]
-        class MainEffect4Buff : PowerBuff
-        {
-            public MainEffect4Buff(TickTimer timeout)
-            {
-                Timeout = timeout;
-            }
-
-            public override bool Apply()
-            {
-                if (!base.Apply())
-                    return false;
-
-                Target.Attributes[GameAttribute.Hit_Chance] -= ScriptFormula(8);
-                Target.Attributes.BroadcastChangedIfRevealed();
-                return true;
-            }
-
-            public override void Remove()
-            {
-                base.Remove();
-                Target.Attributes[GameAttribute.Hit_Chance] += ScriptFormula(8);
+                if (Rune_C > 0)
+                {
+                    Target.Attributes[GameAttribute.Defense_Bonus_Percent] -= ScriptFormula(20);
+                }
+                if (Rune_D > 0)
+                {
+                    Target.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] -= ScriptFormula(25);
+                }
                 Target.Attributes.BroadcastChangedIfRevealed();
             }
         }
     }
     #endregion
+
     //Pet Class
     #region MysticAlly
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.MysticAlly)]
