@@ -65,13 +65,13 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
-    //TODO: Runes
-    //Rune_A: Shockwaves burst forth from the ground at the destination and knock enemies toward you from 33.8 yards away.
-    //Rune_B: Send enemies hurtling 6 yards into other nearby enemies who suffer 30% weapon damage and are pushed back in a chain up to 2 times.
+    //TODO: Rune_B, fix up Rune_A
+    #region LeapAttack
+    //Rune_A(Partially done): Shockwaves burst forth from the ground at the destination and knock enemies toward you from 33.8 yards away.
+    //Rune_B(Needs Collission): Send enemies hurtling 6 yards into other nearby enemies who suffer 30% weapon damage and are pushed back in a chain up to 2 times.
     //Rune_C(DONE): Jump into the air with such great force that enemies within 7.5 yards of the origin of the jump take 182% weapon damage.
     //Rune_D(DONE): Gain 400% additional armor for 4 seconds after landing.
     //Rune_E(DONE): Land with such force that enemies suffer a 70% chance to become stunned for 3 seconds.
-    #region LeapAttack
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.LeapAttack)]
     public class BarbarianLeap : Skill
     {
@@ -117,7 +117,8 @@ namespace Mooege.Core.GS.Powers.Implementations
             User.PlayEffectGroup(162811);
 
             AttackPayload attack = new AttackPayload(this);
-            attack.Targets = GetEnemiesInRadius(TargetPosition, 8f);
+            attack.Targets = GetEnemiesInRadius(TargetPosition, ScriptFormula(0));
+            //ScriptFormula(1) states "% of willpower Damage", perhaps the damage should be calculated that way instead.
             attack.AddWeaponDamage(0.70f, DamageType.Physical);
             attack.OnHit = hitPayload => 
                 { 
@@ -134,6 +135,32 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             if (hitAnything)
                 GeneratePrimaryResource(15f);
+
+            //TODO: Eventually att visuals, and check if the current uber-drag is really intended :P
+            if (Rune_A > 0)
+            {
+                TargetList targets = GetEnemiesInRadius(User.Position, ScriptFormula(3));
+                Actor curTarget;
+                int affectedTargets = 0;
+                while (affectedTargets < ScriptFormula(12)) //SF(11) states  "Min number to Knockback", and is 5, what can that mean?
+                {
+                    curTarget = targets.GetClosestTo(User.Position);
+                    if (curTarget != null)
+                    {
+                        targets.Actors.Remove(curTarget);
+
+                        if (curTarget.World != null)
+                        {
+                            Knockback(curTarget, ScriptFormula(8), ScriptFormula(9), ScriptFormula(10));
+                        }
+                        affectedTargets++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
 
             yield break;
         }
