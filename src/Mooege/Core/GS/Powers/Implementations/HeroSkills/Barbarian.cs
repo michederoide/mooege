@@ -66,13 +66,31 @@ namespace Mooege.Core.GS.Powers.Implementations
 #endregion
 
     //TODO: Runes
+    //Rune_A: Shockwaves burst forth from the ground at the destination and knock enemies toward you from 33.8 yards away.
+    //Rune_B: Send enemies hurtling 6 yards into other nearby enemies who suffer 30% weapon damage and are pushed back in a chain up to 2 times.
+    //Rune_C(DONE): Jump into the air with such great force that enemies within 7.5 yards of the origin of the jump take 182% weapon damage.
+    //Rune_D(DONE): Gain 400% additional armor for 4 seconds after landing.
+    //Rune_E(DONE): Land with such force that enemies suffer a 70% chance to become stunned for 3 seconds.
     #region LeapAttack
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.LeapAttack)]
     public class BarbarianLeap : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            bool hitAnything = false;
             //StartCooldown(WaitSeconds(10f));
+            if (Rune_C > 0)
+            {
+                AttackPayload launch = new AttackPayload(this);
+                launch.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(31));
+                launch.AddWeaponDamage(ScriptFormula(30), DamageType.Physical);
+                launch.OnHit = hitPayload =>
+                {
+                    hitAnything = true;
+                };
+                launch.Apply();
+                User.PlayEffectGroup(165924); //Not sure if this is the only effect to be displayed in this case
+            }
 
             ActorMover mover = new ActorMover(User);
             mover.MoveArc(TargetPosition, 10, -0.1f, new ACDTranslateArcMessage
@@ -90,20 +108,61 @@ namespace Mooege.Core.GS.Powers.Implementations
             // extra wait for leap to finish
             yield return WaitTicks(1);
 
+            if (Rune_D > 0)
+            {
+                AddBuff(User, new LeapAttackArmorBuff());
+            }
+
             // ground smash effect
             User.PlayEffectGroup(162811);
 
-            bool hitAnything = false;
             AttackPayload attack = new AttackPayload(this);
             attack.Targets = GetEnemiesInRadius(TargetPosition, 8f);
             attack.AddWeaponDamage(0.70f, DamageType.Physical);
-            attack.OnHit = hitPayload => { hitAnything = true; };
+            attack.OnHit = hitPayload => 
+                { 
+                    hitAnything = true;
+                    if (Rune_E > 0)
+                    {
+                        if (Rand.NextDouble() < ScriptFormula(37))
+                        {
+                            AddBuff(hitPayload.Target, new DebuffStunned(WaitSeconds(ScriptFormula(38))));
+                        }
+                    }
+                };
             attack.Apply();
 
             if (hitAnything)
                 GeneratePrimaryResource(15f);
 
             yield break;
+        }
+        [ImplementsPowerBuff(2)]
+        class LeapAttackArmorBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(36));
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+
+                User.Attributes[GameAttribute.Armor_Bonus_Percent] += ScriptFormula(33);
+                User.Attributes.BroadcastChangedIfRevealed();
+
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+
+                User.Attributes[GameAttribute.Armor_Bonus_Percent] -= ScriptFormula(33);
+                User.Attributes.BroadcastChangedIfRevealed();
+            }
         }
     }
 #endregion

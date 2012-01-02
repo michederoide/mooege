@@ -2262,6 +2262,13 @@ namespace Mooege.Core.GS.Powers.Implementations
                 return true;
             }
 
+            public override void OnPayload(Payload payload)
+            {
+                //TODO: If it's a deathpayload, and the archon is the user, add time to the timeout.
+                //Timeout = WaitTicks(Timeout.TimeoutTick + (int)(1000f / Timeout.Game.UpdateFrequency * Timeout.Game.TickRate * 1f);
+                //Consider adding a helper function to timers to add / subtract from their ticks/seconds.
+            }
+
             public override void Remove()
             {
                 base.Remove();
