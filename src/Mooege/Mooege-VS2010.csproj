@@ -655,6 +655,10 @@
       <Link>Assets\account.db</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\..\assets\config.ini">
+      <Link>config.ini</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="..\..\assets\mpqdata.db">
       <Link>Assets\mpqdata.db</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
