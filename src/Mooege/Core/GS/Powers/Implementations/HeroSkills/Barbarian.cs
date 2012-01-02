@@ -1381,7 +1381,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
-    //TODO: All Runes
+    //TODO: E, B (check/fix A and C)
     #region Overpower
     [ImplementsPowerSNO(Skills.Skills.Barbarian.Situational.Overpower)]
     public class Overpower : Skill
@@ -1405,11 +1405,17 @@ namespace Mooege.Core.GS.Powers.Implementations
                 {
                     if (Rune_C > 0)
                     {
-                        //Heal 18% of your maximum Life for every enemy hit.
+                        //TODO: is this the intended way to heal?
+                        User.Attributes[GameAttribute.Hitpoints_Cur] =
+                            Math.Min(User.Attributes[GameAttribute.Hitpoints_Cur] + 
+                            ScriptFormula(23) * User.Attributes[GameAttribute.Hitpoints_Max],
+                            User.Attributes[GameAttribute.Hitpoints_Max]);
+
+                        User.Attributes.BroadcastChangedIfRevealed();
                     } 
                     if (Rune_D > 0)
                     {
-                        //Overpower generates 7 Fury for every enemy hit.
+                        GeneratePrimaryResource(ScriptFormula(28));
                     }
                     if (HitPayload.IsCriticalHit)
                     {
@@ -1466,14 +1472,18 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (!base.Apply())
                     return false;
-                //increase critical hit
-                //SF(9)
+                //TODO: is this the intended way to increase critical hit chance?
+                User.Attributes[GameAttribute.Crit_Percent_Base] += (int)ScriptFormula(9);
+                User.Attributes.BroadcastChangedIfRevealed();
+
                 return true;
             }
 
             public override void Remove()
             {
                 base.Remove();
+                User.Attributes[GameAttribute.Crit_Percent_Base] -= (int)ScriptFormula(9);
+                User.Attributes.BroadcastChangedIfRevealed();
             }
         }
     }
