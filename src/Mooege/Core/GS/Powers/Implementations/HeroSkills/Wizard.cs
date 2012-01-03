@@ -263,56 +263,64 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(8) / 5f, (int)ScriptFormula(5));
 
-                var proj1 = new Projectile(this, 99567, User.Position);
-                proj1.Launch(projDestinations[0], ScriptFormula(4));
-                proj1.OnCollision = (hit) =>
+                for (int i = 0; i < projDestinations.Length; i++)
                 {
-                    SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                    proj1.Destroy();
-                    WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
-                };
-
-                for (int i = 1; i < projDestinations.Length; i++)
-                {
-                    Int32 j = 1;
-                    for (j = 1; j < 12000001; j++) //This will generate a 40ms delay over each projectile launch.
+                    var proj = new Projectile(this, 99567, User.Position);
+                    proj.Launch(projDestinations[i], ScriptFormula(4));
+                    proj.OnCollision = (hit) =>
                     {
-                        if (j % 12000000 == 0)
-                        {
-                            var proj = new Projectile(this, 99567, User.Position);
-                            proj.Launch(projDestinations[i], ScriptFormula(4));
-                            proj.OnCollision = (hit) =>
-                            {
-                                SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                                proj.Destroy();
-                                WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
-                            };
-                        }
-                    }
+                        SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                        proj.Destroy();
+                        WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                    };
+                    yield return WaitTicks(1); //TODO: We need less than 100MS Update.
                 }
             }
             else if (Rune_E > 0)
-            {                
-                Int32 j = 1;
+            {
                 var projectile = new Projectile(this, 99567, User.Position);
                 var target = GetEnemiesInArcDirection(User.Position, TargetPosition, 60f, 60f).GetClosestTo(User.Position);
-                projectile.Launch(TargetPosition, ScriptFormula(4));
-                for (j = 1; j < 50000001; j++) //This will generate a ~150ms delay and then search for a target.
+
+                if (target != null)
                 {
-                    if (j % 50000000 == 0)
+                    projectile.Launch(target.Position, ScriptFormula(4));
+                    projectile.OnCollision = (hit) =>
                     {
+                        SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                        projectile.Destroy();
+                        WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                    };
+                }
+                else
+                {
+                    projectile.Launch(TargetPosition, ScriptFormula(4));
+                    projectile.OnCollision = (hit) =>
+                    {
+                        SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                        projectile.Destroy();
+                        WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
+                    };
+
+                    for (int i = 0; i < 2; i++)
+                    {
+                        target = GetEnemiesInArcDirection(User.Position, TargetPosition, 60f, 60f).GetClosestTo(User.Position);
+
                         if (target != null)
                         {
-                            var projectile2 = new Projectile(this, 99567, projectile.Position);
-                            projectile2.Launch(target.Position, ScriptFormula(4));
+                            var projectileSeek = new Projectile(this, 99567, projectile.Position);
                             projectile.Destroy();
-                            projectile2.OnCollision = (hit) =>
+                            projectileSeek.Launch(target.Position, ScriptFormula(4));
+                            projectileSeek.OnCollision = (hit) =>
                             {
                                 SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                                projectile2.Destroy();
+                                projectileSeek.Destroy();
                                 WeaponDamage(hit, ScriptFormula(1), DamageType.Arcane);
                             };
+                            i = 1;
                         }
+
+                        else
+                            yield return WaitTicks(1);
                     }
                 }
             }

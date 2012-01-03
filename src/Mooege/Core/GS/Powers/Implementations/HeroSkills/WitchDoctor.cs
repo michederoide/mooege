@@ -70,20 +70,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Pet Class
-    #region SummonZombieDogs
-    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.SummonZombieDogs)]
-    public class SummonZombieDogs : Skill
-    {
-        public override IEnumerable<TickTimer> Main()
-        {
-
-            yield break;
-        }
-    }
-    #endregion
-
     //Hacky BigToad by MDZ
+    //testing plague of toads attempt, does not work except for one jump, with no animation.
     #region PlagueOfToads
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.PlagueOfToads)]
     public class WitchDoctorPlagueOfToads : PowerScript
@@ -148,6 +136,24 @@ namespace Mooege.Core.GS.Powers.Implementations
                 yield return WaitSeconds(0.7f);
                 bigtoad.Destroy();
             }
+            TickTimer frog = WaitSeconds(ScriptFormula(5));
+            Vector3D inFrontOfminiToads = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, 7f);
+            var projectile = new Projectile(this, 105792, User.Position);
+            projectile.LaunchArc(inFrontOfminiToads, 3f, -0.03f);
+            projectile.OnCollision = (hit) =>
+            {
+                //destroying it while in Launcharc causes an exception.
+                //projectile.Destroy();
+            };
+            projectile.OnArrival = () => { };
+            yield return WaitSeconds(1.2f);
+            projectile.LaunchArc(new Vector3D(RandomDirection(projectile.Position, 4f, 7f)), 3f, -0.03f);
+            projectile.OnArrival = () => { };
+            yield return WaitSeconds(1.2f);
+
+            /*
+             * for regular toads, there is a max of 3 frogs per cast, they are classifyed as projectile with a lifetime of 3.
+             */
         }
 
         private void _SetHiddenAttribute(Actor actor, bool active)
@@ -244,7 +250,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO:lots! :)
+    //TODO:lots!
     #region Haunt
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.SpiritRealm.Haunt)]
     public class Haunt : Skill
@@ -380,7 +386,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             if (Rune_A > 0)
             {
                 Vector3D inFrontOfUser = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, -20f);
-                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, 10f, 2);
+                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, 10f, 3);
 
                     var BearProj1 = new Projectile(this, RuneSelect(74056, 105501, 105543, 105463, 105969, 105812), inFrontOfUser);
                     BearProj1.Position.Z -= 3f;
@@ -388,7 +394,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         WeaponDamage(hit, ScriptFormula(4), DamageType.Poison);
                     };
-                    BearProj1.Launch(projDestinations[0], ScriptFormula(19));
+                    BearProj1.Launch(projDestinations[1], ScriptFormula(19));
 
                     yield return WaitSeconds(0.5f);
                     var BearProj2 = new Projectile(this, RuneSelect(74056, 105501, 105543, 105463, 105969, 105812), inFrontOfUser);
@@ -397,7 +403,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         WeaponDamage(hit, ScriptFormula(4), DamageType.Poison);
                     };
-                    BearProj2.Launch(projDestinations[1], ScriptFormula(19));
+                    BearProj2.Launch(projDestinations[0], ScriptFormula(19));
 
                     yield return WaitSeconds(0.5f);
                     var BearProj3 = new Projectile(this, RuneSelect(74056, 105501, 105543, 105463, 105969, 105812), inFrontOfUser);
@@ -406,7 +412,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         WeaponDamage(hit, ScriptFormula(4), DamageType.Poison);
                     };
-                    BearProj3.Launch(projDestinations[0], ScriptFormula(19));
+                    BearProj3.Launch(projDestinations[2], ScriptFormula(19));
             }
             else if (Rune_B > 0)
             {
@@ -490,43 +496,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Pet Class?
-    #region Hex
-    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.Hex)]
-    public class Hex : Skill
-    {
-        public override IEnumerable<TickTimer> Main()
-        {
-
-            yield break;
-        }
-    }
-    #endregion
-
-    //Jarthrow complete, unknown how to do spiders.
-    #region CorpseSpiders
-    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.CorpseSpiders)]
-    public class CorpseSpiders : Skill
-    {
-        public override IEnumerable<TickTimer> Main()
-        {
-            Vector3D inFrontOfUser = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, 5f);
-            var proj = new Projectile(this, RuneSelect(106504, 215811, 215815, 215816, 215814, 215813), User.Position);
-            proj.Position.Z += 5f;
-            proj.LaunchArc(inFrontOfUser, 5f, -0.07f);
-            yield return WaitSeconds(0.4f);
-            proj.Destroy();
-            SpawnEffect(110714, inFrontOfUser);
-
-            //the rest of this is spiders, which are pets i presume?
-            yield return WaitSeconds(0.05f);
-            SpawnEffect(107031, inFrontOfUser);
-
-            yield break;
-        }
-    }
-    #endregion
-
+    //seems complete
     #region Horrify
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.SpiritRealm.Horrify)]
     public class Horrify : Skill
@@ -561,7 +531,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             //switch.efg
             public override void Init()
             {
-                Timeout = WaitSeconds(2f);
+                Timeout = WaitSeconds(1f);
             }
         }
         [ImplementsPowerBuff(1)]
@@ -615,54 +585,1043 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO: fix resource cost and Rune_D healing
     #region Firebats
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.Firebats)]
     public class Firebats : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            //UsePrimaryResource(ScriptFormula(0));
+            if (Rune_A > 0)
+            {
+                    //Projectile Giant Bat Actors
+                    var proj = new Projectile(this, 108238, User.Position);
+                    proj.Position.Z += 5f;  // unknown if this is needed
+                    proj.OnCollision = (hit) =>
+                    {
+                        SpawnEffect(108389, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z));
+                        AddBuff(hit, new BatDamage());
+                        proj.Destroy();
+                    };
+                    proj.Launch(TargetPosition, ScriptFormula(8));
 
+                yield return WaitSeconds(ScriptFormula(17));
+            }
+            else if (Rune_B > 0)
+            {
+                if (GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(10), ScriptFormula(4)).Actors != null)
+                {
+                    var proj = new Projectile(this, 106569, User.Position);
+                    proj.Position.Z += 5f;
+                    proj.OnCollision = (hit) =>
+                    {
+                        hit.PlayEffectGroup(106575);
+                        AddBuff(hit, new BatDamage());
+                        proj.Destroy();
+                    };
+                    proj.Launch(TargetPosition, ScriptFormula(8));
+                }
+                yield return WaitSeconds(ScriptFormula(6));
+            }
+            else if (Rune_E > 0)
+            {
+                AddBuff(User, new FirebatCast());
+                foreach (Actor actor in GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(3), ScriptFormula(4)).Actors)
+                {
+                    AddBuff(actor, new BatDamage());
+                }
+
+                yield return WaitSeconds(ScriptFormula(20));
+            }
+            else
+            {
+                AddBuff(User, new FirebatCast());
+                foreach (Actor actor in GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(3), ScriptFormula(4)).Actors)
+                {
+                    AddBuff(actor, new BatDamage());
+                }
+                yield return WaitSeconds(ScriptFormula(7));
+            }
             yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class FirebatCast : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(7));
+            }
+        }
+        [ImplementsPowerBuff(2)]
+        class BatDamage : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                if (Rune_C > 0)
+                {
+                    Timeout = WaitSeconds(3f);
+                }
+                else
+                Timeout = WaitSeconds(1f);
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+                    if (Rune_E > 0)
+                    {
+                        WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(21)), ScriptFormula(19), DamageType.Fire);
+                    }
+                    else if (Rune_A > 0)
+                    {
+                        AttackPayload attack = new AttackPayload(this);
+                        attack.SetSingleTarget(Target);
+                        attack.AddWeaponDamage(ScriptFormula(15), DamageType.Fire);
+                        attack.Apply();
+                    }
+                    else if (Rune_B > 0)
+                    {
+                        AttackPayload attack = new AttackPayload(this);
+                        attack.SetSingleTarget(Target);
+                        attack.AddWeaponDamage(ScriptFormula(18), DamageType.Fire);
+                        attack.Apply();
+                    }
+                    else if (Rune_C > 0)
+                    {
+                        AttackPayload attack = new AttackPayload(this);
+                        attack.SetSingleTarget(Target);
+                        attack.AddWeaponDamage(ScriptFormula(12), DamageType.Poison);
+                        attack.OnHit = HitPayload =>
+                            {
+                            };
+                        attack.Apply();
+                    }
+                    else
+                    {
+                        AttackPayload attack = new AttackPayload(this);
+                        attack.SetSingleTarget(Target);
+                        attack.AddWeaponDamage(ScriptFormula(1), DamageType.Fire);
+                        attack.OnHit = HitPayload =>
+                            {
+                                //Rune_D -> Healing
+                            };
+                        attack.Apply();
+                    }
+                }
+                return false;
+            }
         }
     }
     #endregion
 
+    //TODOs: read inside
     #region Firebomb
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.Firebomb)]
     public class Firebomb : Skill
     {
+        //NoRune:blank, A: radius, B: Bounce, C: Pool, D: Turret, E: chainLightning
+        //TODO:Rune_B,D,E
+            //Rune_B -> Allows skull to bounce up to two times, reduce damage by 15%
+            //Rune_E -> Instead of firebomb doing AoE, each does direct damage to enemy then bounces to up to nearby enemies, reduce damage by 20%
         public override IEnumerable<TickTimer> Main()
         {
+            //GeneratePrimaryResource(ScriptFormula(25));
+                Projectile[] grenades = new Projectile[1];
+                for (int i = 0; i < grenades.Length; ++i)
+                {
+                    var projectile = new Projectile(this, 6453, User.Position);
+                    grenades[i] = projectile;
+                }
 
-            yield break;
+                float height = ScriptFormula(3);
+
+                for (int i = 0; i < grenades.Length; ++i)
+                {
+                    grenades[i].LaunchArc(PowerMath.TranslateDirection2D(TargetPosition, User.Position, TargetPosition,
+                                                                          0f), height, ScriptFormula(2));
+                }
+                yield return grenades[0].ArrivalTime;
+
+                if (Rune_D > 0)
+                {
+                    //TODO:figure out the column animation.
+                    var FireColumn = new EffectActor(this, -1, TargetPosition);
+                    FireColumn.Timeout = WaitSeconds(ScriptFormula(14));
+                    FireColumn.Scale = 2f;
+                    FireColumn.Spawn();
+                    FireColumn.UpdateDelay = 0.33f; // attack every half-second
+                    FireColumn.OnUpdate = () =>
+                    {
+                        var targets = GetEnemiesInRadius(FireColumn.Position, ScriptFormula(26));
+                        if (targets.Actors.Count > 0 && targets != null)
+                        {
+                            targets.SortByDistanceFrom(FireColumn.Position);
+                            var proj = new Projectile(this, 193969, FireColumn.Position);
+                            proj.Position.Z += 5f;  // unknown if this is needed
+                            proj.OnCollision = (hit) =>
+                            {
+                                WeaponDamage(hit, ScriptFormula(13), DamageType.Fire);
+
+                                proj.Destroy();
+                            };
+                            FireColumn.TranslateFacing(targets.Actors[0].Position, true);
+                            proj.LaunchArc(targets.Actors[0].Position, ScriptFormula(29), ScriptFormula(28));
+                        }
+
+                    };
+                }
+                else
+                {
+                    foreach (var grenade in grenades)
+                    {
+                        var grenadeN = grenade;
+
+                        SpawnEffect(6451, TargetPosition);
+
+                        if (Rune_C > 0)
+                        {
+                            var pool = SpawnEffect(6483, grenade.Position, 0, WaitSeconds(ScriptFormula(12)));
+                            pool.UpdateDelay = 1f;
+                            pool.OnUpdate = () =>
+                            {
+                                WeaponDamage(GetEnemiesInRadius(grenadeN.Position, ScriptFormula(11)), ScriptFormula(10), DamageType.Fire);
+                            };
+                        }
+
+                        AttackPayload attack = new AttackPayload(this);
+                        attack.Targets = GetEnemiesInRadius(grenade.Position, ScriptFormula(4));
+                        attack.AddWeaponDamage(ScriptFormula(0), DamageType.Fire);
+                        attack.OnHit = (hitPayload) =>
+                        {
+                            if (Rune_A > 0)
+                            {
+                                SpawnEffect(193964, grenade.Position);
+                                WeaponDamage(GetEnemiesInRadius(grenadeN.Position, ScriptFormula(5)), ScriptFormula(6), DamageType.Fire);
+                            }
+                        };
+                        attack.Apply();
+                    }
+                }
         }
     }
     #endregion
 
+    //TODOs: Decoy HP and ID, SpiritWalk Appearance, Rune_C explosion(SNO for it?) needs to be from spawnproxy
     #region SpiritWalk
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.SpiritRealm.SpiritWalk)]
     public class SpiritWalk : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            Vector3D DecoySpot = new Vector3D(User.Position);
+            Actor blast = SpawnProxy(DecoySpot);
+
+            //SpawnEffect(106584, DecoySpot, 0, WaitSeconds(ScriptFormula(0))); //Male
+            SpawnEffect(107705, DecoySpot, 0, WaitSeconds(ScriptFormula(0))); //Female
+
+
+            AddBuff(User, new SpiritWalkBuff());
+
+            if (Rune_C > 0)
+            {
+                yield return WaitSeconds(ScriptFormula(0));
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetEnemiesInRadius(blast.Position, ScriptFormula(8));
+                attack.AddWeaponDamage(ScriptFormula(6), DamageType.Fire);
+                attack.Apply();
+            }
+            else
 
             yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class SpiritWalkBuff : PowerBuff
+        {
+            const float _damageRate = 0.25f;
+            TickTimer _damageTimer = null;
+
+            //Look_override ghostly appearance
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(0));
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                User.Attributes[GameAttribute.Look_Override] = unchecked((int)0xF2F224EA);
+                //User.Attributes[GameAttribute.Walk_Passability_Power_SNO] = ;
+                User.Attributes[GameAttribute.Stealthed] = true;
+                //User.Attributes[GameAttribute.Untargetable] = true;
+                //User.Attributes[GameAttribute.UntargetableByPets] = true;
+                if (Rune_D > 0)
+                {
+                    User.Attributes[GameAttribute.Resource_Regen_Percent_Per_Second] += ScriptFormula(9);
+                } 
+                if (Rune_E > 0)
+                {
+                    //is this attribute by percent on its own? "Gain 16% of your maximum Life every second"
+                    User.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] += ScriptFormula(10);
+                }
+                User.Attributes.BroadcastChangedIfRevealed();
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+                if (Rune_D > 0)
+                {
+                    User.Attributes[GameAttribute.Resource_Regen_Percent_Per_Second] -= ScriptFormula(9);
+                }
+                if (Rune_E > 0)
+                {
+                    //is this attribute by percent on its own? "Gain 16% of your maximum Life every second"
+                    User.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] -= ScriptFormula(10);
+                }
+                User.Attributes[GameAttribute.Look_Override] = 0;
+                //User.Attributes[GameAttribute.Walk_Passability_Power_SNO] = ;
+                User.Attributes[GameAttribute.Stealthed] = false;
+                //User.Attributes[GameAttribute.Untargetable] = false;
+                //User.Attributes[GameAttribute.UntargetableByPets] = false;
+                User.Attributes.BroadcastChangedIfRevealed();
+            }
+
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (Rune_A > 0)
+                {
+                    if (_damageTimer == null || _damageTimer.TimedOut)
+                    {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                        foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(4)).Actors)
+                        {
+                            AddBuff(Target, new SpiritWalkDamage());
+                        }
+                    }
+                }
+                return false;
+            }
+        }
+        [ImplementsPowerBuff(1)]
+        class DecoyLookBuff : PowerBuff
+        {
+            //Brain or something?
+            //Breakable shield HP? idk..
+            //Dummy Health -> Script(11) * MaxHP -> once this  
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(0));
+            }
+        }
+        [ImplementsPowerBuff(2)]
+        class SpiritWalkDamage : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                Timeout = WaitSeconds(1f);
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(4));
+                    attack.AddWeaponDamage(ScriptFormula(1), DamageType.Physical);
+                    attack.Apply();
+                }
+                return false;
+            }
         }
     }
     #endregion
 
+    //This is very hacky. will need to be reworked.
     #region SoulHarvest
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.SpiritRealm.SoulHarvest)]
     public class SoulHarvest : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            //StartCooldown(WaitSeconds(ScriptFormula(2)));
+            //UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
+            User.PlayEffectGroup(19275);
+
+            foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(3), 5).Actors)
+            {
+                enemy.PlayEffectGroup(1164);
+                WeaponDamage(enemy, 30f, DamageType.Physical);
+                enemy.AddComplexEffect(19277, User);
+                /*if (Rune_E > 0)
+                {
+                    WeaponDamage(enemy, ScriptFormula(0), DamageType.Physical);
+                }
+                if (Rune_C > 0)
+                {
+                    AddBuff(enemy, new ObsidianDebuff());
+                    AddBuff(enemy, new DebuffSlowed(ScriptFormula(10), WaitSeconds(ScriptFormula(11))));
+                }*/
+            }
+            //AddBuff(User, new soulHarvestbuff());
+
+            yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class soulHarvestbuff : PowerBuff
+        {
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(7));
+                MaxStackCount = (int)ScriptFormula(13);
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                _AddHarvest();
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+                {
+                    Target.Attributes[GameAttribute.Attack_Bonus] -= StackCount * ScriptFormula(8);
+                    Target.Attributes.BroadcastChangedIfRevealed();
+                }
+            }
+            public override bool Stack(Buff buff)
+            {
+                bool stacked = StackCount < MaxStackCount;
+
+                base.Stack(buff);
+
+                if (stacked)
+                    _AddHarvest();
+
+                return true;
+            }
+            private void _AddHarvest()
+            {
+                if (Rune_A > 0)
+                {
+                    //heal life SF(9)
+                }
+                if (Rune_D > 0)
+                {
+                    //Gain Mana SF(4)
+                }
+
+                Target.Attributes[GameAttribute.Attack_Bonus] += ScriptFormula(8);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
+        }
+        [ImplementsPowerBuff(1)]
+        class ObsidianDebuff : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(11));
+            }
+        }
+    }
+    #endregion
+
+    //SMall Portion of the skill complete
+    #region LocustSwarm
+    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.LocustSwarm)]
+    public class LocustSwarm : Skill
+    {
+        //Summon a plague of locusts to assault enemies, dealing [25 * {Script Formula 18} * 100]% weapon damage per second as Poison for 3 seconds. The locusts will jump to additional nearby targets.
+        //A:[Fire.efg's] -> Ignite the locusts with fire causing them to deal [55 * {Script Formula 18} * 100]% weapon damage per second as Fire.
+        //B:[Multiply.efg's] -> When the swarm jumps there is a 55% chance to jump to two targets instead of one.
+        //C:[Duration.efg's] -> Increase the duration of the swarm to 10 seconds.
+        //D:[Mana.efg's] -> Gain 0.4 Mana for every enemy affected.
+        //E:[Disease.efg's] -> Targets killed by the Locust Swarm leave behind a cloud of locusts that deal [32 * {Script Formula 18} * 100]% weapon damage per second as Poison. This cloud of locusts lingers for 3 seconds. 
+        public override IEnumerable<TickTimer> Main()
+        {
+            var jumptime = ScriptFormula(1);
+            //cast, spread to those in radius, from there jump to other mobs in area within (__?__)
+            User.PlayEffectGroup(106765);
+
+            //just a little wait for the animation
+            yield return WaitSeconds(0.5f);
+
+
+            foreach (Actor LocustTarget in GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(14), 30f).Actors)
+            {
+                AddBuff(LocustTarget, new LocustSwarmer(WaitSeconds(ScriptFormula(1))));
+            }
+            
+            /*
+            //minimum jumptime
+            while (jumptime > 1.2f)
+            {
+                //swarm jump radius
+                while (GetEnemiesInRadius(curTarget, ScriptFormula(2)) != null)
+                {
+
+                }
+                height *= bouncePercent;
+                jumptime *= 0.1f; //delta = Swarm Jump Time Delta
+            }
+            */
+            yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class LocustSwarmer : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public LocustSwarmer(TickTimer timeout)
+            {
+                Timeout = timeout;
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+                    
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.SetSingleTarget(Target);
+                    attack.AddWeaponDamage(ScriptFormula(0), Rune_A > 0 ? DamageType.Fire : DamageType.Poison);
+                    attack.Apply();
+                }
+                return false;
+            }
+        }
+        [ImplementsPowerBuff(1)]
+        class DiseaseSwarm : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(11));
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.SetSingleTarget(Target);
+                    attack.AddWeaponDamage(ScriptFormula(1), DamageType.Fire);
+                    attack.Apply();
+
+
+                }
+                return false;
+            }
+        }
+    }
+    #endregion
+
+    //basic skill works, Rune_E most works, other runes need fixing.
+    #region SpiritBarrage
+    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.SpiritRealm.SpiritBarrage)]
+    public class SpiritBarrage : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            if (Rune_E > 0)
+            {
+                AddBuff(User, new BarrageSpirit());
+            }
+            else if (Rune_B > 0)
+            {
+                //same as regular shot just with extra spirit bolts.
+                /* Missile Buff Duration
+                 * Missile Buff Periodic Fire Rate
+                 * Missile Damage Scalar
+                 * Missile Check Radius
+                 */
+            }
+            else if (Rune_C > 0)
+            {
+                //this doesnt work.
+                var AOE_Ghost = SpawnEffect(181880, TargetPosition, 0, WaitSeconds(ScriptFormula(11)));
+                AOE_Ghost.PlayEffectGroup(186804);
+                AOE_Ghost.UpdateDelay = 1f;
+                AOE_Ghost.OnUpdate = () =>
+                {
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInRadius(AOE_Ghost.Position, ScriptFormula(13));
+                    attack.AddWeaponDamage(ScriptFormula(14), DamageType.Physical);
+                    attack.Apply();
+                };
+            }
+            else
+            {
+                var Target = GetEnemiesInRadius(TargetPosition, ScriptFormula(14)).GetClosestTo(TargetPosition);
+                if (Target != null)
+                {
+                    User.PlayEffectGroup(175350, Target);
+                    yield return WaitSeconds(ScriptFormula(2));
+                    Target.PlayEffectGroup(175403);
+
+                    WeaponDamage(Target, ScriptFormula(0), DamageType.Physical);
+                    //Rune_D -> Mana Gain (SF(5))
+                }
+            }
+            yield break;
+        }
+        [ImplementsPowerBuff(3)]
+        class BarrageSpirit : PowerBuff
+        {
+            const float _damageRate = 0.6f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(17));
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    var Target = GetEnemiesInRadius(User.Position, ScriptFormula(19)).GetClosestTo(User.Position);
+                    if (Target != null)
+                    {
+                        //needs to turn to shoot at enemies.
+                        User.PlayEffectGroup(181866, Target);
+                        User.Position.Z += 10f; // this doesnt change the projectile position.
+                        WaitSeconds(ScriptFormula(2));
+                        Target.PlayEffectGroup(181944);
+
+                        WeaponDamage(Target, ScriptFormula(20), DamageType.Physical);
+
+                    }
+                }
+                return false;
+            }
+        }
+    }
+    #endregion
+
+    //TODOs inside
+    #region AcidCloud
+    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.AcidCloud)]
+    public class AcidCloud : Skill
+    {
+        //TODO: Max Pools = 3;
+        //Rune_B Splash Delay?
+        public override IEnumerable<TickTimer> Main()
+        {
+            if (Rune_E > 0)
+            {
+                SpawnEffect(121908, TargetPosition);
+                yield return WaitSeconds(ScriptFormula(32));
+                WeaponDamage(GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(31), 
+                    ScriptFormula(30)), ScriptFormula(1), DamageType.Poison);
+            }
+            else
+            {
+                SpawnEffect(RuneSelect(61398, 121919, 122281, 121587, 121920, -1), TargetPosition);
+
+                if (Rune_A > 0) { yield return WaitSeconds(ScriptFormula(14)); }
+                else if (Rune_B > 0) { yield return WaitSeconds(ScriptFormula(16)); }
+                else { yield return WaitSeconds(ScriptFormula(0)); }
+
+                WeaponDamage(GetEnemiesInRadius(TargetPosition, ScriptFormula(1)), ScriptFormula(1), DamageType.Poison);
+
+                var AcidPools = SpawnEffect(6509, TargetPosition, 0, WaitSeconds(ScriptFormula(5)));
+                AcidPools.UpdateDelay = 0.25f; //idk
+                AcidPools.OnUpdate = () =>
+                    {
+                        foreach (Actor enemy in GetEnemiesInRadius(TargetPosition, ScriptFormula(4)).Actors)
+                        {
+                            if (AddBuff(enemy, new Disease_Debuff()))
+                            {
+                                AddBuff(enemy, new Disease_Debuff());
+                            }
+                        }
+                    };
+
+                //(PET CLASS)
+                if (Rune_C > 0)
+                {
+                    //slime -> 121595.ACR
+                    //this is a pet and theyre are a max of 3 allowed.
+                    //spawn slime that wanders in a certain area
+                }
+            }
+            yield break;
+        }
+        [ImplementsPowerBuff(2)]
+        class Disease_Debuff : PowerBuff
+        {
+            const float _damageRate = 0.25f; //this needs to be ScriptFormula(7) = buff tickrate
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                Timeout = WaitSeconds(0.25f);
+
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    WeaponDamage(Target, ScriptFormula(8), DamageType.Poison);
+                }
+                return false;
+            }
+        }
+    }
+    #endregion
+
+    //TODO: confusion ID for monsters, Runes_C,E(dogs), check equations.
+    #region MassConfusion
+    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.SpiritRealm.MassConfusion)]
+    public class MassConfusion : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            StartCooldown(WaitSeconds(ScriptFormula(13)));
+            //Target.PlayEffectGroup(184540);
+            TargetList Half = GetEnemiesInRadius(TargetPosition, ScriptFormula(1));
+            foreach (Actor enemy in GetEnemiesInRadius(TargetPosition, ScriptFormula(1), ((int)Half.Actors.Count / 2)).Actors)
+            {
+                AddBuff(enemy, new Confusion_Debuff());
+            }
+            WeaponDamage(GetEnemiesInRadius(TargetPosition, ScriptFormula(1)), ScriptFormula(3), DamageType.Physical);
+
+            if (Rune_B > 0)
+            {
+                foreach (Actor enemy in GetEnemiesInRadius(TargetPosition, ScriptFormula(1), (int)ScriptFormula(4)).Actors)
+                {
+                    if (!AddBuff(enemy, new Confusion_Debuff()))
+                    {
+                        AddBuff(enemy, new DebuffStunned(WaitSeconds(ScriptFormula(6))));
+                    }
+                }
+            } 
+            if (Rune_C > 0)
+            {
+                //could not find the correct Projectile actor for this.
+                var proj = new Projectile(this, -1, User.Position);
+                proj.Position.Z += 5f;  // unknown if this is needed
+                proj.OnUpdate = () =>
+                {
+                    foreach (Actor enemy in GetEnemiesInRadius(proj.Position, ScriptFormula(10)).Actors)
+                    {
+                        AddBuff(enemy, new SpiritDoT());
+                    }
+                };
+                proj.Launch(TargetPosition, ScriptFormula(16));
+            }
+            yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class Confusion_Debuff : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(0));
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                Target.Attributes[GameAttribute.Team_Override] = 0;
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Team_Override] = 0;
+            }
+        }
+        [ImplementsPowerBuff(1)]
+        class SpiritDoT : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                Timeout = WaitSeconds(1f);
+
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    WeaponDamage(Target, ScriptFormula(11), DamageType.Physical);
+                }
+                return false;
+            }
+        }
+    }
+    #endregion
+
+    //Needs Buff Functions fixed and Rune_E added
+    #region BigBadVoodoo
+    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.BigBadVoodoo)]
+    public class BigBadVoodoo : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            var ShamSpot = SpawnProxy(TargetPosition, WaitSeconds(ScriptFormula(0)));
+            SpawnEffect(RuneSelect(117574, 182271, 182276, 182278, 182283, 117574), TargetPosition, 0, WaitSeconds(ScriptFormula(0))).PlayEffectGroup(181291);
+            //AddBuff(ShamSpot, new AuraBuff());
+            yield break;
+        }
+        /*
+        [ImplementsPowerBuff(0)]
+        class AuraBuff : PowerBuff
+        {
+            //aura -> this does not play correctly
+            const float _damageRate = 0.5f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(0));
+
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+                    //your character
+
+                    if (!AddBuff(User, new FetishShamanBuff()))
+                    {
+                        AddBuff(User, new FetishShamanBuff());
+                    }
+
+                    foreach (Actor Ally in GetAlliesInRadius(Target.Position, ScriptFormula(2)).Actors)
+                    {
+                        if (!AddBuff(Ally, new FetishShamanBuff()))
+                        {
+                            AddBuff(Ally, new FetishShamanBuff());
+                        }
+                    }
+                    if (Rune_D > 0)
+                    {
+                        foreach (Actor Ally in GetAlliesInRadius(Target.Position, ScriptFormula(2)).Actors)
+                        {
+                            if (!AddBuff(Ally, new Golden_ManaBuff()))
+                            {
+                                AddBuff(Ally, new Golden_ManaBuff());
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+            }
+        }
+        [ImplementsPowerBuff(2)]
+        class FetishShamanBuff : PowerBuff
+        {
+            //Buff
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(9));
+
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+
+                if (Rune_A > 0)
+                {
+                    Target.Attributes[GameAttribute.Attack_Bonus_Percent] += ScriptFormula(3);
+                    Target.Attributes.BroadcastChangedIfRevealed();
+                }
+                if (!AddBuff(Target, new SpeedBuff(ScriptFormula(1), WaitSeconds(ScriptFormula(9)))))
+                {
+                    AddBuff(Target, new SpeedBuff(ScriptFormula(1), WaitSeconds(ScriptFormula(9))));
+                }
+                if (!AddBuff(Target, new MovementBuff(ScriptFormula(1), WaitSeconds(ScriptFormula(9)))))
+                {
+                    AddBuff(Target, new MovementBuff(ScriptFormula(1), WaitSeconds(ScriptFormula(9))));
+                }
+                return true;
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    if (Rune_E > 0)
+                    {
+                        foreach (Actor Ally in GetAlliesInRadius(Target.Position, ScriptFormula(2)).Actors)
+                        {
+                            //Heal allies for ScriptFormula(4) of Max HP
+                        }
+                    }
+                }
+                return false;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+                if (Rune_A > 0)
+                {
+                  Target.Attributes[GameAttribute.Attack_Bonus_Percent] -= ScriptFormula(3);
+                  Target.Attributes.BroadcastChangedIfRevealed();
+                }
+            }
+        }
+        [ImplementsPowerBuff(3)]
+        class Golden_ManaBuff : PowerBuff
+        {
+            //Buff
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                Timeout = WaitSeconds(1f);
+
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    //Restore ScriptFormula(5) Mana
+
+                }
+                return false;
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+            }
+        }*/
+    }
+    #endregion
+
+    //TODO: Animation Partially complete, Wide(B) isnt complete and Creepers(A) haven't been worked on.
+    // TODO: Tower(E) needs to spawn, Arc Distance, max distance from target is 15f.
+    #region WallOfZombies
+    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.WallOfZombies)]
+    public class WallOfZombies : Skill
+    {
+        //TODO:Unknown how to do the width of the Wall of Zombies..
+        public override IEnumerable<TickTimer> Main()
+        {
+            if (Rune_C > 0)
+            {
+                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, 52f, (int)ScriptFormula(5));
+
+                for (int i = 0; i < projDestinations.Length; i++)
+                {
+                    var proj = new Projectile(this, 183977, User.Position);
+                    proj.OnCollision = (hit) =>
+                    {
+                        proj.Destroy();
+                        WeaponDamage(hit, ScriptFormula(4), DamageType.Physical);
+                        SpawnEffect(182695, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z));
+                    };
+                    proj.Launch(projDestinations[i], 0.2f);
+                }
+            }
+            else
+            {
+                float castAngle = MovementHelpers.GetFacingAngle(User.Position, TargetPosition);
+                var Wall = SpawnEffect(RuneSelect(131202, -1, 135016, -1, 182574, 131640), TargetPosition, castAngle, WaitSeconds(ScriptFormula(0)));
+            }
             yield break;
         }
     }
     #endregion
 
+    //--------------------------Pet Classes Below----------------------//
+
+    //Pet Class
+    #region FetishArmy
+    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.FetishArmy)]
+    public class FetishArmy : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            var Spawner = SpawnProxy(RandomDirection(User.Position, ScriptFormula(4), ScriptFormula(1)));
+            SpawnEffect(134115, Spawner.Position, 0f, WaitSeconds(ScriptFormula(3)));
+
+            //TODOs
+            //Spawns 5 melee Fighters. (pets)
+            //Rune_A = apparateDamage.efg to all spawned fetishes that deals radius damage
+            //Rune_B spawns 2 more fighters
+            //Rune_C spawns 2 shamans -> [213553] "shamanFireBreath.efg"
+            //Rune_D just decreases cooldown
+            //Rune_E spawns 2 hunters, projectile possibly[206229]"hunter.acr" and impact[206230]"hunter_impact.efg"
+            yield break;
+        }
+    }
+    #endregion
+
+    //Pet Class
     #region Sacrifice
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.Sacrifice)]
     public class Sacrifice : Skill
@@ -717,58 +1676,10 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    #region LocustSwarm
-    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.LocustSwarm)]
-    public class LocustSwarm : Skill
-    {
-        public override IEnumerable<TickTimer> Main()
-        {
-
-            yield break;
-        }
-    }
-    #endregion
-
-    #region SpiritBarrage
-    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.SpiritRealm.SpiritBarrage)]
-    public class SpiritBarrage : Skill
-    {
-        public override IEnumerable<TickTimer> Main()
-        {
-
-            yield break;
-        }
-    }
-    #endregion
-
-    #region AcidCloud
-    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.AcidCloud)]
-    public class AcidCloud : Skill
-    {
-        public override IEnumerable<TickTimer> Main()
-        {
-
-            yield break;
-        }
-    }
-    #endregion
-
-    #region MassConfusion
-    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.SpiritRealm.MassConfusion)]
-    public class MassConfusion : Skill
-    {
-        public override IEnumerable<TickTimer> Main()
-        {
-
-            yield break;
-        }
-    }
-    #endregion
-
     //Pet Class?
-    #region BigBadVoodoo
-    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.BigBadVoodoo)]
-    public class BigBadVoodoo : Skill
+    #region Hex
+    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.Hex)]
+    public class Hex : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
@@ -778,13 +1689,26 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Pet Class
-    #region WallOfZombies
-    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.WallOfZombies)]
-    public class WallOfZombies : Skill
+    //Jarthrow complete, unknown how to do spiders.
+    #region CorpseSpiders
+    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.CorpseSpiders)]
+    public class CorpseSpiders : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            var proj = new Projectile(this, RuneSelect(106504, 215811, 215815, 215816, 215814, 215813), User.Position);
+            proj.Position.Z += 5f;
+            proj.LaunchArc(TargetPosition, 5f, -0.07f);
+            yield return WaitSeconds(0.4f);
+            proj.OnArrival = () =>
+                {
+                    proj.Destroy();
+                };
+            SpawnEffect(110714, TargetPosition);
+
+            //the rest of this is spiders, which are pets i presume?
+            yield return WaitSeconds(0.05f);
+            SpawnEffect(107031, TargetPosition);
 
             yield break;
         }
@@ -792,9 +1716,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     #endregion
 
     //Pet Class
-    #region FetishArmy
-    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.FetishArmy)]
-    public class FetishArmy : Skill
+    #region SummonZombieDogs
+    [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.SummonZombieDogs)]
+    public class SummonZombieDogs : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {

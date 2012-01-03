@@ -760,32 +760,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Not Started. Attempted and failed.
-    #region Chakram
-    [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.Chakram)]
-    public class Chakram : Skill
-    {
-        
-        public override IEnumerable<TickTimer> Main()
-        {
-            //http://www.youtube.com/watch?v=9xKCTla3sQU
-            
-            //swirling motion with projectile is NoRune.
-
-            //Rune_A has two chakrams, both same direction just flipped paths
-
-            //Rune_B makes a loop around then destroys
-
-            //Rune_C makes a slow curve
-
-            //Rune_D spirals out to target, actor calls it a straight projectile.
-
-            //Rune_E is just a buff shield
-            yield break;
-        }
-    }
-    #endregion
-
     //Started, no entangling or runes yet
     #region EntanglingShot
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredGenerators.EntanglingShot)]
@@ -1001,19 +975,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO:Pet class.
-    #region Companion
-    [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.Companion)]
-    public class Companion : Skill
-    {
-
-        public override IEnumerable<TickTimer> Main()
-        {
-            yield break;
-        }
-    }
-    #endregion
-
     //TODO: Max Traps + Runes_B,C,D,E Once maxtraps gets figured out, B will be solved.
     #region SpikeTrap
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredGenerators.SpikeTrap)]
@@ -1207,7 +1168,8 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (!base.Apply())
                     return false;
-                User.Attributes[GameAttribute.Untargetable] = true;
+                User.Attributes[GameAttribute.Look_Override] = 0x04E733FD;
+                User.Attributes[GameAttribute.Stealthed] = true;
                 
                 if (Rune_E > 0)
                 {
@@ -1236,7 +1198,8 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Remove()
             {
                 base.Remove();
-                User.Attributes[GameAttribute.Untargetable] = false;
+                User.Attributes[GameAttribute.Stealthed] = false;
+                User.Attributes[GameAttribute.Look_Override] = 0;
 
                 if (Rune_E > 0)
                 {
@@ -1298,19 +1261,6 @@ namespace Mooege.Core.GS.Powers.Implementations
             };
 
             yield return WaitSeconds(ScriptFormula(1));
-        }
-    }
-    #endregion
-
-    //pet class
-    #region Sentry
-    [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.Sentry)]
-    public class Sentry : Skill
-    {
-
-        public override IEnumerable<TickTimer> Main()
-        {
-            yield break;
         }
     }
     #endregion
@@ -1521,6 +1471,60 @@ namespace Mooege.Core.GS.Powers.Implementations
         }
     }
     #endregion
+
+    //Not Started. Attempted and failed.
+    #region Chakram
+    [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.Chakram)]
+    public class Chakram : Skill
+    {
+
+        public override IEnumerable<TickTimer> Main()
+        {
+            //http://www.youtube.com/watch?v=9xKCTla3sQU
+
+            //swirling motion with projectile is NoRune.
+
+            //Rune_A has two chakrams, both same direction just flipped paths
+
+            //Rune_B makes a loop around then destroys
+
+            //Rune_C makes a slow curve
+
+            //Rune_D spirals out to target, actor calls it a straight projectile.
+
+            //Rune_E is just a buff shield
+            yield break;
+        }
+    }
+    #endregion
+
+    //pet class
+    #region Sentry
+    [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.Sentry)]
+    public class Sentry : Skill
+    {
+
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion    
+    
+    //TODO:Pet class.
+    #region Companion
+    [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.Companion)]
+    public class Companion : Skill
+    {
+
+        public override IEnumerable<TickTimer> Main()
+        {
+            yield break;
+        }
+    }
+    #endregion
+
+    //TODO: Add Fan of knives and Vault -> Need Velocityx or ill do it later.
 
     //12 Passive Skills
 }
