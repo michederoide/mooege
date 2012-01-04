@@ -246,15 +246,11 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Rune_B: much better(thanks Wesko), do you also see the weird order of missiles?
-    //        btw, I sped up the missiles even more to seem closer to the animation/video.
-    //TODO: also figure out Rune_E homing missile
-    //TODO: Proper implementation for homing missiles (RuneE) (Ussing only 1 missile and modify its trayectory till reaches target?).
+    //Complete: it's fine the way homing missile is implemented for now until we see really how runes work.
     #region MagicMissile
     [ImplementsPowerSNO(Skills.Skills.Wizard.Signature.MagicMissile)]
     public class WizardMagicMissile : Skill
     {
-        //TODO:Rune_E - ScriptFormula(10 -> Seek Angle Rotate(36),11 -> Seek Update Rate(.15)) -> tracks to nearest target
         public override IEnumerable<TickTimer> Main()
         {
             UsePrimaryResource(ScriptFormula(7));
@@ -604,7 +600,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Very Imcomplete
+    //TODO: cannot do multiple projectiles...
+    //In current state, collision with enemies, causes them to be able to 
+    //hit you from where they are standing.
     #region EnergyTwister
     [ImplementsPowerSNO(Skills.Skills.Wizard.Offensive.EnergyTwister)]
     public class EnergyTwister : Skill
@@ -613,11 +611,31 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
+            TickTimer timeout = WaitSeconds(ScriptFormula(8));
             UsePrimaryResource(ScriptFormula(15));
+            var proj = new Projectile(this, RuneSelect(210896, 215311, 6560, 6560, 215324, 210804), User.Position);
+            proj.Launch(RandomDirection(TargetPosition, 12f, 15f), ScriptFormula(18));
+            proj.Timeout = timeout;
+            proj.OnCollision = (hit) =>
+            {
+                //WeaponDamage(hit, ScriptFormula(0), DamageType.Arcane);
+            };
+            while (!timeout.TimedOut)
+            {
+                proj.OnArrival = () =>
+                {
+                    var Target = GetEnemiesInRadius(proj.Position, ScriptFormula(7)).GetClosestTo(proj.Position);
+                    if (Target != null)
+                    {
+                        proj.Launch(Target.Position, ScriptFormula(18));
+                    }
+                    else
+                        proj.Launch(RandomDirection(proj.Position, 12f, 15f), ScriptFormula(18));
+                };
+            }
 
-            // cast effect
-            AddBuff(Target, new Twister());
-            //SpawnEffect(RuneSelect(6560, 215311, 6560, 6560, 215324, 210804), TargetPosition);
+            //var Twister = SpawnEffect(RuneSelect(6560, 215311, 6560, 6560, 215324, 210804), User.Position, 0, WaitSeconds(ScriptFormula(8)));
+
 
             //Tornados need to move randomdirections at first, if the tornado is heading towards an enemy close by,
             // it will move towards the enemies.
@@ -1006,15 +1024,11 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: Rune_A,E
+    //Complete, just need attributes and buffs checked.
     #region FrostNova
-    //bumbasher
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.FrostNova)]
     public class WizardFrostNova : PowerScript
     {
-        //Rune_A - Enemies take 110% more damage while frozen or chilled by Frost Nova.
-        //Rune_B - frozen enemy that is killed has a 21% chance of exploding another frost nova.
-        //Rune_E - If Frost Nova hits at least 5 targets, you gain 45% chance to critically hit for 12 seconds
         public override IEnumerable<TickTimer> Run()
         {
             if (Rune_C > 0)
@@ -1041,49 +1055,89 @@ namespace Mooege.Core.GS.Powers.Implementations
                 AttackPayload attack = new AttackPayload(this);
                 attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(6));
                 attack.AddWeaponDamage(0.65f, DamageType.Cold);
+                attack.OnHit = hit =>
+                {
+                    AddBuff(hit.Target, new DebuffFrozen(WaitSeconds(ScriptFormula(2))));
+                    if (Rune_A > 0)
+                    {
+                        AddBuff(hit.Target, new Damage_debuff());
+                    }
+                    if (GetEnemiesInRadius(User.Position, ScriptFormula(6)).Actors.Count > ScriptFormula(13))
+                    {
+                        if (Rune_E > 0)
+                        {
+                            if (Rand.NextDouble() < ((Rune_E * 5) + .10f))
+                            {
+                                AddBuff(hit.Target, new FrostNova_Alabaster_Buff());
+                            }
+                        }
+                    }
+                };
                 attack.OnDeath = hitPayload =>
                 {
-                    //TODO:Add in "if Target is frozen".
                     if (Rune_B > 0)
                     {
-                        if (Rand.NextDouble() < ScriptFormula(14))
+                        //does this work?
+                        if (AddBuff(hitPayload.Target, new DebuffFrozen(WaitSeconds(ScriptFormula(2)))))
                         {
-                            //TODO:Does this work? Target.Position, will that get the target that dies?
-                            SpawnEffect(189048, Target.Position);
-                            WeaponDamage(GetEnemiesInRadius(Target.Position, ScriptFormula(15)), ScriptFormula(7), DamageType.Cold);
+                            if (Rand.NextDouble() < ScriptFormula(14))
+                            {
+                                //does this work? hitPayload.Target.Position, will that get the target that dies?
+                                SpawnEffect(189048, hitPayload.Target.Position);
+                                WeaponDamage(GetEnemiesInRadius(hitPayload.Target.Position, ScriptFormula(15)), ScriptFormula(7), DamageType.Cold);
+                            }
                         }
                     }
                 };
                 attack.Apply();
-
-                //TODO: freeze duration(ScriptFormula(2))
-
-                if (Rune_A > 0)
-                {
-                    //todo:while frozen or chilled enemies, Rune_A -> ScriptFormula(16)
-                }
-
-                if (Rune_E > 0)
-                {
-                    //TODO: Add "If Frost Nova hits at least 5 targets, [ScriptFormula(13)]"
-                    if (Rand.NextDouble() < ((Rune_E * 5) + .10f))
-                    {
-                        //critically hit for 12 seconds
-                        //[ScriptFormula(18) / ScriptFormula(19)]
-                        //critBuff_swipe.acr [[215516]] -> this is possibly added when applying buff.
-                    }
-                }
             }
             yield break;
         }
         [ImplementsPowerBuff(5)]
         class FrostNova_Alabaster_Buff : PowerBuff
         {
-            //crit hit stuff goes here.
-
+            //SF is an int value? how does that work for a percent....
             public override void Init()
             {
-                Timeout = WaitSeconds(2f);
+                Timeout = WaitSeconds(ScriptFormula(4));
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                //User.Attributes[GameAttribute.Crit_Damage_Percent] += ScriptFormula(18);
+                User.Attributes.BroadcastChangedIfRevealed();
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+                //User.Attributes[GameAttribute.Crit_Damage_Percent] -= ScriptFormula(18);
+                User.Attributes.BroadcastChangedIfRevealed();
+            }
+        }
+        [ImplementsPowerBuff(4)]
+        class Damage_debuff : PowerBuff
+        {
+            //this happens when the frostnova happens to monsters hit by it.
+            //you deal more damage towards these enemies.
+            //Does that mean the Monsters gets a debuff or the player gets a buff specified to the monsters?
+            //ScriptFormula(16) -> A: Damage Bonus
+            public override void Init()
+            {
+                Timeout = WaitSeconds(3f);
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
             }
         }
     }
@@ -1398,8 +1452,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: Rune_A -> time delay between bleeds? its 3 seconds, damage per second.
-    //TODO: Rune_E
+    //Complete, attributes need to be checked.
     #region SpectralBlade
     [ImplementsPowerSNO(Skills.Skills.Wizard.Signature.SpectralBlade)]
     public class WizardSpectralBlade : PowerScript
@@ -1411,14 +1464,14 @@ namespace Mooege.Core.GS.Powers.Implementations
             //these are changed around to actually identify with their rune color : visual effects
             User.PlayEffectGroup(RuneSelect(19343, 189477, 19343, 189413, 188944, 189362));
 
-            // calculate hit area of effect, just in front of the user
-            //(SF2)Pie Angle:60 || (SF3)Total:Pie Radius
             TargetPosition = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, 9f);
 
             for (int n = 0; n < 3; ++n)
             {
                 AttackPayload attack = new AttackPayload(this);
                 attack.Targets = GetEnemiesInRadius(TargetPosition, ScriptFormula(3));
+                //oddly enough this seems to be the script formula the way it should be, but damage doesnt go as far as effect
+                //attack.Targets = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(3), ScriptFormula(2));
                 attack.AddWeaponDamage(ScriptFormula(21), DamageType.Physical);
                 attack.OnHit = hitPayload =>
                 {
@@ -1443,8 +1496,10 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         if (hitPayload.IsCriticalHit)
                         {
-                            //hitPayload.TotalDamage
-                            //E:Whenever the blades do critical damage, you are healed [1 * 100|1|]% of the damage caused.
+                            float Damage = hitPayload.TotalDamage;
+                            float HealingAmount = Damage * ScriptFormula(15);
+                            User.Attributes[GameAttribute.Hitpoints_Granted] += HealingAmount;
+                            User.Attributes.BroadcastChangedIfRevealed();
                         }
                     }
                 };
@@ -1455,6 +1510,9 @@ namespace Mooege.Core.GS.Powers.Implementations
         [ImplementsPowerBuff(2)]
         class BleedEffect : PowerBuff
         {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
             public override void Init()
             {
                 Timeout = WaitSeconds(ScriptFormula(6));
@@ -1463,20 +1521,22 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (base.Update())
                     return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
 
-                AttackPayload bleed = new AttackPayload(this);
-                //Script for damage may be off. please check.
-                bleed.AddWeaponDamage(ScriptFormula(4), DamageType.Physical);
-                bleed.Apply();
+                    AttackPayload bleed = new AttackPayload(this);
+                    bleed.AddWeaponDamage(ScriptFormula(4), DamageType.Physical);
+                    bleed.Apply();
+                }
                 return false;
             }
         }
     }
     #endregion
 
-    //TODO: make ArmorBuff, Rune_C,E
-    //TODO: auras need to Update every 1-2 seconds..
-    //TODO: Someone cancel Iceblade effect, which is Rune_C
+    //TODO: Kinda messy, once zombie attacks you, stackoverflowexception or something terminates diablo.
+    //TODO: your attacks have a chance to frost nova a target, OnHitPayload in buff?
     #region Icearmor
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.IceArmor)]
     public class IceArmor : Skill
@@ -1486,57 +1546,30 @@ namespace Mooege.Core.GS.Powers.Implementations
             StartDefaultCooldown();
             UsePrimaryResource(25f);
             AddBuff(User, new IceArmorBuff());
+            if (Rune_D > 0)
+            {
+                AddBuff(User, new BonusStackEffect());
+            }
             if (Rune_C > 0)
             {
-                User.PlayEffectGroup(87899);
-                AttackPayload chillingAura = new AttackPayload(this);
-                chillingAura.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
-                chillingAura.AddWeaponDamage(ScriptFormula(9), DamageType.Cold);
-                chillingAura.OnHit = (hit) =>
-                {
-                    AddBuff(hit.Target, new DebuffChilled(0.5f, WaitSeconds(ScriptFormula(23))));
-                };
-                chillingAura.Apply();
+                yield return WaitSeconds(1f);
+                AddBuff(User, new FrozenRingBuff());
             }
-            else
-            {
-                AttackPayload chillingAura = new AttackPayload(this);
-                chillingAura.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
-                chillingAura.AddWeaponDamage(ScriptFormula(0), DamageType.Cold);
-                chillingAura.OnHit = (hit) =>
-                {
-                    AddBuff(hit.Target, new DebuffChilled(0.5f, WaitSeconds(ScriptFormula(23))));
-                    if (Rune_E > 0)
-                    {
-                        //if(hit. melee attack
-                        if (Rand.NextDouble() < ScriptFormula(12))
-                        {
-                            hit.Target.PlayEffectGroup(19321);
-                            AttackPayload frostNova = new AttackPayload(this);
-                            frostNova.Targets = GetEnemiesInRadius(hit.Target.Position, ScriptFormula(6));
-                            frostNova.AddWeaponDamage(ScriptFormula(19) * ScriptFormula(13), DamageType.Cold);
-                            frostNova.OnHit = hitPayload =>
-                            {
-                                AddBuff(hitPayload.Target, new DebuffFrozen(WaitSeconds(ScriptFormula(16))));
-                            };
-                            frostNova.Apply();
-                        }
-                    }
-                };
-                chillingAura.Apply();
-            }
+            
             yield break;
         }
 
-        [ImplementsPowerBuff(1)]
+        //0 = IceArmor, 1 = Rune_C, 2 = buff_switch
+        [ImplementsPowerBuff(0)]
         class IceArmorBuff : PowerBuff
         {
+            const float _damageRate = 1.5f;
+            TickTimer _damageTimer = null;
+
             public override void Init()
             {
                 Timeout = WaitSeconds(ScriptFormula(3));
-                MaxStackCount = (int)ScriptFormula(11);
             }
-
             public override bool Apply()
             {
                 if (!base.Apply())
@@ -1546,7 +1579,75 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                 return true;
             }
+            public override void OnPayload(Payload payload)
+            {
+                if (payload.Target == Target && payload is HitPayload)
+                {
+                        WeaponDamage(payload.Context.Target, ScriptFormula(0), DamageType.Cold);
+                        AddBuff(payload.Context.Target, new DebuffChilled(0.5f, WaitSeconds(ScriptFormula(4))));
+                }
+                //"your attacks have a chance to frost nova"
+                /*if (payload.Target == User && payload is HitPayload)
+                {
+                    if (Rune_E > 0)
+                    {
+                        if (Rand.NextDouble() < ScriptFormula(12))
+                        {
+                            payload.Target.PlayEffectGroup(19321);
+                            AttackPayload frostNova = new AttackPayload(this);
+                            frostNova.Targets = GetEnemiesInRadius(payload.Target.Position, ScriptFormula(6));
+                            frostNova.AddWeaponDamage(ScriptFormula(19) * ScriptFormula(13), DamageType.Cold);
+                            frostNova.OnHit = hitPayload =>
+                            {
+                                AddBuff(hitPayload.Target, new DebuffFrozen(WaitSeconds(ScriptFormula(16))));
+                            };
+                            frostNova.Apply();
+                        }
+                    }
+                }*/
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
 
+                    if (Rune_B > 0)
+                    {
+                        AttackPayload chillingAura = new AttackPayload(this);
+                        chillingAura.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
+                        chillingAura.OnHit = (hit) =>
+                        {
+                            if(!AddBuff(hit.Target, new DebuffChilled(0.5f, WaitSeconds(ScriptFormula(23)))))
+                            AddBuff(hit.Target, new DebuffChilled(0.5f, WaitSeconds(ScriptFormula(23))));
+                        };
+                        chillingAura.Apply();
+                    }
+                }
+                return false;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+                User.Attributes[GameAttribute.Armor_Item_Percent] -= ScriptFormula(2);
+                User.Attributes.BroadcastChangedIfRevealed();
+                //User.PlayEffectGroup(19326);
+                //User.PlayEffectGroup(185652);
+
+            }
+        }
+        //Rune_D
+        [ImplementsPowerBuff(2)]
+        class BonusStackEffect : PowerBuff
+        {
+            public override void Init()
+            {
+                //TODO: this needs to reset to original set time each time hit.
+                Timeout = WaitSeconds(ScriptFormula(27));
+                MaxStackCount = (int)ScriptFormula(11);
+            }
             public override void OnPayload(Payload payload)
             {
                 if (payload.Target == Target && payload is HitPayload)
@@ -1555,54 +1656,15 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         _AddArmor();
                     }
-                    if (Rune_A > 0)
-                    {
-                        WeaponDamage(payload.Context.Target, ScriptFormula(0), DamageType.Cold);
-                        AddBuff(payload.Context.Target, new DebuffChilled(0.5f, WaitSeconds(ScriptFormula(4))));
-                    }
                 }
             }
             public override bool Stack(Buff buff)
             {
                 bool stacked = StackCount < MaxStackCount;
-
                 base.Stack(buff);
 
                 if (stacked)
                     _AddArmor();
-
-                return true;
-            }
-
-            public override void Remove()
-            {
-                base.Remove();
-                User.Attributes[GameAttribute.Armor_Item_Percent] -= ScriptFormula(2);
-                User.Attributes.BroadcastChangedIfRevealed();
-                User.PlayEffectGroup(19326);
-                User.PlayEffectGroup(185652);
-
-            }
-
-            private void _AddArmor()
-            {
-                AddBuff(User, new BonusStackEffect());
-            }
-        }
-        [ImplementsPowerBuff(0)]
-        class BonusStackEffect : PowerBuff
-        {
-            public override void Init()
-            {
-                Timeout = WaitSeconds(ScriptFormula(27));
-            }
-            public override bool Apply()
-            {
-                if (!base.Apply())
-                    return false;
-                User.Attributes[GameAttribute.Armor_Item_Percent] += ScriptFormula(26);
-                User.Attributes.BroadcastChangedIfRevealed();
-
                 return true;
             }
             public override void Remove()
@@ -1610,11 +1672,44 @@ namespace Mooege.Core.GS.Powers.Implementations
                 base.Remove();
                 User.Attributes[GameAttribute.Armor_Item_Percent] -= StackCount * ScriptFormula(26);
                 User.Attributes.BroadcastChangedIfRevealed();
+            }
+            private void _AddArmor()
+            {
+                User.Attributes[GameAttribute.Armor_Item_Percent] += ScriptFormula(26);
+                User.Attributes.BroadcastChangedIfRevealed();
+            }
+        }
+        //Rune_C
+        [ImplementsPowerBuff(1)]
+        class FrozenRingBuff : PowerBuff
+        {
+            const float _damageRate = 0.5f;
+            TickTimer _damageTimer = null;
 
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(8));
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                        AttackPayload chillingAura = new AttackPayload(this);
+                        chillingAura.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
+                        chillingAura.AddWeaponDamage(ScriptFormula(9), DamageType.Cold);
+                        chillingAura.Apply();
+                }
+                return false;
             }
         }
     }
     #endregion
+
+    //-----2nd check through stopping point-----//
 
     //Incomplete
     #region ShockPulse
