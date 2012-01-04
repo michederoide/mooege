@@ -1709,8 +1709,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //-----2nd check through stopping point-----//
-
     //Incomplete
     #region ShockPulse
     [ImplementsPowerSNO(Skills.Skills.Wizard.Signature.ShockPulse)]
@@ -1811,8 +1809,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: Rune_C and Rune_E
-    //TODO: shock range and melee attacks for weapon damage as lightning (not in update. make your own update in Main())
+    //TODO: Rune_E
     #region StormArmor
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.StormArmor)]
     public class StormArmor : Skill
@@ -1822,6 +1819,10 @@ namespace Mooege.Core.GS.Powers.Implementations
             StartDefaultCooldown();
             UsePrimaryResource(25f);
             AddBuff(User, new StormArmorBuff());
+            if (Rune_D > 0)
+            {
+                AddBuff(User, new GoldenBuff());
+            }
             yield break;
         }
 
@@ -1830,7 +1831,104 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             public override void Init()
             {
-                Timeout = WaitSeconds(120f);
+                Timeout = WaitSeconds(ScriptFormula(0));
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+
+            public override void OnPayload(Payload payload)
+            {
+                if (payload.Target == Target && payload is HitPayload)
+                {
+                    //projectile? ScriptFormula(3) is speed.
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.SetSingleTarget(Target);
+                    attack.AddWeaponDamage(ScriptFormula(1), DamageType.Lightning);
+                    attack.Apply();
+                    if (Rune_B > 0)
+                    {
+                        if (!AddBuff(User, new IndigoBuff()))
+                        {
+                            AddBuff(User, new IndigoBuff());
+                        }
+                        if (!AddBuff(User, new MovementBuff(ScriptFormula(14), WaitSeconds(ScriptFormula(20)))))
+                        {
+                            AddBuff(User, new MovementBuff(ScriptFormula(14), WaitSeconds(ScriptFormula(20))));
+                        }
+                    }
+                    if (Rune_C > 0)
+                    {
+                        if (!AddBuff(User, new TeslaBuff()))
+                        {
+                            AddBuff(User, new TeslaBuff());
+                        }
+                    }
+                }
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+            }
+        }
+        [ImplementsPowerBuff(1)]
+        class TeslaBuff : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(20));
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    AttackPayload attack = new AttackPayload(this);
+                    //there is no real radius description, just says nearby enemies.
+                    attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(19));
+                    attack.AddWeaponDamage(ScriptFormula(9), DamageType.Lightning);
+                    attack.Apply();
+                }
+                return false;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+            }
+        }
+        [ImplementsPowerBuff(2)]
+        class IndigoBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(23));
+            }
+        }
+        [ImplementsPowerBuff(3)]
+        class GoldenBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(0));
             }
 
             public override bool Apply()
@@ -1846,25 +1944,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                 return true;
             }
 
-            public override void OnPayload(Payload payload)
-            {
-                if (Rune_B > 0)
-                {
-                    if (payload.Target == Target && payload is HitPayload)
-                    {
-                        AddBuff(User, new IndigoBuff());
-                        AddBuff(User, new MovementBuff(ScriptFormula(14), WaitSeconds(ScriptFormula(20))));
-                    }
-                }
-                if (Rune_C > 0)
-                {
-                    if (payload.Target == Target && payload is HitPayload)
-                    {
-                        AddBuff(User, new TeslaBuff());
-                    }
-                }
-            }
-
             public override void Remove()
             {
                 if (Rune_D > 0)
@@ -1873,47 +1952,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                     User.Attributes.BroadcastChangedIfRevealed();
                 }
                 base.Remove();
-            }
-        }
-        [ImplementsPowerBuff(1)]
-        class TeslaBuff : PowerBuff
-        {
-            //Rune_C
-
-            //you have a chance to be enveloped with a lightning shield for 8 seconds 
-            //that shocks nearby enemies for 120% weapon damage as Lightning.
-
-            //TeslaStrike.acr 80600
-            //tslaBolt.rop 80602
-            public override void Init()
-            {
-                Timeout = WaitSeconds(8f);
-            }
-            public override bool Apply()
-            {
-                if (!base.Apply())
-                    return false;
-                return true;
-            }
-
-            public override bool Update()
-            {
-                if (base.Update())
-                    return true;
-                return false;
-            }
-
-            public override void Remove()
-            {
-                base.Remove();
-            }
-        }
-        [ImplementsPowerBuff(2)]
-        class IndigoBuff : PowerBuff
-        {
-            public override void Init()
-            {
-                Timeout = WaitSeconds(5f);
             }
         }
     }
@@ -2007,7 +2045,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: make sure things in Update() don't get created over and over again.
     //TODO:Rune_B: create an outer ring and only get that outer ring of targets.
     #region SlowTime
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.SlowTime)]
@@ -2032,6 +2069,10 @@ namespace Mooege.Core.GS.Powers.Implementations
         [ImplementsPowerBuff(0)]
         class SlowTimeBuff : PowerBuff
         {
+            const float _damageRate = 0.2f;
+            TickTimer _damageTimer = null;
+
+            
             public override void Init()
             {
                 Timeout = WaitSeconds(ScriptFormula(11));
@@ -2052,35 +2093,50 @@ namespace Mooege.Core.GS.Powers.Implementations
                 {
                     return true;
                 }
-                var targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
-                if (targets.Actors.Count > 0)
+                if (base.Update())
+                    return true;
+
+                if (_damageTimer == null || _damageTimer.TimedOut)
                 {
-                    foreach (Actor actor in targets.Actors)
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    var targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
+                    if (targets.Actors.Count > 0)
                     {
-                        AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(0))));
-                        if (Rune_A > 0)
+                        foreach (Actor actor in targets.Actors)
                         {
-                            AddBuff(actor, new AttackDamageBuff());
+                            if (!AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(0)))))
+                                AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(0))));
+
+                            if (Rune_A > 0)
+                            {
+                                if (!AddBuff(actor, new AttackDamageBuff()))
+                                AddBuff(actor, new AttackDamageBuff());
+                            }
                         }
                     }
-                }
-                if (Rune_E > 0)
-                {
-                    var friendlytargets = GetAlliesInRadius(User.Position, ScriptFormula(2));
-                    if (friendlytargets.Actors.Count > 0)
+                    if (Rune_E > 0)
                     {
-                        foreach (Actor actor in friendlytargets.Actors)
+                        var friendlytargets = GetAlliesInRadius(User.Position, ScriptFormula(2));
+                        if (friendlytargets.Actors.Count > 0)
                         {
-                            AddBuff(actor, new SpeedBuff(ScriptFormula(16), WaitSeconds(ScriptFormula(0))));
+                            foreach (Actor actor in friendlytargets.Actors)
+                            {
+                                if(!AddBuff(actor, new SpeedBuff(ScriptFormula(16), WaitSeconds(ScriptFormula(0)))))
+                                AddBuff(actor, new SpeedBuff(ScriptFormula(16), WaitSeconds(ScriptFormula(0))));
+                            }
                         }
                     }
-                }
-                if (Rune_B > 0)
-                {
-                    var OutOfRangeTargets = GetAlliesInRadius(User.Position, ScriptFormula(2) + 2f);
-                    foreach (Actor actor in OutOfRangeTargets.Actors)
+                    if (Rune_B > 0)
                     {
-                        AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(7))));
+                        //this is what it needs to be.
+                        //GetEnemiesInRadius(User.Position, ScriptFormula(2) + 2f) - GetEnemiesInRadius(User.Position, ScriptFormula(2));
+                        var OutOfRangeTargets = GetEnemiesInRadius(User.Position, ScriptFormula(2) + 2f);
+                        foreach (Actor actor in OutOfRangeTargets.Actors)
+                        {
+                            if(!AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(7)))))
+                            AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(7))));
+                        }
                     }
                 }
                 return false;
@@ -2156,6 +2212,8 @@ namespace Mooege.Core.GS.Powers.Implementations
                         float HPamount = User.Attributes[GameAttribute.Hitpoints_Max_Total];
                         float TargetHit = payload.Context.Target.Attributes[GameAttribute.Get_Hit_Current];
                         float NewDamage = Math.Min(TargetHit / HPamount, ScriptFormula(8) / HPamount);
+                        payload.Context.Target.Attributes[GameAttribute.Get_Hit_Current] = NewDamage;
+                        payload.Context.Target.Attributes.BroadcastChangedIfRevealed();
                     }
                     if (Rune_D > 0)
                     {
@@ -2210,7 +2268,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: Rune_A, E
+    //TODO: Rune_E, Rune_A: check if done correctly
     #region MagicWeapon
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.MagicWeapon)]
     public class MagicWeapon : Skill
@@ -2259,9 +2317,8 @@ namespace Mooege.Core.GS.Powers.Implementations
                         AttackPayload lastAttack = (AttackPayload)payload;
                         if (Rune_A > 0)
                         {
-                            //TODO:
-                            //ScriptFormula(3 & 4 & 5)
-                            //poison enemies for 3 seconds, dealing 70% of weapon damage
+                            //TODO: does this target the mob you attacked?
+                            AddBuff(Target, new PoisonTarget());
                         }
                         if (Rune_B > 0) //Note: this implementation presumes that all lightning arcs will start at the soruce target, and then go only to their respective targets.
                                         //If it turns out that it's instead a chain-lightning-like mechanic, just redesign so that after each iteration, ropeSource becomes curTarget.
@@ -2326,6 +2383,45 @@ namespace Mooege.Core.GS.Powers.Implementations
                 }
             }
         }
+        [ImplementsPowerBuff(0)]
+        class PoisonTarget : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(3));
+            }
+
+            public override bool Update()
+            {
+                if (base.Update())
+                {
+                    return true;
+                }
+                if (base.Update())
+                    return true;
+
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.SetSingleTarget(Target);
+                    attack.AddWeaponDamage(ScriptFormula(4), DamageType.Poison);
+                    attack.Apply();
+                }
+                return false;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+
+            }
+        }
     }
     #endregion
 
@@ -2340,6 +2436,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         * 
         * 
         */
+
         public override IEnumerable<TickTimer> Main()
         {
             //StartDefaultCooldown();
@@ -2379,7 +2476,6 @@ namespace Mooege.Core.GS.Powers.Implementations
         }
     }
     #endregion
-
 
     #region MirrorImage
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.MirrorImage)]
