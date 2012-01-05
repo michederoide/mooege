@@ -435,7 +435,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
-    //TODO: this is another homing missile style projectile.
+    //TODO: needs the actor position fixed, since the arrow jumps from position to positions when changing direction
     #region HungeringArrow
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredGenerators.HungeringArrow)]
     public class HungeringArrow : Skill
@@ -443,7 +443,50 @@ namespace Mooege.Core.GS.Powers.Implementations
         //BoneArrow
         public override IEnumerable<TickTimer> Main()
         {
+            var projectile = new Projectile(this, RuneSelect(129932, 154590, 154591, 154592, 154593, 154594), User.Position);
+            var target = GetEnemiesInRadius(TargetPosition, ScriptFormula(3)).GetClosestTo(TargetPosition);
+            if (target != null)
+            {
+                projectile.Launch(target.Position, ScriptFormula(7));
+                projectile.OnCollision = (hit) =>
+                {
+                    SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                    projectile.Destroy();
+                    WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
+                };
+            }
+            else
+            {
+                projectile.Launch(TargetPosition, ScriptFormula(7));
+                projectile.Position.Z += 5f;
+                projectile.OnCollision = (hit) =>
+                {
+                    SpawnEffect(129934, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f));
+                    projectile.Destroy();
+                    WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
+                };
 
+                for (int i = 0; i < 10; i++)
+                {
+                    var closetarget = GetEnemiesInRadius(projectile.Position, ScriptFormula(4)).GetClosestTo(projectile.Position);
+
+                    if (closetarget != null)
+                    {
+                        var projectileSeek = new Projectile(this, RuneSelect(129932, 154590, 154591, 154592, 154593, 154594), projectile.Position);
+                        projectile.Destroy();
+                        projectileSeek.Launch(closetarget.Position, ScriptFormula(7));
+                        projectileSeek.OnCollision = (hit) =>
+                        {
+                            SpawnEffect(129934, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f));
+                            projectileSeek.Destroy();
+                            WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
+                        };
+                        i = 10;
+                    }
+                    else
+                        yield return WaitSeconds(0.1f);
+                }
+            }
             yield break;
         }
     }
@@ -1525,6 +1568,10 @@ namespace Mooege.Core.GS.Powers.Implementations
     #endregion
 
     //TODO: Add Fan of knives and Vault -> Need Velocityx or ill do it later.
+    //spirit walk: 0xF2F224EA  (used on pet proxy)
+    //vault: 0x04E733FD 
+    //diamondskin: 0x061F7489
+    //smokescreen: 0x04E733FD
 
     //12 Passive Skills
 }

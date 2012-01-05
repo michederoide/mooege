@@ -1405,7 +1405,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             //AddBuff(ShamSpot, new AuraBuff());
             yield break;
         }
-        /*
+
         [ImplementsPowerBuff(0)]
         class AuraBuff : PowerBuff
         {
@@ -1427,26 +1427,17 @@ namespace Mooege.Core.GS.Powers.Implementations
                     _damageTimer = WaitSeconds(_damageRate);
                     //your character
 
-                    if (!AddBuff(User, new FetishShamanBuff()))
-                    {
                         AddBuff(User, new FetishShamanBuff());
-                    }
 
                     foreach (Actor Ally in GetAlliesInRadius(Target.Position, ScriptFormula(2)).Actors)
                     {
-                        if (!AddBuff(Ally, new FetishShamanBuff()))
-                        {
                             AddBuff(Ally, new FetishShamanBuff());
-                        }
                     }
                     if (Rune_D > 0)
                     {
                         foreach (Actor Ally in GetAlliesInRadius(Target.Position, ScriptFormula(2)).Actors)
                         {
-                            if (!AddBuff(Ally, new Golden_ManaBuff()))
-                            {
                                 AddBuff(Ally, new Golden_ManaBuff());
-                            }
                         }
                     }
                 }
@@ -1485,14 +1476,8 @@ namespace Mooege.Core.GS.Powers.Implementations
                     Target.Attributes[GameAttribute.Attack_Bonus_Percent] += ScriptFormula(3);
                     Target.Attributes.BroadcastChangedIfRevealed();
                 }
-                if (!AddBuff(Target, new SpeedBuff(ScriptFormula(1), WaitSeconds(ScriptFormula(9)))))
-                {
                     AddBuff(Target, new SpeedBuff(ScriptFormula(1), WaitSeconds(ScriptFormula(9))));
-                }
-                if (!AddBuff(Target, new MovementBuff(ScriptFormula(1), WaitSeconds(ScriptFormula(9)))))
-                {
                     AddBuff(Target, new MovementBuff(ScriptFormula(1), WaitSeconds(ScriptFormula(9))));
-                }
                 return true;
             }
             public override bool Update()
@@ -1558,7 +1543,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 base.Remove();
             }
-        }*/
+        }
     }
     #endregion
 
