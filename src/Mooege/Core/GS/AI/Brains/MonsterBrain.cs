@@ -49,7 +49,9 @@ namespace Mooege.Core.GS.AI.Brains
                 foreach (var monsterSkill in monsterData.SkillDeclarations)
                 {
                     if (monsterSkill.SNOPower > 0)
+                    {
                         this.PresetPowers.Add(monsterSkill.SNOPower);
+                    }
                 }
             }
         }
@@ -103,6 +105,11 @@ namespace Mooege.Core.GS.AI.Brains
 
             // no usable power
             return -1;
+        }
+
+        public void AddPresetPower(int powerSNO)
+        {
+            this.PresetPowers.Add(powerSNO);
         }
     }
 }

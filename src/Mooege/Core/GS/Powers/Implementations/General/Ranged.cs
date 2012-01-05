@@ -26,7 +26,7 @@ using Mooege.Core.GS.Actors;
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
-    [ImplementsPowerSNO(30334)]  // Monster_Ranged_Projectile.pow
+    /*[ImplementsPowerSNO(30334)]  // Monster_Ranged_Projectile.pow
     public class MonsterRangedProjectile : ActionTimedSkill
     {
         public override IEnumerable<TickTimer> Main()
@@ -41,11 +41,15 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             yield break;
         }
-    }
+    }*/
 
-    [ImplementsPowerSNO(30503)]  // SkeletonSummoner_Projectile.pow
+    /*[ImplementsPowerSNO(30503)]  // SkeletonSummoner_Projectile.pow
     public class SkeletonSummonerProjectile : ActionTimedSkill
     {
+        public SkeletonSummonerProjectile()
+        {
+            System.Console.Out.WriteLine("LOL");
+        }
         public override IEnumerable<TickTimer> Main()
         {
             var proj = new Projectile(this, 5392, User.Position);
@@ -60,5 +64,5 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             yield break;
         }
-    }
+    }*/
 }
