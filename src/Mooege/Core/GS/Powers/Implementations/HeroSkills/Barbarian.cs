@@ -33,34 +33,106 @@ using Mooege.Net.GS.Message.Definitions.Actor;
 namespace Mooege.Core.GS.Powers.Implementations
 {
 
-    //TODO: need to run up to monster, you try to attack from far away while zombies have a bigger range than you..
-    //TODO: Runes
+    //Complete, Rune_E is a capsule radius/dist, I use beam direction.
     #region Bash
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.Bash)]
     public class BarbarianBash : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
-            AttackPayload attack = new AttackPayload(this);
-            attack.Targets = GetBestMeleeEnemy();
-            attack.AddWeaponDamage(1.45f, DamageType.Physical);
-            attack.OnHit = hitPayload =>
+            var ShockWavePos = PowerMath.TranslateDirection2D(User.Position, TargetPosition,
+                                                             User.Position,
+                                                             ScriptFormula(23));
+            var maxHits = ScriptFormula(1);
+            for (int i = 0; i < maxHits; ++i)
             {
-                GeneratePrimaryResource(6f);
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetBestMeleeEnemy();
 
-                if (Rand.NextDouble() < 0.20)
-                    Knockback(hitPayload.Target, ScriptFormula(5), ScriptFormula(6), ScriptFormula(7));
-            };
+                if (i == 0)
+                { attack.AddWeaponDamage(ScriptFormula(3), DamageType.Physical); }
+                else 
+                { attack.AddWeaponDamage(ScriptFormula(12), DamageType.Physical); }
 
-            attack.Apply();
+                attack.OnHit = hitPayload =>
+                {
+                    if (Rune_D > 0)
+                    {
+                        GeneratePrimaryResource(ScriptFormula(10));
+                    }
+                    if (Rune_B > 0)
+                    {
+                        AddBuff(User, new AddDamageBuff());
+                    }
 
+                    if (Rune_A > 0)
+                    {
+                    }
+                    else if (Rune_C > 0)
+                    {
+                        if (Rand.NextDouble() < ScriptFormula(14))
+                            AddBuff(hitPayload.Target, new DebuffStunned(WaitSeconds(ScriptFormula(15))));
+                    }
+                    else
+                    {
+                    if (Rand.NextDouble() < ScriptFormula(0))
+                        Knockback(hitPayload.Target, ScriptFormula(5), ScriptFormula(6), ScriptFormula(7));
+                    }
+                };
+                attack.Apply();
+                yield return WaitSeconds(ScriptFormula(13));
+            }
+            //Shockwave -> capsule distance, at the moment using beamdirection
+            if (Rune_E > 0)
+            {
+                User.PlayEffectGroup(93867);
+                yield return WaitSeconds(0.5f);
+                WeaponDamage(GetEnemiesInBeamDirection(ShockWavePos, TargetPosition, 30f, 8f), ScriptFormula(18), DamageType.Physical);
+            }
             yield break;
         }
-
-        public override float GetContactDelay()
+        [ImplementsPowerBuff(0)]
+        public class AddDamageBuff : PowerBuff
         {
-            // seems to need this custom speed for all attacks
-            return ScriptFormula(13);
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(11));
+                MaxStackCount = (int)ScriptFormula(4);
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                        _AddDamage();
+                return true;
+            }
+
+            public override bool Stack(Buff buff)
+            {
+                bool stacked = StackCount < MaxStackCount;
+
+                base.Stack(buff);
+
+                if (stacked)
+                    _AddDamage();
+
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                User.Attributes[GameAttribute.Damage_Bonus_Min] -= StackCount * ScriptFormula(2);
+                User.Attributes.BroadcastChangedIfRevealed();
+
+            }
+
+            private void _AddDamage()
+            {
+                User.Attributes[GameAttribute.Damage_Bonus_Min] += ScriptFormula(2);
+                User.Attributes.BroadcastChangedIfRevealed();
+            }
         }
     }
 #endregion
@@ -194,7 +266,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
-    //TODO: Runes
+    //TODO: Runes_C,D,E
     #region WhirlWind
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FurySpenders.Whirlwind)]
     public class BarbarianWhirlwind : Skill
@@ -213,7 +285,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             public override void Init()
             {
-                Timeout = WaitSeconds(0.20f);
+                Timeout = WaitSeconds(ScriptFormula(0));
             }
 
             public override bool Update()
@@ -258,6 +330,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
+    //TODO:sometimes receives exception of CheckCollisions().
+    //TODO: Rune_A,B(maybe just infront?, not full circle), C, E
     #region AncientSpear
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.AncientSpear)]
     public class BarbarianAncientSpear : Skill
@@ -265,35 +339,77 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Main()
         {
             //StartCooldown(WaitSeconds(10f));
-
-            var projectile = new Projectile(this, 74636, User.Position);
-            projectile.Timeout = WaitSeconds(0.5f);
-            projectile.OnCollision = (hit) =>
+            if (Rune_B > 0)
             {
-                GeneratePrimaryResource(15f);
-                
-                _setupReturnProjectile(hit.Position);
+                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(9), (int)ScriptFormula(11));
 
-                AttackPayload attack = new AttackPayload(this);
-                attack.SetSingleTarget(hit);
-                attack.AddWeaponDamage(1.00f, DamageType.Physical);
-                attack.OnHit = (hitPayload) =>
+                for (int i = 0; i < projDestinations.Length; i++)
                 {
-                    // GET OVER HERE
-                    Knockback(hitPayload.Target, -25f, 1f, -0.03f);
-                };
-                attack.Apply();
+                    var proj = new Projectile(this, 74636, User.Position);
+                    proj.Timeout = WaitSeconds(0.5f);
+                    proj.OnCollision = (hit) =>
+                    {
+                        GeneratePrimaryResource(15f);
 
-                projectile.Destroy();
-            };
-            projectile.OnTimeout = () =>
+                        _setupReturnProjectile(hit.Position);
+
+                        AttackPayload attack = new AttackPayload(this);
+                        attack.SetSingleTarget(hit);
+                        attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                        attack.OnHit = (hitPayload) =>
+                        {
+                            hitPayload.Target.PlayEffectGroup(79420);
+                            Knockback(hitPayload.Target, -25f, ScriptFormula(3), ScriptFormula(4));
+                        };
+                        attack.Apply();
+
+                        proj.Destroy();
+                    };
+                    proj.OnTimeout = () =>
+                    {
+                        _setupReturnProjectile(proj.Position);
+                    };
+
+                    proj.Launch(projDestinations[i], ScriptFormula(8));
+                    User.AddRopeEffect(79402, proj);
+                }
+            }
+            else if (Rune_A > 0)
             {
-                _setupReturnProjectile(projectile.Position);
-            };
+                //Straight line but brings all the zombies in that line back to you.
+            }
+            else
+            {
+                var projectile = new Projectile(this, 74636, User.Position);
+                projectile.Timeout = WaitSeconds(0.5f);
+                projectile.OnCollision = (hit) =>
+                {
+                    GeneratePrimaryResource(ScriptFormula(12) + ScriptFormula(13));
 
-            projectile.Launch(TargetPosition, 1.9f);
-            User.AddRopeEffect(79402, projectile);
+                    _setupReturnProjectile(hit.Position);
 
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.SetSingleTarget(hit);
+                    attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                    attack.OnHit = (hitPayload) =>
+                    {
+                        // GET OVER HERE
+                        //unknown on magnitude/knockback offset?
+                        hitPayload.Target.PlayEffectGroup(79420);
+                        Knockback(hitPayload.Target, -25f, ScriptFormula(3), ScriptFormula(4));
+                    };
+                    attack.Apply();
+
+                    projectile.Destroy();
+                };
+                projectile.OnTimeout = () =>
+                {
+                    _setupReturnProjectile(projectile.Position);
+                };
+
+                projectile.Launch(TargetPosition, ScriptFormula(8));
+                User.AddRopeEffect(79402, projectile);
+            }
             yield break;
         }
 
@@ -310,7 +426,6 @@ namespace Mooege.Core.GS.Powers.Implementations
 #endregion
 
     //TODO: A,C
-    //Receive CallBack Exception..
     #region ThreateningShout
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FurySpenders.ThreateningShout)]
     public class ThreateningShout : Skill
@@ -320,49 +435,92 @@ namespace Mooege.Core.GS.Powers.Implementations
             UsePrimaryResource(20f);
             //User.PlayEffectGroup(RuneSelect(18705, 99810, 216339, 99798, 201534, 99821));
             //User.PlayEffectGroup(202891); //Yell Sound
-            AttackPayload attack = new AttackPayload(this);
-            attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(9));
-            attack.OnHit = (hit) =>
+            foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(9)).Actors)
             {
-                AddBuff(hit.Target, new ShoutReduceDamage(WaitSeconds(ScriptFormula(2))));
+                AddBuff(enemy, new ShoutDeBuff());
+                if (Rune_D > 0)
+                {
+                    AddBuff(enemy, new ShoutAttackDeBuff());
+                }
                 if (Rune_A > 0)
                 {
                     //Script(8) -> taunt duration
                     //taunted to attack you... guess more for multiple player...
                 }
-                if (Rune_B > 0)
-                {
-                    AddBuff(hit.Target, new MovementDeBuff(ScriptFormula(14), WaitSeconds(ScriptFormula(2))));
-                }
-
                 if (Rune_C > 0)
                 {
                     if (Rand.NextDouble() < ScriptFormula(7))
                     {
-                        attack.OnDeath = (dead) =>
+                        /*attack.OnDeath = (dead) =>
                             {
                                 //dead.Target
                                 //Drop another random loot :)
-                            };
+                            };*/
                     }
-                }
-                if (Rune_D > 0)
-                {
-                    AddBuff(hit.Target, new AttackSpeedDeBuff(ScriptFormula(4), WaitSeconds(ScriptFormula(17))));
                 }
                 if (Rune_E > 0)
                 {
                     //Script(10) -> Fear Death Effect Duration? what is this for..
                     if (Rand.NextDouble() < ScriptFormula(3))
                     {
-                        AddBuff(hit.Target, new DebuffFeared(WaitSeconds(Rand.Next((int)ScriptFormula(5), (int)ScriptFormula(5) + (int)ScriptFormula(6)))));
+                        AddBuff(enemy, new DebuffFeared(WaitSeconds(Rand.Next((int)ScriptFormula(5), (int)ScriptFormula(5) + (int)ScriptFormula(6)))));
                     }
                 }
-
-            };
-            attack.Apply();
+            }
 
             yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        public class ShoutDeBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(2));
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                Target.Attributes[GameAttribute.Damage_Done_Reduction_Percent] += ScriptFormula(0);
+                if (Rune_B > 0)
+                {
+                    Target.Attributes[GameAttribute.Movement_Scalar_Reduction_Percent] += ScriptFormula(14);
+                }
+                Target.Attributes.BroadcastChangedIfRevealed();
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Damage_Done_Reduction_Percent] -= ScriptFormula(0);
+                if (Rune_B > 0)
+                {
+                    Target.Attributes[GameAttribute.Movement_Scalar_Reduction_Percent] -= ScriptFormula(14);
+                }
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
+        }
+        [ImplementsPowerBuff(4)]
+        public class ShoutAttackDeBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                    Timeout = WaitSeconds(ScriptFormula(17));
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                    Target.Attributes[GameAttribute.Attacks_Per_Second_Percent] += ScriptFormula(4);
+                Target.Attributes.BroadcastChangedIfRevealed();
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Attacks_Per_Second_Percent] -= ScriptFormula(4);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
         }
 
     }
@@ -405,7 +563,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     }
                     if (Rune_C > 0)
                     {
-                        AddBuff(hitPayload.Target, new MovementDeBuff(ScriptFormula(8), WaitSeconds(ScriptFormula(10))));
+                        AddBuff(hitPayload.Target, new DebuffSlowed(ScriptFormula(8), WaitSeconds(ScriptFormula(10))));
                     }
                 };
                 attack.OnDeath = DeathPayload =>
@@ -448,6 +606,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 #endregion
 
     //TODO: A,B,C
+    //Receive CallBack Exception when Used...
     #region BattleRage
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FurySpenders.BattleRage)]
     public class BattleRage : Skill
@@ -457,6 +616,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             //UsePrimaryResource(5f);
 
             AddBuff(User, new BattleRageEffect());
+
             yield break;
         }
 
@@ -481,50 +641,34 @@ namespace Mooege.Core.GS.Powers.Implementations
                 return true;
             }
 
-            public override bool Update()
-            {
-                if (base.Update())
-                    return true;
-
-                return false;
-            }
-
             public override void OnPayload(Payload payload)
             {
-                if (User != null && payload.Target != null
-                    && payload.Context.Target != null
-                    && payload.Context.User != null)
+            if (payload is HitPayload && Target.Equals(payload.Context.User))
                 {
-                    if (payload is AttackPayload && !payload.Context.Target.Equals(User)
-                        && payload.Context.User.Equals(User) && (payload.Context.PowerSNO.CompareTo(0x00007780) == 0))
+                //if (payload.IsCriticalHit)
                     {
-                        AttackPayload lastAttack = (AttackPayload)payload;
-
-                        //if (payload.IsCriticalHit)
+                        if (Rune_B > 0)
                         {
-                            if (Rune_B > 0)
+                            if (Rand.NextDouble() < ScriptFormula(5))
                             {
-                                if (Rand.NextDouble() < ScriptFormula(5))
-                                {
-                                    //ScriptFormula(4) -> extends duration 
-                                }
+                                //ScriptFormula(4) -> extends duration 
                             }
-                            if (Rune_C > 0)
+                        }
+                        if (Rune_C > 0)
+                        {
+                            if (Rand.NextDouble() < ScriptFormula(6))
                             {
-                                if (Rand.NextDouble() < ScriptFormula(6))
-                                {
-                                    //drop additional health globes.
-                                }
+                                //drop additional health globes.
                             }
-                            if (Rune_D > 0)
-                            {
-                                GeneratePrimaryResource(ScriptFormula(3));
-                            }
-                            if (Rune_E > 0)
-                            {
-                                User.PlayEffectGroup(210321);
-                                WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(9)), ScriptFormula(10), DamageType.Physical);
-                            }
+                        }
+                        if (Rune_D > 0)
+                        {
+                            GeneratePrimaryResource(ScriptFormula(3));
+                        }
+                        if (Rune_E > 0)
+                        {
+                            User.PlayEffectGroup(210321);
+                            WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(9)), ScriptFormula(10), DamageType.Physical);
                         }
                     }
                 }
@@ -544,25 +688,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //TODO: fix this... it plays both animations at once, play 159481 first, then 159449.
-            //Switch between these two effects.
-            int AnimSwitch = 0; 
-            if (AnimSwitch == 1)
-            {
-                User.PlayEffectGroup(159449);
-                //User.PlayEffectGroup(RuneSelect(18671, 159452, 159457, 159458, 159459, 159460));
-                AnimSwitch = 0;
-            }
-            else
-            {
-                User.PlayEffectGroup(159481);
-                //User.PlayEffectGroup(RuneSelect(18672, 159480, 159479, 159478, 159477, 159476));
-                AnimSwitch = 1;
-            }
-            
-
             //Primary Target
-            WeaponDamage(Target, ScriptFormula(16), DamageType.Physical);
+            //WeaponDamage(Target, ScriptFormula(16), DamageType.Physical);
+            WeaponDamage(GetBestMeleeEnemy(), ScriptFormula(16), DamageType.Physical);
             //Secondary Targets
             AttackPayload attack = new AttackPayload(this);
             //SF(27) is 120 degrees, SF(26) is range.
@@ -572,23 +700,14 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (Rune_B > 0)
                 {
-                    //why is there knockback magnitude delta, drawn in radius, knockback magnitude, inner exclude radius
-                    //gathering storm tooltip says reduces speed. but gathering storm formulas show that it brings targets closer to you.
-
-                    AttackPayload ClosePull = new AttackPayload(this);
-                    ClosePull.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(14));
-                    attack.OnHit = ClosePuller =>
-                                            {
-                                                Knockback(ClosePuller.Target, ScriptFormula(13));
-                                            };
-                    ClosePull.Apply();
-                    AttackPayload FarPull = new AttackPayload(this);
-                    FarPull.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(21));
-                    attack.OnHit = FarPuller =>
-                                            {
-                                                Knockback(FarPuller.Target, ScriptFormula(20));
-                                            };
-                    FarPull.Apply();
+                    foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(14)).Actors)
+                    {
+                        Knockback(enemy, ScriptFormula(13));
+                    } 
+                    foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(21)).Actors)
+                    {
+                        Knockback(enemy, ScriptFormula(20));
+                    }
                 }
                 if (Rune_C > 0)
                 {
@@ -618,6 +737,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 }
                 if (Rune_E > 0)
                 {
+                    //this doesnt work either.
                     attack.OnDeath = DeathPayload =>
                         {
                             if (Rand.NextDouble() < ScriptFormula(12))
@@ -922,7 +1042,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
-    //Figure out Bleed Damaging when you don't have a .acr UpdateDelay.. (inside buff)
     //TODO: Rune_D SF(8)
     //max fury chance to stack SF(9) and striking max stacks SF(10)
     #region Rend
@@ -931,7 +1050,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            User.PlayEffectGroup(RuneSelect(70614, 161594, 100842, 161655, 161652, 161605));
 
             AttackPayload attack = new AttackPayload(this);
             attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(4));
@@ -939,15 +1057,16 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 AddBuff(hitPayload.Target, new RendDebuff());
             };
+            //this work? if it dies with rend debuff, infect others.
             attack.OnDeath = DeathPayload =>
                 {
                     if (AddBuff(Target, new RendDebuff()))
                     {
                         AttackPayload BleedAgain = new AttackPayload(this);
                         BleedAgain.Targets = GetEnemiesInRadius(Target.Position, ScriptFormula(19));
-                        BleedAgain.OnHit = hitPayload =>
+                        BleedAgain.OnHit = hitPayload2 =>
                         {
-                            AddBuff(hitPayload.Target, new RendDebuff());
+                            AddBuff(hitPayload2.Target, new RendDebuff());
                         };
                         BleedAgain.Apply();
                     }
@@ -958,6 +1077,9 @@ namespace Mooege.Core.GS.Powers.Implementations
         [ImplementsPowerBuff(0)]
         public class RendDebuff : PowerBuff
         {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
             public override void Init()
             {
                 Timeout = WaitSeconds(ScriptFormula(5));
@@ -967,50 +1089,31 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (!base.Apply())
                     return false;
-
-                //Add this to Remove() of RendSeconds to make it 
-                //do the bleed damage once every second for SF(5) seconds.
-
-                for (int i = 0; i < ScriptFormula(5); ++i)
-                {
-                    new RendSeconds();
-                }
-
                 return true;
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+                    if (Rune_E > 0)
+                    {
+                        WeaponDamage(Target, ScriptFormula(7), DamageType.Physical);
+                    }
+                    else
+                        WeaponDamage(Target, ScriptFormula(20), DamageType.Physical);
+                }
+                return false;
             }
 
             public override void Remove()
             {
                 base.Remove();
-            }
-        }
-        [ImplementsPowerBuff(0)]
-        public class RendSeconds : PowerBuff
-        {
-            public override void Init()
-            {
-                Timeout = WaitSeconds(1f);
-            }
+                User.Attributes[GameAttribute.Damage_Bonus_Min] -= StackCount * ScriptFormula(2);
+                User.Attributes.BroadcastChangedIfRevealed();
 
-            public override bool Apply()
-            {
-                if (!base.Apply())
-                    return false;
-                float Damage;
-                if (Rune_E > 0)
-                {
-                    Damage = ScriptFormula(7);
-                }
-                else
-                    Damage = ScriptFormula(20);
-
-                WeaponDamage(Target, Damage, DamageType.Physical);
-                return true;
-            }
-
-            public override void Remove()
-            {
-                base.Remove();
             }
         }
     }
@@ -1031,10 +1134,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 AddBuff(User, new FrenzyBuff());
                 if (Rune_C > 0)
                 {
-                    if (!AddBuff(User, new ObsidianSpeedEffect()))
-                    {
                         AddBuff(User, new ObsidianSpeedEffect());
-                    }
                 }
                 if (Rune_B > 0)
                 {
@@ -1171,9 +1271,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
-    //Complete, just need to see which of the 4 powerpuffs use buff icons correctly.
-    //It actually seems that anything that gives ally's puffs, assigns the buff 
-    //as 0-You, 2-second person, 3-third, 4-last player.
+
+    //why do you give an exception?
     #region WarCry
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.WarCry)]
     public class WarCry : Skill
@@ -1184,9 +1283,12 @@ namespace Mooege.Core.GS.Powers.Implementations
             StartDefaultCooldown();
 
             AddBuff(User, new RevengeBuff());
+
             foreach (Actor ally in GetAlliesInRadius(User.Position, ScriptFormula(11)).Actors)
+            {
                 AddBuff(User, new RevengeAllyBuff());
-            yield break;
+            }
+            yield return WaitSeconds(0.5f);
         }
     }
     //4 different powerbuffs, figure out which one is which.
@@ -1293,7 +1395,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
-    //Incomplete.. Dashing Strike, turned into furious charge (Lots of work :D)
+    //still terrible. needs to be redone.
     #region FuriousCharge
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.FuriousCharge)]
     public class FuriousCharge : Skill
@@ -1303,15 +1405,9 @@ namespace Mooege.Core.GS.Powers.Implementations
             Target = GetEnemiesInRadius(TargetPosition, 12f).GetClosestTo(TargetPosition);
 
             if (Target != null)
-            {
-                // put dash destination just beyond target
-                TargetPosition = PowerMath.TranslateDirection2D(User.Position, Target.Position, Target.Position, 5f);
-            }
+            { TargetPosition = PowerMath.TranslateDirection2D(User.Position, Target.Position, Target.Position, 5f); }
             else
-            {
-                // if no target, always dash fixed amount
-                TargetPosition = PowerMath.TranslateDirection2D(User.Position, TargetPosition, TargetPosition, 0f);
-            }
+            { TargetPosition = PowerMath.TranslateDirection2D(User.Position, TargetPosition, TargetPosition, 0f); }
 
             var dashBuff = new DashMoverBuff(TargetPosition);
             AddBuff(User, dashBuff);
@@ -1321,13 +1417,22 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 User.TranslateFacing(Target.Position, true);
                 yield return WaitSeconds(0.1f);
-                User.PlayEffectGroup(166194);
+                User.PlayEffectGroup(166193);
+                foreach (Actor enemy in GetEnemiesInArcDirection(User.Position, Target.Position, ScriptFormula(13), 8f).Actors)
+                {
+                    WeaponDamage(enemy, ScriptFormula(14), DamageType.Physical);
+                    Knockback(enemy, ScriptFormula(10));
+                }
             }
+            yield break;
         }
 
         [ImplementsPowerBuff(0)]
         class DashMoverBuff : PowerBuff
         {
+            const float _damageRate = 0.05f;
+            TickTimer _damageTimer = null;
+
             private Vector3D _destination;
             private ActorMover _mover;
 
@@ -1341,15 +1446,14 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
 
-                // dash speed seems to always be actor speed * 10
-                float speed = User.Attributes[GameAttribute.Running_Rate_Total] * 5f;
+                float speed = User.Attributes[GameAttribute.Running_Rate_Total] * 10f;
 
                 User.TranslateFacing(_destination, true);
                 _mover = new ActorMover(User);
                 _mover.Move(_destination, speed, new NotifyActorMovementMessage
                 {
                     TurnImmediately = true,
-                    AnimationTag = 69808, // dashing strike attack animation
+                    AnimationTag = 69808,
                 });
 
                 // make sure buff timeout is big enough otherwise the client will sometimes ignore the visual effects.
@@ -1364,18 +1468,52 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 base.Remove();
                 User.Attributes.BroadcastChangedIfRevealed();
-                User.PlayEffectGroup(166193);
-                WeaponDamage(GetEnemiesInRadius(User.Position, 15f), ScriptFormula(14), DamageType.Physical);
-                Knockback(Target, ScriptFormula(5));
 
             }
 
             public override bool Update()
             {
                 _mover.Update();
-                WeaponDamage(GetEnemiesInRadius(User.Position, 5f), ScriptFormula(16), DamageType.Physical);
-                Knockback(Target, ScriptFormula(2));
-                return base.Update();
+
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.AddWeaponDamage(ScriptFormula(16), DamageType.Physical);
+                    attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(6));
+                    attack.OnHit = hit =>
+                        {
+                        Knockback(hit.Target, ScriptFormula(2));
+                        if (Rune_B > 0)
+                        {
+                            User.Attributes[GameAttribute.Hitpoints_Granted] += ScriptFormula(21);
+                            User.Attributes.BroadcastChangedIfRevealed();
+                        } 
+                        if (Rune_D > 0)
+                        {
+                            GeneratePrimaryResource(ScriptFormula(11));
+                        }
+                        if (Rune_C > 0)
+                        {
+                            if (hit.IsCriticalHit)
+                            {
+                                AddBuff(hit.Target, new DebuffStunned(WaitSeconds(ScriptFormula(8))));
+                            }
+                        }
+                        if (Rune_E > 0)
+                        {
+                            int resourceHit = 0;
+                            while (resourceHit < ScriptFormula(10))
+                            {
+                                //maybe this cannot go here?
+                            }
+                        }
+                        };
+                    attack.Apply();
+                }
+                return false;
             }
         }
     }
@@ -1499,13 +1637,13 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             StartDefaultCooldown();
             UsePrimaryResource(ScriptFormula(15));
-
+            yield return WaitSeconds(0.5f);
             var proj1 = new Projectile(this, 164708, User.Position);
             proj1.Launch(TargetPosition, 1f);
             foreach (Actor target in GetEnemiesInArcDirection(User.Position, TargetPosition, 45f, ScriptFormula(14)).Actors)
             {
                 WeaponDamage(target, ScriptFormula(8), DamageType.Physical);
-                //Knockback(User.Position, target, ScriptFormula(0), ScriptFormula(1));
+                Knockback(target, ScriptFormula(0), ScriptFormula(1));
 
                 if (Rune_C > 0)
                 {

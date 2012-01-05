@@ -1535,7 +1535,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: Kinda messy, once zombie attacks you, stackoverflowexception or something terminates diablo.
     //TODO: your attacks have a chance to frost nova a target, OnHitPayload in buff?
     #region Icearmor
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.IceArmor)]
@@ -1583,8 +1582,8 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (payload.Target == Target && payload is HitPayload)
                 {
-                        WeaponDamage(payload.Context.Target, ScriptFormula(0), DamageType.Cold);
-                        AddBuff(payload.Context.Target, new DebuffChilled(0.5f, WaitSeconds(ScriptFormula(4))));
+                        WeaponDamage(payload.Context.User, ScriptFormula(0), DamageType.Cold);
+                        AddBuff(payload.Context.User, new DebuffChilled(0.5f, WaitSeconds(ScriptFormula(4))));
                 }
                 //"your attacks have a chance to frost nova"
                 /*if (payload.Target == User && payload is HitPayload)
@@ -1620,7 +1619,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                         chillingAura.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
                         chillingAura.OnHit = (hit) =>
                         {
-                            if(!AddBuff(hit.Target, new DebuffChilled(0.5f, WaitSeconds(ScriptFormula(23)))))
                             AddBuff(hit.Target, new DebuffChilled(0.5f, WaitSeconds(ScriptFormula(23))));
                         };
                         chillingAura.Apply();
@@ -1847,26 +1845,17 @@ namespace Mooege.Core.GS.Powers.Implementations
                 {
                     //projectile? ScriptFormula(3) is speed.
                     AttackPayload attack = new AttackPayload(this);
-                    attack.SetSingleTarget(Target);
+                    attack.SetSingleTarget(payload.Context.User);
                     attack.AddWeaponDamage(ScriptFormula(1), DamageType.Lightning);
                     attack.Apply();
                     if (Rune_B > 0)
                     {
-                        if (!AddBuff(User, new IndigoBuff()))
-                        {
-                            AddBuff(User, new IndigoBuff());
-                        }
-                        if (!AddBuff(User, new MovementBuff(ScriptFormula(14), WaitSeconds(ScriptFormula(20)))))
-                        {
-                            AddBuff(User, new MovementBuff(ScriptFormula(14), WaitSeconds(ScriptFormula(20))));
-                        }
+                        AddBuff(User, new IndigoBuff());
+                        AddBuff(User, new MovementBuff(ScriptFormula(14), WaitSeconds(ScriptFormula(20))));
                     }
                     if (Rune_C > 0)
                     {
-                        if (!AddBuff(User, new TeslaBuff()))
-                        {
-                            AddBuff(User, new TeslaBuff());
-                        }
+                        AddBuff(User, new TeslaBuff());
                     }
                 }
             }
