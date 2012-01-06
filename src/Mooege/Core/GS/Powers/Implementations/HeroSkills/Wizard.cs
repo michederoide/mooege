@@ -29,9 +29,8 @@ using Mooege.Core.GS.Common.Types.TagMap;
 using Mooege.Net.GS.Message;
 using Mooege.Core.GS.Players;
 
-//TODO (IMPORTANT): GO BACK through and any WaitSeconds/GameAttributes must be in Buff Apply() and Remove()
 //TODO: ADD TO buffs. Targets in Radius receiving debuff.
-//TODO any projectile that pierces through enemies needs to be inside an updater, so it doesnt constantly attack.
+//TODO any projectile that pierces through enemies, somehow needs to stop doing rapid damage. (somewhere around 2/3 hits per mob)
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
@@ -2094,12 +2093,10 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         foreach (Actor actor in targets.Actors)
                         {
-                            if (!AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(0)))))
                                 AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(0))));
 
                             if (Rune_A > 0)
                             {
-                                if (!AddBuff(actor, new AttackDamageBuff()))
                                 AddBuff(actor, new AttackDamageBuff());
                             }
                         }
@@ -2111,7 +2108,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                         {
                             foreach (Actor actor in friendlytargets.Actors)
                             {
-                                if(!AddBuff(actor, new SpeedBuff(ScriptFormula(16), WaitSeconds(ScriptFormula(0)))))
                                 AddBuff(actor, new SpeedBuff(ScriptFormula(16), WaitSeconds(ScriptFormula(0))));
                             }
                         }
@@ -2123,7 +2119,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                         var OutOfRangeTargets = GetEnemiesInRadius(User.Position, ScriptFormula(2) + 2f);
                         foreach (Actor actor in OutOfRangeTargets.Actors)
                         {
-                            if(!AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(7)))))
                             AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(7))));
                         }
                     }

@@ -643,7 +643,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     //lets move backwards!
                     User.TranslateFacing(TargetPosition, true);
                     _mover = new ActorMover(Target);
-                    _mover.Move(destination, speed, new NotifyActorMovementMessage
+                    _mover.Move(destination, speed, new ACDTranslateNormalMessage
                     {
                         AnimationTag = 69824, // dashing strike attack animation
                     });

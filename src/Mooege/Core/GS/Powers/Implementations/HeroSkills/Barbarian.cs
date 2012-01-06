@@ -1450,7 +1450,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                 User.TranslateFacing(_destination, true);
                 _mover = new ActorMover(User);
-                _mover.Move(_destination, speed, new NotifyActorMovementMessage
+                _mover.Move(_destination, speed, new ACDTranslateNormalMessage
                 {
                     TurnImmediately = true,
                     AnimationTag = 69808,

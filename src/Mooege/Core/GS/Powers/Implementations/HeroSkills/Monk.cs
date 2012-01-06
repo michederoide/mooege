@@ -29,6 +29,7 @@ using Mooege.Core.GS.Players;
 using Mooege.Core.GS.Ticker;
 using Mooege.Core.GS.Common.Types.TagMap;
 using Mooege.Core.GS.Powers.Payloads;
+using Mooege.Net.GS.Message.Definitions.ACD;
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
@@ -472,7 +473,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                 Target.TranslateFacing(_destination, true);
                 _mover = new ActorMover(Target);
-                _mover.Move(_destination, speed, new NotifyActorMovementMessage
+                _mover.Move(_destination, speed, new ACDTranslateNormalMessage
                 {
                     TurnImmediately = true,
                     Field5 = 0x9206, // alt: 0x920e, not sure what this param is for.
@@ -840,10 +841,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 attack.OnHit = hit =>
                     {
                         Knockback(hit.Target, ScriptFormula(5), ScriptFormula(6), ScriptFormula(7));
-                        if (!AddBuff(hit.Target, new DOTbuff(WaitSeconds(ScriptFormula(9)))))
-                        {
                             AddBuff(hit.Target, new DOTbuff(WaitSeconds(ScriptFormula(9))));
-                        }
                     };
 
             }
@@ -1570,17 +1568,10 @@ namespace Mooege.Core.GS.Powers.Implementations
                 Sanctuary.UpdateDelay = 0.3f;
                 Sanctuary.OnUpdate = () =>
                     {
-
-                        if (!AddBuff(User, new RegenBuff()))
-                        {
                             AddBuff(User, new RegenBuff());
-                        }
                         foreach (Actor ally in GetAlliesInRadius(GroundSpot.Position, ScriptFormula(1)).Actors)
                         {
-                            if (!AddBuff(User, new RegenAllyBuff()))
-                            {
                                 AddBuff(User, new RegenAllyBuff());
-                            }
                         }
                     };
             }
@@ -1596,10 +1587,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         foreach (Actor enemy in GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(1)).Actors)
                         {
-                            if (!AddBuff(enemy, new DebuffSlowed(ScriptFormula(30), WaitSeconds(ScriptFormula(31)))))
-                            {
                             AddBuff(enemy, new DebuffSlowed(ScriptFormula(30), WaitSeconds(ScriptFormula(31))));
-                            }
                         }
                     };
             }

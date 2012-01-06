@@ -195,14 +195,8 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         foreach (Actor enemy in GetEnemiesInRadius(TargetPosition, ScriptFormula(3)).Actors)
                         {
-                            if (!AddBuff(enemy, new DebuffSlowed(ScriptFormula(19), WaitSeconds(ScriptFormula(8)))))
-                            {
                                 AddBuff(enemy, new DebuffSlowed(ScriptFormula(19), WaitSeconds(ScriptFormula(8))));
-                            }
-                            if (!AddBuff(enemy, new DamageGroundDebuff()))
-                            {
                                 AddBuff(enemy, new DamageGroundDebuff());
-                            }
                         }
                     };
             }
@@ -1324,6 +1318,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 foreach (Actor enemy in GetEnemiesInRadius(TargetPosition, ScriptFormula(1), (int)ScriptFormula(4)).Actors)
                 {
+                    //if it doesnt have confusion, it gets stunned.
                     if (!AddBuff(enemy, new Confusion_Debuff()))
                     {
                         AddBuff(enemy, new DebuffStunned(WaitSeconds(ScriptFormula(6))));
