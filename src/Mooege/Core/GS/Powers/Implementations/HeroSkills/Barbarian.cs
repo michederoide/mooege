@@ -333,7 +333,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     //TODO:sometimes receives exception of CheckCollisions().
     //TODO: Rune_A,B(maybe just infront?, not full circle), C, E
     #region AncientSpear
-    [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.AncientSpear)]
+    /*[ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.AncientSpear)]
     public class BarbarianAncientSpear : Skill
     {
         public override IEnumerable<TickTimer> Main()
@@ -422,7 +422,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             return_proj.LaunchArc(inFrontOfUser, 1f, -0.03f);
             User.AddRopeEffect(79402, return_proj);
         }
-    }
+    }*/
 #endregion
 
     //TODO: A,C
@@ -608,7 +608,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     //TODO: A,B,C
     //Receive CallBack Exception when Used...
     #region BattleRage
-    [ImplementsPowerSNO(Skills.Skills.Barbarian.FurySpenders.BattleRage)]
+    /*[ImplementsPowerSNO(Skills.Skills.Barbarian.FurySpenders.BattleRage)]
     public class BattleRage : Skill
     {
         public override IEnumerable<TickTimer> Main()
@@ -678,7 +678,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 base.Remove();
             }
         }
-    }
+    }*/
     #endregion
 
     //Check through Skill..
@@ -1274,7 +1274,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
     //why do you give an exception?
     #region WarCry
-    [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.WarCry)]
+    /*[ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.WarCry)]
     public class WarCry : Skill
     {
         public override IEnumerable<TickTimer> Main()
@@ -1392,7 +1392,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             Target.Attributes[GameAttribute.Defense_Bonus_Percent] -= ScriptFormula(0);
             Target.Attributes.BroadcastChangedIfRevealed();
         }
-    }
+    }*/
 #endregion
 
     //still terrible. needs to be redone.

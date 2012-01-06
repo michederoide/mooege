@@ -322,7 +322,7 @@ namespace Mooege.Core.GS.Players
 
             //Basic stats
             this.Attributes[GameAttribute.Level_Cap] = 13;
-            this.Attributes[GameAttribute.Level] = this.Toon.Level;
+            this.Attributes[GameAttribute.Level] = 30; //this has been changed so skills can be used. Originally "this.Toon.Level;"
             this.Attributes[GameAttribute.Experience_Next] = LevelBorders[this.Toon.Level];
             this.Attributes[GameAttribute.Experience_Granted] = 1000;
             this.Attributes[GameAttribute.Armor_Total] = 0;
@@ -341,11 +341,11 @@ namespace Mooege.Core.GS.Players
             this.Attributes[GameAttribute.Hitpoints_Max_Total] = GetMaxTotalHitpoints();
             this.Attributes[GameAttribute.Hitpoints_Cur] = this.Attributes[GameAttribute.Hitpoints_Max_Total];
 
-            //Resource
-            this.Attributes[GameAttribute.Resource_Cur, this.ResourceID] = 200f;
-            this.Attributes[GameAttribute.Resource_Max, this.ResourceID] = 200f;
-            this.Attributes[GameAttribute.Resource_Max_Total, this.ResourceID] = 200f;
-            this.Attributes[GameAttribute.Resource_Effective_Max, this.ResourceID] = 200f;
+            //Resource //TODO: Originals were 200f, this is so you can test skills.
+            this.Attributes[GameAttribute.Resource_Cur, this.ResourceID] = 400f;
+            this.Attributes[GameAttribute.Resource_Max, this.ResourceID] = 400f;
+            this.Attributes[GameAttribute.Resource_Max_Total, this.ResourceID] = 400f;
+            this.Attributes[GameAttribute.Resource_Effective_Max, this.ResourceID] = 400f;
             this.Attributes[GameAttribute.Resource_Regen_Total, this.ResourceID] = 3.051758E-05f;
             this.Attributes[GameAttribute.Resource_Type_Primary] = this.ResourceID;
 
