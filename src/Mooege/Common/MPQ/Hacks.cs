@@ -32,7 +32,7 @@ namespace Mooege.Common.MPQ
             fout = new StreamWriter(File.Create("c:\\users\\michael\\desktop\\hacks.txt"));
 
             SNOS = new Dictionary<int, string>();
-            var snofile = File.OpenText(@"C:\Users\michael\Desktop\d3emu\snodatabase.txt");
+            var snofile = File.OpenText(@"C:\Users\michael\Desktop\d3emu\mpq_research\snodatabase8101.txt");
             string line;
             while ((line = snofile.ReadLine()) != null)
             {
@@ -44,7 +44,7 @@ namespace Mooege.Common.MPQ
             }
 
             TagNames = new Dictionary<int, string>();
-            var tagNameFile = File.OpenText(@"C:\Users\michael\Desktop\d3emu\mpq_research\tagid_names.txt");
+            var tagNameFile = File.OpenText(@"C:\Users\michael\Desktop\d3emu\tagid_names_patch4.txt");
             while ((line = tagNameFile.ReadLine()) != null)
             {
                 Match m = Regex.Match(line, @"(\S+) (\d+) (.+)");
@@ -268,9 +268,67 @@ namespace Mooege.Common.MPQ
             }
         }
 
+        public static void DumpPowersForMonsters()
+        {
+            foreach (var powerEntry in MPQStorage.Data.Assets[SNOGroup.Power].Values)
+            {
+                List<Asset> users = new List<Asset>();
+
+                foreach (var monsterEntry in MPQStorage.Data.Assets[SNOGroup.Monster].Values)
+                {
+                    var monData = (Monster)monsterEntry.Data;
+                    foreach (var skill in monData.SkillDeclarations)
+                    {
+                        if (skill.SNOPower == powerEntry.SNOId)
+                        {
+                            users.Add(monsterEntry);
+                        }
+                    }
+                }
+
+                if (users.Count > 0)
+                {
+                    Log("monsters using {0} ({1})", StringSNO(powerEntry.SNOId), powerEntry.SNOId);
+                    foreach (var monsterEntry in users.OrderBy(mon => StringSNO(mon.SNOId)))
+                        Log("   {0} ({1})", StringSNO(monsterEntry.SNOId), monsterEntry.SNOId);
+
+                    Log("");
+                }
+            }
+        }
+
+        public static void DumpBehaviorsForMonsters()
+        {
+            foreach (var aibEntry in MPQStorage.Data.Assets[SNOGroup.AiBehavior].Values)
+            {
+                List<Asset> users = new List<Asset>();
+
+                foreach (var monsterEntry in MPQStorage.Data.Assets[SNOGroup.Monster].Values)
+                {
+                    var monData = (Monster)monsterEntry.Data;
+                    foreach (var behavior in monData.AIBehavior)
+                    {
+                        if (aibEntry.SNOId == behavior)
+                        {
+                            users.Add(monsterEntry);
+                        }
+                    }
+                }
+
+                if (users.Count > 0)
+                {
+                    Log("monsters using {0} ({1})", StringSNO(aibEntry.SNOId), aibEntry.SNOId);
+                    foreach (var monsterEntry in users.OrderBy(mon => StringSNO(mon.SNOId)))
+                        Log("   {0} ({1})", StringSNO(monsterEntry.SNOId), monsterEntry.SNOId);
+
+                    Log("");
+                }
+            }
+        }
+
         public static void OnMPQLoaded()
         {
-            DumpInterestingSNOS();
+            DumpBehaviorsForMonsters();
 
             Logger.Debug("OnMPQLoaded() finished!");
         }
