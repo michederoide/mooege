@@ -35,7 +35,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 {
     //22 skills, 3 done by mdz, 2(vault and fan of knives) by velocityx, 8 started by wetwlly
 
-    //TODO: Rune_E only right?
+    //Complete
     #region BolaShot
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredGenerators.BolaShot)]
     public class DemonHunterBolaShot : Skill
@@ -499,24 +499,26 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            if (Rune_D > 0)
-            {
-                //SpawnEffect(222156, User.Position);
-                WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(11)), ScriptFormula(12), DamageType.Physical);
-            }
-            else
-            {
-                var proj = new Projectile(this, RuneSelect(220527, 222102, 222115, 222128, -1, 222141), User.Position);
+            var proj = new Projectile(this, RuneSelect(220527, 222102, 222115, 222128, 220527, 222141), User.Position);
                 proj.Position.Z += 5f;  // fix height
                 proj.OnCollision = (hit) =>
                 {
-                    hit.PlayEffectGroup(RuneSelect(221164, 222107, 222120, 222133, -1, 222146));
+                    hit.PlayEffectGroup(RuneSelect(221164, 222107, 222120, 222133, 221164, 222146));
                     WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
-
-                    if (Rune_E > 0)
-                    {
-                        //if critical hit, do weapondamage (SF(13)) as well as damage below.
-                    }
+                    /*AttackPayload attack = new AttackPayload(this);
+                    attack.Target = hit;
+                    attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                    attack.OnHit = (HitPayload) =>
+                        {
+                            if (HitPayload.IsCriticalHit)
+                            {
+                                if (Rune_E > 0)
+                                {
+                                    WeaponDamage(HitPayload.Target, ScriptFormula(13), DamageType.Physical);
+                                }
+                            }
+                        };
+                    attack.Apply();*/
 
                     if (Rune_A > 0)
                     {
@@ -531,18 +533,25 @@ namespace Mooege.Core.GS.Powers.Implementations
                         }
                         if (Rune_C > 0)
                         {
-                            AddBuff(hit, new ActiveCalTrops());
+                            AddBuff(hit, new addsDOTDamage());
                         }
                         proj.Destroy();
 
                     }
                 };
                 proj.Launch(TargetPosition, ScriptFormula(2));
-            }
+
+                if (Rune_D > 0)
+                {
+                    SpawnEffect(222156, User.Position);
+                    //User.PlayEffectGroup(222155);
+                    WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(11)), ScriptFormula(12), DamageType.Physical);
+                }
+
             yield return WaitSeconds(1f);
         }
-        [ImplementsPowerBuff(0)]
-        class ActiveCalTrops : PowerBuff
+        [ImplementsPowerBuff(1)]
+        class addsDOTDamage : PowerBuff
         {
             const float _damageRate = 1f;
             TickTimer _damageTimer = null;

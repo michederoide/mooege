@@ -1688,5 +1688,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //Add cyclone strike
+
     //11 Passives
 }

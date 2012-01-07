@@ -261,7 +261,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield break;
         }
 
-        [ImplementsPowerBuff(0)]
+        [ImplementsPowerBuff(0, true)]
         class CheckHaunts : PowerBuff
         {
             public override void Init()
@@ -977,7 +977,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             yield break;
         }
-        [ImplementsPowerBuff(0)]
+        [ImplementsPowerBuff(0, true)]
         class soulHarvestbuff : PowerBuff
         {
             public override void Init()
@@ -1543,7 +1543,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     #endregion
 
     //TODO: Animation Partially complete, Wide(B) isnt complete and Creepers(A) haven't been worked on.
-    // TODO: Tower(E) needs to spawn, Arc Distance, max distance from target is 15f.
+    //TODO: Tower(E) needs to spawn, Arc Distance, max distance from target is 15f.
     #region WallOfZombies
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.WallOfZombies)]
     public class WallOfZombies : Skill
@@ -1567,10 +1567,33 @@ namespace Mooege.Core.GS.Powers.Implementations
                     proj.Launch(projDestinations[i], 0.2f);
                 }
             }
+            else if (Rune_B > 0)
+            {
+                //this needs to have double the width, 
+                //at the moment this only shows the double length when pointing spell to the right.
+                
+                float castAngle = MovementHelpers.GetFacingAngle(User.Position, TargetPosition);
+                Vector3D[] spawnPoints = PowerMath.GenerateSpreadPositions(TargetPosition, new Vector3D(TargetPosition.X + 10f, TargetPosition.Y, TargetPosition.Z), 180, 2);
+
+                for (int i = 0; i < spawnPoints.Length; ++i)
+                {
+                    SpawnEffect(135016, spawnPoints[i], castAngle, WaitSeconds(ScriptFormula(0)));
+                }
+                
+            }
             else
             {
                 float castAngle = MovementHelpers.GetFacingAngle(User.Position, TargetPosition);
                 var Wall = SpawnEffect(RuneSelect(131202, -1, 135016, -1, 182574, 131640), TargetPosition, castAngle, WaitSeconds(ScriptFormula(0)));
+                Wall.UpdateDelay = 1f;
+                Wall.OnUpdate = () =>
+                    {
+                        //set position in front of zombies, add width. rectangle?
+                        if (Rune_D > 0)
+                        {
+                            //slow movement of enemies
+                        }
+                    };
             }
             yield break;
         }
@@ -1669,7 +1692,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Jarthrow complete, unknown how to do spiders.
+    //Jarthrow complete, need pet spider class
     #region CorpseSpiders
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.PhysicalRealm.CorpseSpiders)]
     public class CorpseSpiders : Skill

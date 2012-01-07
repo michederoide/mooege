@@ -1636,12 +1636,11 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
         //Rune_D
-        [ImplementsPowerBuff(2)]
+        [ImplementsPowerBuff(2, true)]
         class BonusStackEffect : PowerBuff
         {
             public override void Init()
             {
-                //TODO: this needs to reset to original set time each time hit.
                 Timeout = WaitSeconds(ScriptFormula(27));
                 MaxStackCount = (int)ScriptFormula(11);
             }
