@@ -114,7 +114,9 @@ namespace Mooege.Core.MooNet.Games
 
         private void SendConnectionInfo(MooNetClient client)
         {
-            // Lock party and close privacy level while entering game
+            // Lock party and close privacy level while entering game            
+            if (client.CurrentChannel != null)
+            {
             var channelStatePrivacyLevel = bnet.protocol.channel.ChannelState.CreateBuilder()
                 .SetPrivacyLevel(bnet.protocol.channel.ChannelState.Types.PrivacyLevel.PRIVACY_LEVEL_CLOSED).Build();
 
@@ -122,8 +124,7 @@ namespace Mooege.Core.MooNet.Games
                 .SetAgentId(client.Account.CurrentGameAccount.BnetEntityId)
                 .SetStateChange(channelStatePrivacyLevel)
                 .Build();
-            if (client.CurrentChannel != null)
-            {
+
                 client.MakeTargetedRPC(client.CurrentChannel, () =>
                     bnet.protocol.channel.ChannelSubscriber.CreateStub(client).NotifyUpdateChannelState(null, notificationPrivacyLevel, callback => { }));
 
