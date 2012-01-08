@@ -1688,7 +1688,32 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Add cyclone strike
+    //TODO: Runes.
+    #region CycloneStrike
+    [ImplementsPowerSNO(223473)]
+    public class CycloneStrike : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            //rune-D -> spirit
+            //crits -> Rune_E
+            //debuff -> Rune_C
+            //multi -> Rune_B
+            //randomAOE -> Rune_A
+            AttackPayload attack = new AttackPayload(this);
+            attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2), (int)ScriptFormula(5));
+            attack.OnHit = hit =>
+                {
+                    Knockback(hit.Target, -25f, ScriptFormula(1), ScriptFormula(29));
+                };
+            attack.Apply();
+            yield return WaitSeconds(0.5f);
+            User.PlayEffectGroup(224247);
+            WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(16) + ScriptFormula(17)), ScriptFormula(10), Rune_A > 0 ? DamageType.Fire : DamageType.Holy);
 
+            yield break;
+        }
+    }
+    #endregion
     //11 Passives
 }
