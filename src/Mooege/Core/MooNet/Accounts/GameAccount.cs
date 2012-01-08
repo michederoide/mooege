@@ -420,19 +420,19 @@ namespace Mooege.Core.MooNet.Accounts
                     }
                     else if (queryKey.Group == 3 && queryKey.Field == 2) // Hero's current level
                     {
-                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue(this.CurrentToon.Level).Build());
+                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue(this.CurrentToon.HeroLevelField.Value).Build());
                     }
                     else if (queryKey.Group == 3 && queryKey.Field == 3) // Hero's visible equipment
                     {
-                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetMessageValue(this.CurrentToon.Equipment.ToByteString()).Build());
+                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetMessageValue(this.CurrentToon.HeroVisualEquipmentField.Value.ToByteString()).Build());
                     }
                     else if (queryKey.Group == 3 && queryKey.Field == 4) // Hero's flags (gender and such)
                     {
-                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue((uint)(this.CurrentToon.Flags | ToonFlags.AllUnknowns)).Build());
+                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue((uint)((uint)this.CurrentToon.HeroFlagsField.Value | (uint)ToonFlags.AllUnknowns)).Build());
                     }
                     else if (queryKey.Group == 3 && queryKey.Field == 5) // Toon name
                     {
-                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetStringValue(this.CurrentToon.Name).Build());
+                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetStringValue(this.CurrentToon.HeroNameField.Value).Build());
                     }
                     else if (queryKey.Group == 4 && queryKey.Field == 1) // Channel ID if the client is online
                     {

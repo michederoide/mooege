@@ -56,7 +56,7 @@ namespace Mooege.Core.MooNet.Services
 
         public override void GetChannelInfo(Google.ProtocolBuffers.IRpcController controller, bnet.protocol.channel.GetChannelInfoRequest request, System.Action<bnet.protocol.channel.GetChannelInfoResponse> done)
         {
-            Logger.Trace("GetChannelInfoRequest() to channel {0}:{1} by toon {2}", request.ChannelId.High, request.ChannelId.Low, Client.Account.CurrentGameAccount.CurrentToon.Name);
+            Logger.Trace("GetChannelInfoRequest() to channel {0}:{1} by toon {2}", request.ChannelId.High, request.ChannelId.Low, Client.Account.CurrentGameAccount.CurrentToon.HeroNameField.Value);
 
             var builder = bnet.protocol.channel.GetChannelInfoResponse.CreateBuilder();
             var channel = ChannelManager.GetChannelByEntityId(request.ChannelId);

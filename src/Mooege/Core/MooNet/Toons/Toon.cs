@@ -58,22 +58,6 @@ namespace Mooege.Core.MooNet.Toons
         public ToonHandleHelper ToonHandle { get; private set; }
 
         /// <summary>
-        /// Toon's name.
-        /// </summary>
-        private string _name;
-        public string Name {
-            get
-            {
-                return _name;
-            }
-            private set
-            {
-                this._name = value;
-                this.HeroNameField.Value = value;
-            }
-        }
-
-        /// <summary>
         /// Toon's owner account.
         /// </summary>
         public GameAccount GameAccount { get; set; }
@@ -116,41 +100,6 @@ namespace Mooege.Core.MooNet.Toons
         }
 
         /// <summary>
-        /// Toon's flags.
-        /// </summary>
-        private ToonFlags _flags;
-        public ToonFlags Flags
-        {
-            get
-            {
-                return _flags;
-            }
-            private set
-            {
-                _flags = value;
-                this.HeroFlagsField.Value = (int)(this.Flags | ToonFlags.AllUnknowns);
-            }
-        }
-
-        /// <summary>
-        /// Toon's level.
-        /// </summary>
-        //TODO: Remove this as soon as everywhere the field is used
-        private byte _level;
-        public byte Level
-        {
-            get
-            {
-                return _level;
-            }
-            private set
-            {
-                this._level = value;
-                this.HeroLevelField.Value = value;
-            }
-        }
-
-        /// <summary>
         /// Total time played for toon.
         /// </summary>
         public uint TimePlayed { get; set; }
@@ -159,23 +108,6 @@ namespace Mooege.Core.MooNet.Toons
         /// Last login time for toon.
         /// </summary>
         public uint LoginTime { get; set; }
-
-        /// <summary>
-        /// The visual equipment for toon.
-        /// </summary>
-        private D3.Hero.VisualEquipment _equipment;
-        public D3.Hero.VisualEquipment Equipment
-        {
-            get
-            {
-                return _equipment;
-            }
-            protected set
-            {
-                this._equipment = value;
-                this.HeroVisualEquipmentField.Value = value;
-            }
-        }
 
         /// <summary>
         /// Settings for toon.
@@ -202,11 +134,11 @@ namespace Mooege.Core.MooNet.Toons
             {
                 return D3.Hero.Digest.CreateBuilder().SetVersion(893)
                                 .SetHeroId(this.D3EntityID)
-                                .SetHeroName(this.Name)
+                                .SetHeroName(this.HeroNameField.Value)
                                 .SetGbidClass((int)this.ClassID)
-                                .SetPlayerFlags((uint)this.Flags)
-                                .SetLevel(this.Level)
-                                .SetVisualEquipment(this.Equipment)
+                                .SetPlayerFlags((uint)this.HeroFlagsField.Value)
+                                .SetLevel((int)this.HeroLevelField.Value)
+                                .SetVisualEquipment(this.HeroVisualEquipmentField.Value)
                                 .SetLastPlayedAct(0)
                                 .SetHighestUnlockedAct(0)
                                 .SetLastPlayedDifficulty(0)
@@ -229,24 +161,9 @@ namespace Mooege.Core.MooNet.Toons
                     .SetHardcore(false)
                     .SetHeroId(this.D3EntityID)
                     .SetHighestDifficulty(0)
-                    .SetHighestLevel(this.Level)
+                    .SetHighestLevel((uint)(this.HeroLevelField.Value))
                     .SetMonstersKilled(923)
                     .Build();
-            }
-        }
-
-        public bool IsSelected
-        {
-            get
-            {
-                if (!this.GameAccount.IsOnline) return false;
-                else
-                {
-                    if (this.GameAccount.CurrentToon != null)
-                        return this.GameAccount.CurrentToon.D3EntityID == this.D3EntityID;
-                    else
-                        return false;
-                }
             }
         }
 
@@ -308,7 +225,7 @@ namespace Mooege.Core.MooNet.Toons
         {
             get
             {
-                return (int)(this.Flags & ToonFlags.Female); // 0x00 for male, so we can just return the AND operation
+                return (int)((uint)(this.HeroFlagsField.Value) & (uint)(ToonFlags.Female)); // 0x00 for male, so we can just return the AND operation
             }
         }
 
@@ -317,10 +234,10 @@ namespace Mooege.Core.MooNet.Toons
             //this.BnetEntityID = bnet.protocol.EntityId.CreateBuilder().SetHigh((ulong)EntityIdHelper.HighIdType.ToonId + this.PersistentID).SetLow(this.PersistentID).Build();
             this.D3EntityID = D3.OnlineService.EntityId.CreateBuilder().SetIdHigh((ulong)EntityIdHelper.HighIdType.ToonId + this.PersistentID).SetIdLow(this.PersistentID).Build();
 
-            this.Name = name;
+            this.HeroNameField.Value = name;
             this.Class = @class;
-            this.Flags = flags;
-            this.Level = level;
+            this.HeroFlagsField.Value = (uint)flags;
+            this.HeroLevelField.Value = level;
             this.GameAccount = owner;
             this.TimePlayed = timePlayed;
 
@@ -336,14 +253,14 @@ namespace Mooege.Core.MooNet.Toons
                 D3.Hero.VisualItem.CreateBuilder().SetEffectLevel(0).Build(), // Legs
             };
 
-            this.Equipment = D3.Hero.VisualEquipment.CreateBuilder().AddRangeVisualItem(visualItems).Build();
+            this.HeroVisualEquipmentField.Value = D3.Hero.VisualEquipment.CreateBuilder().AddRangeVisualItem(visualItems).Build();
 
         }
 
 
         public void LevelUp()
         {
-            this.Level++;
+            this.HeroLevelField.Value++;
         }
 
         #region Notifications
@@ -393,7 +310,7 @@ namespace Mooege.Core.MooNet.Toons
 
         public override string ToString()
         {
-            return String.Format("{{ Toon: {0} [lowId: {1}] }}", this.Name, this.D3EntityID.IdLow);
+            return String.Format("{{ Toon: {0} [lowId: {1}] }}", this.HeroNameField.Value, this.D3EntityID.IdLow);
         }
 
         public void SaveToDB()
@@ -405,7 +322,7 @@ namespace Mooege.Core.MooNet.Toons
                     var query =
                         string.Format(
                             "UPDATE toons SET name='{0}', class={1}, gender={2}, level={3}, accountId={4}, timePlayed={5} WHERE id={6}",
-                            this.Name, (byte)this.Class, (byte)this.Gender, this.Level, this.GameAccount.PersistentID, this.TimePlayed, this.PersistentID);
+                            this.HeroNameField.Value, (byte)this.Class, (byte)this.Gender, this.HeroLevelField.Value, this.GameAccount.PersistentID, this.TimePlayed, this.PersistentID);
 
                     var cmd = new SQLiteCommand(query, DBManager.Connection);
                     cmd.ExecuteNonQuery();
@@ -415,7 +332,7 @@ namespace Mooege.Core.MooNet.Toons
                     var query =
                         string.Format(
                             "INSERT INTO toons (id, name, class, gender, level, timePlayed, accountId) VALUES({0},'{1}',{2},{3},{4},{5},{6})",
-                            this.PersistentID, this.Name, (byte)this.Class, (byte)this.Gender, this.Level, this.TimePlayed, this.GameAccount.PersistentID);
+                            this.PersistentID, this.HeroNameField.Value, (byte)this.Class, (byte)this.Gender, this.HeroLevelField.Value, this.TimePlayed, this.GameAccount.PersistentID);
 
                     var cmd = new SQLiteCommand(query, DBManager.Connection);
                     cmd.ExecuteNonQuery();

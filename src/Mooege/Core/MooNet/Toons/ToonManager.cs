@@ -84,7 +84,7 @@ namespace Mooege.Core.MooNet.Toons
             Toons.Add(toon.PersistentID, toon);
             toon.SaveToDB();
 
-            Logger.Trace("Character {0} added to database", toon.Name);
+            Logger.Trace("Character {0} added to database", toon.HeroNameField.Value);
 
             return true;
         }

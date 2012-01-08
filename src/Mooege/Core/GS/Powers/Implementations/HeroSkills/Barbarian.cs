@@ -919,7 +919,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
-    //TODO: Rune_B and Rune_E -> Figure Out TeamID
+    //TODO: Rune_E -> Figure Out TeamID
     #region WeaponThrow
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FurySpenders.WeaponThrow)]
     public class WeaponThrow : Skill
@@ -928,7 +928,38 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             if (Rune_B > 0)
             {
-                //throw projectile -> once collision with target, RopeEffect up to ScriptFromula(5) times.
+                IList<Actor> targets = new List<Actor>() { Target };
+                Actor ropeSource = User;
+                Actor curTarget = Target;
+                float damage = ScriptFormula(15);
+                while (targets.Count < ScriptFormula(5) + 1)
+                {
+                    if (ropeSource.World == null)
+                        ropeSource = SpawnProxy(ropeSource.Position);
+
+                    if (curTarget.World != null)
+                    {
+                        ropeSource.AddRopeEffect(166450, curTarget);
+                        ropeSource = curTarget;
+
+                        WeaponDamage(curTarget, damage, DamageType.Physical);
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    curTarget = GetEnemiesInRadius(curTarget.Position, ScriptFormula(12), (int)ScriptFormula(5)).Actors.FirstOrDefault(t => !targets.Contains(t));
+                    if (curTarget != null)
+                    {
+                        targets.Add(curTarget);
+                        yield return WaitSeconds(0.150f);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
             }
             else
             {

@@ -1038,30 +1038,26 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             if (Rune_C > 0)
             {
-                /*var proj1 = new Projectile(this, 87564, User.Position);
-                proj1.Position.Z += 5f;
-                proj1.OnCollision = (hit) =>
-                {
-                    AddBuff(hit, new curseDebuff());
-                };
-                proj1.Launch(TargetPosition, ScriptFormula(12));
-                */
+                TickTimer timeout = WaitSeconds(ScriptFormula(4));
                 //TODO:there needs to be a traget for this. and needs to be its own function because you're planting it on a target.
-                   // WeaponDamage(GetEnemiesInRadius(Target.Position, ScriptFormula(6)), ScriptFormula(0), DamageType.Fire);
+                if (timeout.TimedOut)
+                {
+                    WeaponDamage(GetEnemiesInRadius(Target.Position, ScriptFormula(6)), ScriptFormula(0), DamageType.Fire);
+                }
             }
             else
             {
                 var GroundSpot = SpawnProxy(User.Position);
-                var spikeTrapGround = SpawnEffect(111330, GroundSpot.Position, 0, WaitSeconds(ScriptFormula(4)));
+                var caltropsGround = SpawnEffect(111330, GroundSpot.Position, 0, WaitSeconds(ScriptFormula(4)));
 
                 yield return WaitSeconds(ScriptFormula(3));
 
-                spikeTrapGround.UpdateDelay = 0.25f;
-                spikeTrapGround.OnUpdate = () =>
+                caltropsGround.UpdateDelay = 0.25f;
+                caltropsGround.OnUpdate = () =>
                 {
                     if (GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(5)).Actors.Count > 0)
                     {
-                        spikeTrapGround.Destroy();
+                        caltropsGround.Destroy();
                         var calTrops = SpawnEffect(75887, GroundSpot.Position);
                         AttackPayload attack = new AttackPayload(this);
                         attack.Targets = GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(5));
@@ -1073,30 +1069,6 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
 
             yield break;
-        }
-        [ImplementsPowerBuff(1)]
-        class curseDebuff : PowerBuff
-        {
-
-            public override void Init()
-            {
-                Timeout = WaitSeconds(ScriptFormula(4));
-            }
-
-            public override bool Apply()
-            { if (!base.Apply())
-                    return false;
-                return true; }
-            public override void Remove() { base.Remove(); }
-
-            public override void OnPayload(Payload payload)
-            {
-                if (payload.Target == Target && payload is DeathPayload)
-                {
-                    Target.PlayEffectGroup(159027);
-                    WeaponDamage(GetEnemiesInRadius(Target.Position, ScriptFormula(6)), ScriptFormula(0), DamageType.Fire);
-                }
-            }
         }
     }
     #endregion
@@ -1185,17 +1157,10 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             StartDefaultCooldown();
             UseSecondaryResource(ScriptFormula(2));
-
-            var cloudCover = SpawnProxy(User.Position, WaitSeconds(ScriptFormula(4)));
-            cloudCover.PlayEffectGroup(131425);
-            cloudCover.OnTimeout = () =>
-                {
-                    cloudCover.World.BuffManager.RemoveAllBuffs(cloudCover);
-                };
-
+            
             AddBuff(User, new SmokeScreenBuff());
                 
-            AddBuff(cloudCover, new SmokeScreenCloud());
+            //AddBuff(GroundArea, new SmokeScreenCloud());
 
             yield break;
         }
@@ -1240,7 +1205,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                 base.Remove();
             }
         }
-        //may not be for every cast, does not show the cloud animation around you in a video..
         [ImplementsPowerBuff(2)]
         class SmokeScreenBuff : PowerBuff
         {
@@ -1286,7 +1250,6 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Remove()
             {
                 base.Remove();
-                //User.PlayEffectGroup(133698); //reappear
                 User.Attributes[GameAttribute.Stealthed] = false;
                 User.Attributes[GameAttribute.Look_Override] = 0;
 

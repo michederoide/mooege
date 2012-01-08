@@ -84,7 +84,7 @@ namespace Mooege.Net.GS
                 client.BnetClient.InGameClient = client;
 
                 client.Player = new Player(game.StartingWorld, client, toon);
-                Logger.Info("Player {0}[PlayerIndex: {1}] connected.", client.Player.Toon.Name, client.Player.PlayerIndex);
+                Logger.Info("Player {0}[PlayerIndex: {1}] connected.", client.Player.Toon.HeroNameField.Value, client.Player.PlayerIndex);
 
                 client.SendMessage(new VersionsMessage(message.SNOPackHash));
 

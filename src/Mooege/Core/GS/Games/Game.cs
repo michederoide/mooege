@@ -287,11 +287,11 @@ namespace Mooege.Core.GS.Games
                 PlayerIndex = joinedPlayer.PlayerIndex, // player index
                 ToonId = new EntityId() { High = (long)joinedPlayer.Toon.D3EntityID.IdHigh, Low = (long)joinedPlayer.Toon.D3EntityID.IdLow }, //Toon
                 GameAccountId = new EntityId() { High = (long)joinedPlayer.Toon.GameAccount.BnetEntityId.High, Low = (long)joinedPlayer.Toon.GameAccount.BnetEntityId.Low }, //GameAccount
-                ToonName = joinedPlayer.Toon.Name,
+                ToonName = joinedPlayer.Toon.HeroNameField.Value,
                 Field3 = 0x00000002, //party frame class
                 Field4 = target!=joinedPlayer? 0x2 : 0x4, //party frame level /boyc - may mean something different /raist.
                 snoActorPortrait = joinedPlayer.ClassSNO, //party frame portrait
-                Field6 = joinedPlayer.Toon.Level,
+                Field6 = (int) joinedPlayer.Toon.HeroLevelField.Value,
                 StateData = joinedPlayer.GetStateData(),
                 Field8 = this.Players.Count != 1, //announce party join
                 Field9 = 0x00000001,

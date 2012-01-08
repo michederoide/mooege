@@ -323,7 +323,7 @@ namespace Mooege.Core.GS.Players
             //Basic stats
             this.Attributes[GameAttribute.Level_Cap] = 13;
             this.Attributes[GameAttribute.Level] = 30; //this has been changed so skills can be used. Originally "this.Toon.Level;"
-            this.Attributes[GameAttribute.Experience_Next] = LevelBorders[this.Toon.Level];
+            this.Attributes[GameAttribute.Experience_Next] = LevelBorders[(int)this.Toon.HeroLevelField.Value];
             this.Attributes[GameAttribute.Experience_Granted] = 1000;
             this.Attributes[GameAttribute.Armor_Total] = 0;
             this.Attributes[GameAttribute.Attack] = (int)this.InitialAttack;
@@ -885,17 +885,17 @@ namespace Mooege.Core.GS.Players
                 switch (this.Toon.Class)
                 {
                     case ToonClass.Barbarian:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.DemonHunter:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.Monk:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.WitchDoctor:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.Wizard:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                 }
-                return 10f + (this.Toon.Level - 1) * 2;
+                return 10f + (this.Toon.HeroLevelField.Value - 1) * 2;
             }
         }
 
@@ -906,17 +906,17 @@ namespace Mooege.Core.GS.Players
                 switch (this.Toon.Class)
                 {
                     case ToonClass.Barbarian:
-                        return 9f + (this.Toon.Level - 1);
+                        return 9f + (this.Toon.HeroLevelField.Value - 1);
                     case ToonClass.DemonHunter:
-                        return 11f + ((this.Toon.Level - 1) * 2);
+                        return 11f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.Monk:
-                        return 11f + ((this.Toon.Level - 1) * 2);
+                        return 11f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.WitchDoctor:
-                        return 9f + ((this.Toon.Level - 1) * 2);
+                        return 9f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.Wizard:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                 }
-                return 10f + ((this.Toon.Level - 1) * 2);
+                return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
             }
         }
 
@@ -927,20 +927,20 @@ namespace Mooege.Core.GS.Players
                 switch (this.Toon.Class)
                 {
                     case ToonClass.Barbarian:
-                        return 11f + ((this.Toon.Level - 1) * 2);
+                        return 11f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.DemonHunter:
                         // For DH and Wizard, half the levels (starting with the first) give 2 defense => (Level / 2) * 2
                         // and half give 1 defense => ((Level - 1) / 2) * 1
                         // Note: We can't cancel the twos in ((Level - 1) / 2) * 2 because of integer divison
-                        return 9f + (((this.Toon.Level / 2) * 2) + ((this.Toon.Level - 1) / 2));
+                        return 9f + (((this.Toon.HeroLevelField.Value / 2) * 2) + ((this.Toon.HeroLevelField.Value - 1) / 2));
                     case ToonClass.Monk:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.WitchDoctor:
-                        return 9f + ((this.Toon.Level - 1) * 2);
+                        return 9f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.Wizard:
-                        return 8f + (((this.Toon.Level / 2) * 2) + ((this.Toon.Level - 1) / 2));
+                        return 8f + (((this.Toon.HeroLevelField.Value / 2) * 2) + ((this.Toon.HeroLevelField.Value - 1) / 2));
                 }
-                return 10f + ((this.Toon.Level - 1) * 2);
+                return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
             }
         }
 
@@ -951,20 +951,20 @@ namespace Mooege.Core.GS.Players
                 switch (this.Toon.Class)
                 {
                     case ToonClass.Barbarian:
-                        return 11f + ((this.Toon.Level - 1) * 2);
+                        return 11f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.DemonHunter:
                         // For DH and Wizard, half the levels give 2 vit => ((Level - 1) / 2) * 2
                         // and half (starting with the first) give 1 vit => (Level / 2) * 1
                         // Note: We can't cancel the twos in ((Level - 1) / 2) * 2 because of integer divison
-                        return 9f + ((((this.Toon.Level - 1) / 2) * 2) + (this.Toon.Level / 2));
+                        return 9f + ((((this.Toon.HeroLevelField.Value - 1) / 2) * 2) + (this.Toon.HeroLevelField.Value / 2));
                     case ToonClass.Monk:
-                        return 9f + (this.Toon.Level - 1);
+                        return 9f + (this.Toon.HeroLevelField.Value - 1);
                     case ToonClass.WitchDoctor:
-                        return 10f + (this.Toon.Level - 1);
+                        return 10f + (this.Toon.HeroLevelField.Value - 1);
                     case ToonClass.Wizard:
-                        return 9f + ((((this.Toon.Level - 1) / 2) * 2) + (this.Toon.Level / 2));
+                        return 9f + ((((this.Toon.HeroLevelField.Value - 1) / 2) * 2) + (this.Toon.HeroLevelField.Value / 2));
                 }
-                return 10f + ((this.Toon.Level - 1) * 2);
+                return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
             }
         }
 

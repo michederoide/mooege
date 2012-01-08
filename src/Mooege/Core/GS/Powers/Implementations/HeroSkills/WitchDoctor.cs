@@ -164,7 +164,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Complete, needs checking
+    //TODO:Rune_E
     #region GraspOfTheDead
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.GraspOfTheDead)]
     public class GraspOfTheDead : Skill
@@ -213,12 +213,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 base.Init();
                 Timeout = WaitSeconds(ScriptFormula(8));
             }
-            /*public override void OnPayload(Payload payload)
-            {
-                if (payload.Target == Target && payload is DeathPayload)
-                {
-                }
-            }*/
+
             public override bool Update()
             {
                 if (base.Update())
@@ -238,8 +233,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                                 if (Rand.NextDouble() < ScriptFormula(21))
                                 {
                                     //produce a health globe
-                                    //Items.ItemGenerator.CreateGlobe(User, "HealthGlobe" + 25);
-
                                 }
                             }
                         };
@@ -251,9 +244,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO:checking for all Haunts in a 90f radius. needs checking
-    //TODO:also needs to check if monster already has haunt, to look for a new target or overwrite the existing one.
-    //TODO: Something very buggy with complexEffect... very very buggy. (ex. cast spell, click-hold mouse move around)
+    //TODO:lots!
     #region Haunt
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.SpiritRealm.Haunt)]
     public class Haunt : Skill
@@ -261,31 +252,49 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Main()
         {
             //Need to check for all Haunt Buffs in this radius.
-            //Max simultaneous haunts = 3 ScriptFormula(8)
             //Max Haunt Check Radius(ScriptFormula(9)) -> 90f
-            
-            if (Rune_B > 0)
+            if (Target != null)
             {
-                if (Target == null)
-                {
-                    
-                    var Lingerer = SpawnEffect(111345, TargetPosition, 0, WaitSeconds(ScriptFormula(4)));
-                    Lingerer.OnTimeout = () =>
-                        {
-                            Lingerer.World.BuffManager.RemoveAllBuffs(Lingerer);
-                        };
-                    AddBuff(Lingerer, new HauntLinger());
-                }
+                AddBuff(Target, new CheckHaunts());
             }
-            else
-            {
-                if (Target != null)
-                {
-                    User.AddComplexEffect(19257, Target);
-                    AddBuff(Target, new Haunt1());
-                }
-            }
+            //if the Target Dies before time is over, find a new target within search check radius (SF(10))
             yield break;
+        }
+
+        [ImplementsPowerBuff(0, true)]
+        class CheckHaunts : PowerBuff
+        {
+            public override void Init()
+            {
+                MaxStackCount = (int)ScriptFormula(8);
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                _AddHaunt();
+
+                return true;
+            }
+            public override bool Stack(Buff buff)
+            {
+                bool stacked = StackCount < MaxStackCount;
+
+                base.Stack(buff);
+
+                if (stacked)
+                    _AddHaunt();
+
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+            }
+            private void _AddHaunt()
+            {
+                AddBuff(Target, new Haunt1());
+            }
         }
 
         [ImplementsPowerBuff(0)]
@@ -298,32 +307,6 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 Timeout = WaitSeconds(ScriptFormula(1));
             }
-            public override void OnPayload(Payload payload)
-            {
-                if (payload.Target == Target && payload is DeathPayload)
-                {
-                    //Need to check if monster already has a haunt on them, if it does -> check next monster.
-                    var target = GetEnemiesInRadius(payload.Context.Target.Position, ScriptFormula(10))
-                        .GetClosestTo(payload.Context.Target.Position);
-                    if (target != null)
-                    {
-                        Target.AddComplexEffect(RuneSelect(19257, 111257, 111370, 113742, 111461, 111564), target);
-                        AddBuff(target, new Haunt1());
-                    }
-                    else
-                    {
-                        if (Rune_B > 0)
-                        {
-                            var Lingerer = SpawnEffect(111345, Target.Position, 0, WaitSeconds(ScriptFormula(4)));
-                            Lingerer.OnTimeout = () =>
-                            {
-                                Lingerer.World.BuffManager.RemoveAllBuffs(Lingerer);
-                            };
-                            AddBuff(Lingerer, new HauntLinger());
-                        }
-                    }
-                }
-            }
             public override bool Update()
             {
                 if (base.Update())
@@ -334,39 +317,30 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                     if (Rune_D > 0)
                     {
-                        GeneratePrimaryResource(ScriptFormula(3));
+                        //GeneratePrimaryResource(ScriptFormula(3));
                     }
 
                     AttackPayload attack = new AttackPayload(this);
                     attack.SetSingleTarget(Target);
                     attack.AddWeaponDamage((ScriptFormula(0) / ScriptFormula(1)), DamageType.Holy);
-                    attack.AutomaticHitEffects = false;
                     attack.OnHit = hit =>
                         {
                             if (Rune_A > 0)
                             {
                                 //45% of damage healed back to user
-                                float healMe = ScriptFormula(2) * hit.TotalDamage;
-                                //User.Attributes[GameAttribute.Hitpoints_Granted] = healMe;
-                                //User.Attributes.BroadcastChangedIfRevealed();
                             } 
                             if (Rune_C > 0)
                             {
                                 //DebuffSlowed Target 
-                                AddBuff(Target, new DebuffSlowed(ScriptFormula(5), WaitSeconds(ScriptFormula(1))));
                             }
                         };
                     attack.Apply();
                 }
                 return false;
             }
-            public override void Remove()
-            {
-                base.Remove();
-            }
         }
         //Rune_B
-        [ImplementsPowerBuff(2)]
+        [ImplementsPowerBuff(1)]
         class HauntLinger : PowerBuff
         {
             const float _damageRate = 1.25f;
@@ -385,20 +359,12 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (_damageTimer == null || _damageTimer.TimedOut)
                 {
                     _damageTimer = WaitSeconds(_damageRate);
-                    //When this finds a target, it needs to destroy the spawnactor[Lingerer]
-                    if(GetEnemiesInRadius(Target.Position, ScriptFormula(10)).Actors.Count > 0)
-                    {
-                        var target = GetEnemiesInRadius(Target.Position, ScriptFormula(10)).GetClosestTo(Target.Position);
-                        Target.AddComplexEffect(19257, target);
-                        AddBuff(target, new Haunt1());
-                    }
-                     
+
+                    /*if(GetEnemiesInRadius(Wherever Monster Died, ScriptFormula(10)).Actors.Count > 0)
+                    { AddBuff(GetEnemiesInRadius(Monster's Death, ScriptFormula(10)).GetClosestTo(Monster's Death), new Haunt1())) }
+                     */
                 }
                 return false;
-            }
-            public override void Remove()
-            {
-                base.Remove();
             }
         }
     }
@@ -463,7 +429,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                 Vector3D inFrontOfUser = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, 3f);
                 var proj = new Projectile(this, RuneSelect(74056, 105501, 105543, 105463, 105969, 105812), inFrontOfUser);
                 proj.Position.Z -= 3f;
-                proj.Launch(TargetPosition, ScriptFormula(1));
                 proj.OnCollision = (hit) =>
                 {
                     AttackPayload attack = new AttackPayload(this);
@@ -471,10 +436,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     attack.AddWeaponDamage(ScriptFormula(4), DamageType.Poison);
                     attack.Apply();
                     attack.OnDeath = DeathPayload =>
-                    {
-                        Vector3D inFrontOfUser2 = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, 22f);
-                        var proj2 = new Projectile(this, RuneSelect(74056, 105501, 105543, 105463, 105969, 105812), inFrontOfUser2);
-                            proj.Launch(TargetPosition, ScriptFormula(1));
+                        {
                             //TODO:need this stuff.
                             //zombie new distance (SF(13))
                             //zombie speed (SF(14))
@@ -485,6 +447,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                             //damage reduction per zombie -> SF30
                         };
                 };
+                proj.Launch(TargetPosition, ScriptFormula(1));
             }
             else if (Rune_E > 0)
             {
@@ -501,25 +464,25 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 Vector3D inFrontOfUser = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, 3f);
                 var proj = new Projectile(this, RuneSelect(74056, 105501, 105543, 105463, 105969, 105812), inFrontOfUser);
-                proj.Position.Z -= 3f; 
-                proj.Launch(TargetPosition, ScriptFormula(1));
-                if (Rune_C > 0)
-                {
-                    var Puddle = SpawnEffect(105502, proj.Position, 0, WaitSeconds(ScriptFormula(17)));
-                    Puddle.UpdateDelay = 0.5f; //somehow play this more often?
-                    Puddle.OnUpdate = () =>
-                    {
-                        AttackPayload attack = new AttackPayload(this);
-                        attack.Targets = GetEnemiesInRadius(proj.Position, ScriptFormula(8));
-                        attack.AddWeaponDamage(ScriptFormula(6), DamageType.Poison);
-                        attack.Apply();
-                    };
-                }
+                proj.Position.Z -= 3f;
                 proj.OnCollision = (hit) =>
                 {
                     WeaponDamage(hit, ScriptFormula(4), DamageType.Poison);
-                };
 
+                    if (Rune_C > 0)
+                    {
+                        var Puddle = SpawnEffect(105502, hit.Position, 0, WaitSeconds(ScriptFormula(17)));
+                        Puddle.UpdateDelay = 1f;
+                        Puddle.OnUpdate = () =>
+                            {
+                                AttackPayload attack = new AttackPayload(this);
+                                attack.Targets = GetEnemiesInRadius(hit.Position, ScriptFormula(8));
+                                attack.AddWeaponDamage(ScriptFormula(6), DamageType.Poison);
+                                attack.Apply();
+                            };
+                    }
+                };
+                proj.Launch(TargetPosition, ScriptFormula(1));
             }
 
             yield break;
@@ -845,7 +808,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     #endregion
 
     //TODOs: Decoy HP and ID, SpiritWalk Appearance, Rune_C explosion(SNO for it?) needs to be from spawnproxy
-    //decoy deathmask.acr? buff/decoydeath/decoylook.efg?
     #region SpiritWalk
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.SpiritRealm.SpiritWalk)]
     public class SpiritWalk : Skill
@@ -873,7 +835,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             yield break;
         }
-        [ImplementsPowerBuff(1)]
+        [ImplementsPowerBuff(0)]
         class SpiritWalkBuff : PowerBuff
         {
             const float _damageRate = 0.25f;
@@ -944,7 +906,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 return false;
             }
         }
-        /*[ImplementsPowerBuff(1)]
+        [ImplementsPowerBuff(1)]
         class DecoyLookBuff : PowerBuff
         {
             //Brain or something?
@@ -954,7 +916,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 Timeout = WaitSeconds(ScriptFormula(0));
             }
-        }*/
+        }
         [ImplementsPowerBuff(2)]
         class SpiritWalkDamage : PowerBuff
         {
@@ -984,7 +946,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Seems alright.. just needs tweaking, check on the teleportation of the character occassionally when casting.
+    //This is very hacky. will need to be reworked.
     #region SoulHarvest
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.SpiritRealm.SoulHarvest)]
     public class SoulHarvest : Skill
@@ -1001,7 +963,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 enemy.PlayEffectGroup(1164);
                 WeaponDamage(enemy, 30f, DamageType.Physical);
                 enemy.AddComplexEffect(19277, User);
-                if (Rune_E > 0)
+                /*if (Rune_E > 0)
                 {
                     WeaponDamage(enemy, ScriptFormula(0), DamageType.Physical);
                 }
@@ -1009,10 +971,9 @@ namespace Mooege.Core.GS.Powers.Implementations
                 {
                     AddBuff(enemy, new ObsidianDebuff());
                     AddBuff(enemy, new DebuffSlowed(ScriptFormula(10), WaitSeconds(ScriptFormula(11))));
-                }
-                yield return WaitSeconds(0.7f);
-                AddBuff(User, new soulHarvestbuff());
+                }*/
             }
+            //AddBuff(User, new soulHarvestbuff());
 
             yield break;
         }
@@ -1083,10 +1044,15 @@ namespace Mooege.Core.GS.Powers.Implementations
     public class LocustSwarm : Skill
     {
         //Summon a plague of locusts to assault enemies, dealing [25 * {Script Formula 18} * 100]% weapon damage per second as Poison for 3 seconds. The locusts will jump to additional nearby targets.
+        //A:[Fire.efg's] -> Ignite the locusts with fire causing them to deal [55 * {Script Formula 18} * 100]% weapon damage per second as Fire.
+        //B:[Multiply.efg's] -> When the swarm jumps there is a 55% chance to jump to two targets instead of one.
+        //C:[Duration.efg's] -> Increase the duration of the swarm to 10 seconds.
+        //D:[Mana.efg's] -> Gain 0.4 Mana for every enemy affected.
+        //E:[Disease.efg's] -> Targets killed by the Locust Swarm leave behind a cloud of locusts that deal [32 * {Script Formula 18} * 100]% weapon damage per second as Poison. This cloud of locusts lingers for 3 seconds. 
         public override IEnumerable<TickTimer> Main()
         {
+            var jumptime = ScriptFormula(1);
             //cast, spread to those in radius, from there jump to other mobs in area within (__?__)
-            //does not always focus the correct way.
             User.PlayEffectGroup(106765);
 
             //just a little wait for the animation
@@ -1097,6 +1063,20 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 AddBuff(LocustTarget, new LocustSwarmer(WaitSeconds(ScriptFormula(1))));
             }
+            
+            /*
+            //minimum jumptime
+            while (jumptime > 1.2f)
+            {
+                //swarm jump radius
+                while (GetEnemiesInRadius(curTarget, ScriptFormula(2)) != null)
+                {
+
+                }
+                height *= bouncePercent;
+                jumptime *= 0.1f; //delta = Swarm Jump Time Delta
+            }
+            */
             yield break;
         }
         [ImplementsPowerBuff(0)]
@@ -1104,9 +1084,6 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             const float _damageRate = 1f;
             TickTimer _damageTimer = null;
-
-            float _jumpRate = 3f;
-            TickTimer _jumpTimer = null;
 
             public LocustSwarmer(TickTimer timeout)
             {
@@ -1123,26 +1100,8 @@ namespace Mooege.Core.GS.Powers.Implementations
                     AttackPayload attack = new AttackPayload(this);
                     attack.SetSingleTarget(Target);
                     attack.AddWeaponDamage(ScriptFormula(0), Rune_A > 0 ? DamageType.Fire : DamageType.Poison);
-                    attack.AutomaticHitEffects = false;
                     attack.Apply();
                 }
-
-                /*while (_jumpRate > ScriptFormula(4))
-                {
-                    if (_jumpTimer == null || _jumpTimer.TimedOut)
-                    {
-                        _jumpTimer = WaitSeconds(_jumpRate);
-                        //swarm jump radius
-                        var newTarget = GetEnemiesInRadius(Target.Position, ScriptFormula(2)).GetClosestTo(Target.Position);
-                        while (newTarget != null)
-                        {
-                            //Target.AddComplexEffect(106839, newTarget);
-                            AddBuff(newTarget, new LocustSwarmer(WaitSeconds(ScriptFormula(1))));
-                        }
-                        _jumpRate *= 0.9f; //delta = Swarm Jump Time Delta
-                    }
-                }*/
-
                 return false;
             }
         }
@@ -1436,20 +1395,18 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            var ShamSpot = SpawnProxy(TargetPosition, WaitSeconds(ScriptFormula(0)+1f));
+            var ShamSpot = SpawnProxy(TargetPosition, WaitSeconds(ScriptFormula(0)));
             SpawnEffect(RuneSelect(117574, 182271, 182276, 182278, 182283, 117574), TargetPosition, 0, WaitSeconds(ScriptFormula(0))).PlayEffectGroup(181291);
-            AddBuff(ShamSpot, new AuraBuff());
+            //AddBuff(ShamSpot, new AuraBuff());
             yield break;
         }
 
         [ImplementsPowerBuff(0)]
         class AuraBuff : PowerBuff
         {
+            //aura -> this does not play correctly
             const float _damageRate = 0.5f;
             TickTimer _damageTimer = null;
-
-            const float _healRate = 1f;
-            TickTimer _healTimer = null;
 
             public override void Init()
             {
@@ -1464,12 +1421,8 @@ namespace Mooege.Core.GS.Powers.Implementations
                 {
                     _damageTimer = WaitSeconds(_damageRate);
                     //your character
-                    //if User in Radius of Target.Position, get this buff plus Rune_D if active.
-                    AddBuff(User, new FetishShamanBuff());
-                    if (Rune_D > 0)
-                    {
-                        AddBuff(User, new Golden_ManaBuff());
-                    }
+
+                        AddBuff(User, new FetishShamanBuff());
 
                     foreach (Actor Ally in GetAlliesInRadius(Target.Position, ScriptFormula(2)).Actors)
                     {
@@ -1480,19 +1433,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                         foreach (Actor Ally in GetAlliesInRadius(Target.Position, ScriptFormula(2)).Actors)
                         {
                                 AddBuff(Ally, new Golden_ManaBuff());
-                        }
-                    }
-                }
-                if (_healTimer == null || _healTimer.TimedOut)
-                {
-                    _healTimer = WaitSeconds(_healRate);
-
-                    if (Rune_E > 0)
-                    {
-                        //User health as well
-                        foreach (Actor Ally in GetAlliesInRadius(Target.Position, ScriptFormula(2)).Actors)
-                        {
-                            //Heal allies for ScriptFormula(4) of Max HP
                         }
                     }
                 }
@@ -1512,6 +1452,10 @@ namespace Mooege.Core.GS.Powers.Implementations
         [ImplementsPowerBuff(2)]
         class FetishShamanBuff : PowerBuff
         {
+            //Buff
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
             public override void Init()
             {
                 Timeout = WaitSeconds(ScriptFormula(9));
@@ -1530,6 +1474,24 @@ namespace Mooege.Core.GS.Powers.Implementations
                     AddBuff(Target, new SpeedBuff(ScriptFormula(1), WaitSeconds(ScriptFormula(9))));
                     AddBuff(Target, new MovementBuff(ScriptFormula(1), WaitSeconds(ScriptFormula(9))));
                 return true;
+            }
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    if (Rune_E > 0)
+                    {
+                        foreach (Actor Ally in GetAlliesInRadius(Target.Position, ScriptFormula(2)).Actors)
+                        {
+                            //Heal allies for ScriptFormula(4) of Max HP
+                        }
+                    }
+                }
+                return false;
             }
             public override void Remove()
             {
