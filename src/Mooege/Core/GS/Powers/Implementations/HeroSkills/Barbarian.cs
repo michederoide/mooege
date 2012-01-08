@@ -51,7 +51,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                 if (i == 0)
                 { attack.AddWeaponDamage(ScriptFormula(3), DamageType.Physical); }
-                else 
+                else
                 { attack.AddWeaponDamage(ScriptFormula(12), DamageType.Physical); }
 
                 attack.OnHit = hitPayload =>
@@ -75,8 +75,8 @@ namespace Mooege.Core.GS.Powers.Implementations
                     }
                     else
                     {
-                    if (Rand.NextDouble() < ScriptFormula(0))
-                        Knockback(hitPayload.Target, ScriptFormula(5), ScriptFormula(6), ScriptFormula(7));
+                        if (Rand.NextDouble() < ScriptFormula(0))
+                            Knockback(hitPayload.Target, ScriptFormula(5), ScriptFormula(6), ScriptFormula(7));
                     }
                 };
                 attack.Apply();
@@ -104,7 +104,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (!base.Apply())
                     return false;
-                        _AddDamage();
+                _AddDamage();
                 return true;
             }
 
@@ -135,7 +135,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: Rune_B, fix up Rune_A
     #region LeapAttack
@@ -192,17 +192,17 @@ namespace Mooege.Core.GS.Powers.Implementations
             attack.Targets = GetEnemiesInRadius(TargetPosition, ScriptFormula(0));
             //ScriptFormula(1) states "% of willpower Damage", perhaps the damage should be calculated that way instead.
             attack.AddWeaponDamage(0.70f, DamageType.Physical);
-            attack.OnHit = hitPayload => 
-                { 
-                    hitAnything = true;
-                    if (Rune_E > 0)
+            attack.OnHit = hitPayload =>
+            {
+                hitAnything = true;
+                if (Rune_E > 0)
+                {
+                    if (Rand.NextDouble() < ScriptFormula(37))
                     {
-                        if (Rand.NextDouble() < ScriptFormula(37))
-                        {
-                            AddBuff(hitPayload.Target, new DebuffStunned(WaitSeconds(ScriptFormula(38))));
-                        }
+                        AddBuff(hitPayload.Target, new DebuffStunned(WaitSeconds(ScriptFormula(38))));
                     }
-                };
+                }
+            };
             attack.Apply();
 
             if (hitAnything)
@@ -264,7 +264,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: Runes_C,D,E
     #region WhirlWind
@@ -328,7 +328,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //Rune_C
     #region AncientSpear
@@ -340,7 +340,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             StartCooldown(WaitSeconds(10f));
             if (Rune_B > 0)
             {
-                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(9)/5f, (int)ScriptFormula(11));
+                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(9) / 5f, (int)ScriptFormula(11));
 
                 for (int i = 0; i < projDestinations.Length; i++)
                 {
@@ -349,7 +349,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     proj.OnCollision = (hit) =>
                     {
                         //should happen on first hit, dunno if thats for all (up to 8) spears.
-                        GeneratePrimaryResource(ScriptFormula(12)+ScriptFormula(13));
+                        GeneratePrimaryResource(ScriptFormula(12) + ScriptFormula(13));
 
                         _setupReturnProjectile(hit.Position);
 
@@ -358,7 +358,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                         attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
                         attack.OnHit = (hitPayload) =>
                         {
-                            
+
                             hitPayload.Target.PlayEffectGroup(79420);
                             Knockback(hitPayload.Target, -25f, ScriptFormula(3), ScriptFormula(4));
                         };
@@ -376,40 +376,40 @@ namespace Mooege.Core.GS.Powers.Implementations
                 }
             }
             else if (Rune_E > 0)
+            {
+                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(9) / 5f, (int)ScriptFormula(11));
+
+                for (int i = 0; i < projDestinations.Length; i++)
                 {
-                    Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(9) / 5f, (int)ScriptFormula(11));
-
-                    for (int i = 0; i < projDestinations.Length; i++)
+                    var proj = new Projectile(this, 161894, User.Position);
+                    proj.Timeout = WaitSeconds(0.5f);
+                    proj.OnCollision = (hit) =>
                     {
-                        var proj = new Projectile(this, 161894, User.Position);
-                        proj.Timeout = WaitSeconds(0.5f);
-                        proj.OnCollision = (hit) =>
+                        GeneratePrimaryResource(ScriptFormula(12) + ScriptFormula(13));
+
+                        _setupReturnProjectile(hit.Position);
+
+                        AttackPayload attack = new AttackPayload(this);
+                        attack.SetSingleTarget(hit);
+                        attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                        attack.OnHit = (hitPayload) =>
                         {
-                            GeneratePrimaryResource(ScriptFormula(12) + ScriptFormula(13));
-
-                            _setupReturnProjectile(hit.Position);
-
-                            AttackPayload attack = new AttackPayload(this);
-                            attack.SetSingleTarget(hit);
-                            attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
-                            attack.OnHit = (hitPayload) =>
-                            {
-                                hitPayload.Target.PlayEffectGroup(79420);
-                                Knockback(hitPayload.Target, 25f, ScriptFormula(3), ScriptFormula(4));
-                            };
-                            attack.Apply();
-
-                            proj.Destroy();
+                            hitPayload.Target.PlayEffectGroup(79420);
+                            Knockback(hitPayload.Target, 25f, ScriptFormula(3), ScriptFormula(4));
                         };
-                        proj.OnTimeout = () =>
-                        {
-                            _setupReturnProjectile(proj.Position);
-                        };
+                        attack.Apply();
 
-                        proj.Launch(projDestinations[i], ScriptFormula(8));
-                        User.AddRopeEffect(79402, proj);
-                    }
+                        proj.Destroy();
+                    };
+                    proj.OnTimeout = () =>
+                    {
+                        _setupReturnProjectile(proj.Position);
+                    };
+
+                    proj.Launch(projDestinations[i], ScriptFormula(8));
+                    User.AddRopeEffect(79402, proj);
                 }
+            }
             else if (Rune_A > 0)
             {
                 var projectile = new Projectile(this, 161890, User.Position);
@@ -487,7 +487,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             User.AddRopeEffect(79402, return_proj);
         }
     }
-#endregion
+    #endregion
 
     //TODO: A,C
     #region ThreateningShout
@@ -569,13 +569,13 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             public override void Init()
             {
-                    Timeout = WaitSeconds(ScriptFormula(17));
+                Timeout = WaitSeconds(ScriptFormula(17));
             }
             public override bool Apply()
             {
                 if (!base.Apply())
                     return false;
-                    Target.Attributes[GameAttribute.Attacks_Per_Second_Percent] += ScriptFormula(4);
+                Target.Attributes[GameAttribute.Attacks_Per_Second_Percent] += ScriptFormula(4);
                 Target.Attributes.BroadcastChangedIfRevealed();
                 return true;
             }
@@ -588,7 +588,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         }
 
     }
-#endregion
+    #endregion
 
     //TODO: D,E
     #region HammerOfTheAncients
@@ -631,43 +631,43 @@ namespace Mooege.Core.GS.Powers.Implementations
                     }
                 };
                 attack.OnDeath = DeathPayload =>
+                {
+                    if (Rune_E > 0)
                     {
-                        if (Rune_E > 0)
+                        //if (DeathPayload.Target)?
                         {
-                            //if (DeathPayload.Target)?
+                            if (Rand.NextDouble() < ScriptFormula(16))
                             {
-                                if (Rand.NextDouble() < ScriptFormula(16))
+                                AttackPayload Stunattack = new AttackPayload(this);
+                                Stunattack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(18));
+                                Stunattack.OnHit = stun =>
                                 {
-                                    AttackPayload Stunattack = new AttackPayload(this);
-                                    Stunattack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(18));
-                                    Stunattack.OnHit = stun =>
-                                        {
-                                            AddBuff(stun.Target, new DebuffStunned(WaitSeconds(ScriptFormula(17))));
-                                        };
-                                    Stunattack.Apply();
-                                }
+                                    AddBuff(stun.Target, new DebuffStunned(WaitSeconds(ScriptFormula(17))));
+                                };
+                                Stunattack.Apply();
                             }
                         }
-                    };
+                    }
+                };
                 attack.Apply();
 
                 if (Rune_C > 0)
                 {
-                    var QuakeHammer = SpawnEffect(159030, User.Position, 0 , WaitSeconds(ScriptFormula(10)));
+                    var QuakeHammer = SpawnEffect(159030, User.Position, 0, WaitSeconds(ScriptFormula(10)));
                     QuakeHammer.UpdateDelay = 1f;
                     QuakeHammer.OnUpdate = () =>
-                        {
-                            AttackPayload TremorAttack = new AttackPayload(this);
-                            TremorAttack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
-                            TremorAttack.AddWeaponDamage(ScriptFormula(9), DamageType.Physical);
-                            TremorAttack.Apply();
-                        };
+                    {
+                        AttackPayload TremorAttack = new AttackPayload(this);
+                        TremorAttack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
+                        TremorAttack.AddWeaponDamage(ScriptFormula(9), DamageType.Physical);
+                        TremorAttack.Apply();
+                    };
                 }
             }
             yield break;
         }
     }
-#endregion
+    #endregion
 
     //TODO: just needs attribute check/crit/timer
     #region BattleRage
@@ -698,20 +698,20 @@ namespace Mooege.Core.GS.Powers.Implementations
                     return false;
                 //Rune_A
                 //Total Damage Bonus
-                    User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] += ScriptFormula(1);
+                User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] += ScriptFormula(1);
 
                 //Crit Chance Bonus
-                    User.Attributes[GameAttribute.Crit_Damage_Percent] += (int)ScriptFormula(2);
-                    User.Attributes.BroadcastChangedIfRevealed();
+                User.Attributes[GameAttribute.Crit_Damage_Percent] += (int)ScriptFormula(2);
+                User.Attributes.BroadcastChangedIfRevealed();
 
                 return true;
             }
 
             public override void OnPayload(Payload payload)
             {
-            if (payload is HitPayload && Target.Equals(payload.Context.User))
+                if (payload is HitPayload && Target.Equals(payload.Context.User))
                 {
-                //if (payload.IsCriticalHit)
+                    //if (payload.IsCriticalHit)
                     {
                         if (Rune_B > 0)
                         {
@@ -744,11 +744,11 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 base.Remove();
                 //Total Damage Bonus
-                    User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] -= ScriptFormula(1);
+                User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] -= ScriptFormula(1);
 
                 //Crit Chance Bonus
-                    User.Attributes[GameAttribute.Crit_Damage_Percent] -= (int)ScriptFormula(2);
-                    User.Attributes.BroadcastChangedIfRevealed();
+                User.Attributes[GameAttribute.Crit_Damage_Percent] -= (int)ScriptFormula(2);
+                User.Attributes.BroadcastChangedIfRevealed();
             }
         }
     }
@@ -776,7 +776,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(14)).Actors)
                     {
                         Knockback(enemy, ScriptFormula(13));
-                    } 
+                    }
                     foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(21)).Actors)
                     {
                         Knockback(enemy, ScriptFormula(20));
@@ -806,21 +806,21 @@ namespace Mooege.Core.GS.Powers.Implementations
                         StackCount++;
                     }
 
-                    GeneratePrimaryResource(ScriptFormula(22)* StackCount);
+                    GeneratePrimaryResource(ScriptFormula(22) * StackCount);
                 }
                 if (Rune_E > 0)
                 {
                     //this doesnt work either.
                     attack.OnDeath = DeathPayload =>
+                    {
+                        if (Rand.NextDouble() < ScriptFormula(12))
                         {
-                            if (Rand.NextDouble() < ScriptFormula(12))
-                            {
-                                AttackPayload explode = new AttackPayload(this);
-                                explode.Targets = GetEnemiesInRadius(DeathPayload.Target.Position, ScriptFormula(6));
-                                explode.AddWeaponDamage(ScriptFormula(4), DamageType.Physical);
-                                explode.Apply();
-                            }
-                        };
+                            AttackPayload explode = new AttackPayload(this);
+                            explode.Targets = GetEnemiesInRadius(DeathPayload.Target.Position, ScriptFormula(6));
+                            explode.AddWeaponDamage(ScriptFormula(4), DamageType.Physical);
+                            explode.Apply();
+                        }
+                    };
                 }
             };
             attack.Apply();
@@ -917,9 +917,9 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
-    //TODO: Rune_E -> Figure Out TeamID
+    //TODO: Rune_B and Rune_E -> Figure Out TeamID
     #region WeaponThrow
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FurySpenders.WeaponThrow)]
     public class WeaponThrow : Skill
@@ -928,38 +928,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             if (Rune_B > 0)
             {
-                IList<Actor> targets = new List<Actor>() { Target };
-                Actor ropeSource = User;
-                Actor curTarget = Target;
-                float damage = ScriptFormula(15);
-                while (targets.Count < ScriptFormula(5) + 1)
-                {
-                    if (ropeSource.World == null)
-                        ropeSource = SpawnProxy(ropeSource.Position);
-
-                    if (curTarget.World != null)
-                    {
-                        ropeSource.AddRopeEffect(166450, curTarget);
-                        ropeSource = curTarget;
-
-                        WeaponDamage(curTarget, damage, DamageType.Physical);
-                    }
-                    else
-                    {
-                        break;
-                    }
-
-                    curTarget = GetEnemiesInRadius(curTarget.Position, ScriptFormula(12), (int)ScriptFormula(5)).Actors.FirstOrDefault(t => !targets.Contains(t));
-                    if (curTarget != null)
-                    {
-                        targets.Add(curTarget);
-                        yield return WaitSeconds(0.150f);
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+                //throw projectile -> once collision with target, RopeEffect up to ScriptFromula(5) times.
             }
             else
             {
@@ -1009,7 +978,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override bool Apply()
             {
                 if (!base.Apply())
-                    return false; 
+                    return false;
                 Target.Attributes[GameAttribute.TeamID] = 0;
                 Target.Attributes.BroadcastChangedIfRevealed();
                 return true;
@@ -1023,7 +992,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //Complete, check it.
     #region GroundStomp
@@ -1113,7 +1082,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: Rune_D SF(8)
     #region Rend
@@ -1131,18 +1100,18 @@ namespace Mooege.Core.GS.Powers.Implementations
             };
             //this work? if it dies with rend debuff, infect others.
             attack.OnDeath = DeathPayload =>
+            {
+                if (AddBuff(Target, new RendDebuff()))
                 {
-                    if (AddBuff(Target, new RendDebuff()))
+                    AttackPayload BleedAgain = new AttackPayload(this);
+                    BleedAgain.Targets = GetEnemiesInRadius(Target.Position, ScriptFormula(19));
+                    BleedAgain.OnHit = hitPayload2 =>
                     {
-                        AttackPayload BleedAgain = new AttackPayload(this);
-                        BleedAgain.Targets = GetEnemiesInRadius(Target.Position, ScriptFormula(19));
-                        BleedAgain.OnHit = hitPayload2 =>
-                        {
-                            AddBuff(hitPayload2.Target, new RendDebuff());
-                        };
-                        BleedAgain.Apply();
-                    }
-                };
+                        AddBuff(hitPayload2.Target, new RendDebuff());
+                    };
+                    BleedAgain.Apply();
+                }
+            };
             attack.Apply();
             yield break;
         }
@@ -1154,7 +1123,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             public override void Init()
             {
-                Timeout = WaitSeconds(ScriptFormula(5)); 
+                Timeout = WaitSeconds(ScriptFormula(5));
                 MaxStackCount = (int)ScriptFormula(10);
             }
 
@@ -1205,7 +1174,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //Complete, check it.
     #region Frenzy
@@ -1222,7 +1191,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 AddBuff(User, new FrenzyBuff());
                 if (Rune_C > 0)
                 {
-                        AddBuff(User, new ObsidianSpeedEffect());
+                    AddBuff(User, new ObsidianSpeedEffect());
                 }
                 if (Rune_B > 0)
                 {
@@ -1249,14 +1218,14 @@ namespace Mooege.Core.GS.Powers.Implementations
                 }
             };
             attack.OnDeath = DeathPayload =>
+            {
+                if (Rune_E > 0)
                 {
-                    if (Rune_E > 0)
-                    {
-                        User.Attributes[GameAttribute.Hitpoints_Granted_Duration] += (int)ScriptFormula(12);
-                        User.Attributes[GameAttribute.Hitpoints_Granted] += ScriptFormula(10) * User.Attributes[GameAttribute.Hitpoints_Max_Total];
-                        User.Attributes.BroadcastChangedIfRevealed();
-                    }
-                };
+                    User.Attributes[GameAttribute.Hitpoints_Granted_Duration] += (int)ScriptFormula(12);
+                    User.Attributes[GameAttribute.Hitpoints_Granted] += ScriptFormula(10) * User.Attributes[GameAttribute.Hitpoints_Max_Total];
+                    User.Attributes.BroadcastChangedIfRevealed();
+                }
+            };
             attack.Apply();
 
             yield break;
@@ -1274,7 +1243,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (!base.Apply())
                     return false;
-                        _AddFrenzy();
+                _AddFrenzy();
                 return true;
             }
 
@@ -1339,7 +1308,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //Incomplete, very confusing how to active this with using everthing else and how to end it when pressed.
     //Possibly wait to finish this when we get Passives activated.
@@ -1362,7 +1331,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield break;
         }
     }
-#endregion
+    #endregion
 
 
     //Complete, stupid error I made, check it.
@@ -1485,7 +1454,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //still terrible. needs to be redone.
     #region FuriousCharge
@@ -1576,13 +1545,13 @@ namespace Mooege.Core.GS.Powers.Implementations
                     attack.AddWeaponDamage(ScriptFormula(16), DamageType.Physical);
                     attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(6));
                     attack.OnHit = hit =>
-                        {
+                    {
                         Knockback(hit.Target, ScriptFormula(2));
                         if (Rune_B > 0)
                         {
                             User.Attributes[GameAttribute.Hitpoints_Granted] += ScriptFormula(21);
                             User.Attributes.BroadcastChangedIfRevealed();
-                        } 
+                        }
                         if (Rune_D > 0)
                         {
                             GeneratePrimaryResource(ScriptFormula(11));
@@ -1602,14 +1571,14 @@ namespace Mooege.Core.GS.Powers.Implementations
                                 //maybe this cannot go here?
                             }
                         }
-                        };
+                    };
                     attack.Apply();
                 }
                 return false;
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: E, B (check/fix A and C)
     #region Overpower
@@ -1632,26 +1601,26 @@ namespace Mooege.Core.GS.Powers.Implementations
             attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
             attack.AddWeaponDamage(ScriptFormula(7), DamageType.Physical);
             attack.OnHit = HitPayload =>
+            {
+                if (Rune_C > 0)
                 {
-                    if (Rune_C > 0)
-                    {
-                        //TODO: is this the intended way to heal?
-                        User.Attributes[GameAttribute.Hitpoints_Cur] =
-                            Math.Min(User.Attributes[GameAttribute.Hitpoints_Cur] + 
-                            ScriptFormula(23) * User.Attributes[GameAttribute.Hitpoints_Max],
-                            User.Attributes[GameAttribute.Hitpoints_Max]);
+                    //TODO: is this the intended way to heal?
+                    User.Attributes[GameAttribute.Hitpoints_Cur] =
+                        Math.Min(User.Attributes[GameAttribute.Hitpoints_Cur] +
+                        ScriptFormula(23) * User.Attributes[GameAttribute.Hitpoints_Max],
+                        User.Attributes[GameAttribute.Hitpoints_Max]);
 
-                        User.Attributes.BroadcastChangedIfRevealed();
-                    } 
-                    if (Rune_D > 0)
-                    {
-                        GeneratePrimaryResource(ScriptFormula(28));
-                    }
-                    if (HitPayload.IsCriticalHit)
-                    {
-                        Cooldown = WaitSeconds(0f);
-                    }
-                };
+                    User.Attributes.BroadcastChangedIfRevealed();
+                }
+                if (Rune_D > 0)
+                {
+                    GeneratePrimaryResource(ScriptFormula(28));
+                }
+                if (HitPayload.IsCriticalHit)
+                {
+                    Cooldown = WaitSeconds(0f);
+                }
+            };
             attack.Apply();
 
             if (Rune_B > 0)
@@ -1717,7 +1686,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: Rune_E -> this is going to be hard..
     //Something wrong with using knockback.
@@ -1762,7 +1731,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield break;
         }
     }
-#endregion
+    #endregion
 
     //SuperEarthquake.ani.
     //this is a dumpster fire.. (terrible, rewrite it)
@@ -1778,17 +1747,17 @@ namespace Mooege.Core.GS.Powers.Implementations
             var Quake = SpawnEffect(168440, User.Position, 0, WaitSeconds(ScriptFormula(1)));
             Quake.UpdateDelay = 0.5f;
             Quake.OnUpdate = () =>
-                {
-                    AttackPayload attack = new AttackPayload(this);
-                    attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(0));
-                    attack.AddWeaponDamage(ScriptFormula(17), DamageType.Physical);
-                    attack.Apply();
-                };
+            {
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(0));
+                attack.AddWeaponDamage(ScriptFormula(17), DamageType.Physical);
+                attack.Apply();
+            };
             //Secondary Tremor stuff..
             yield break;
         }
     }
-#endregion    
+    #endregion
 
     //TODO: Rune_C and _E
     #region Sprint
@@ -1888,7 +1857,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: Rune_C/D
     #region WrathOfTheBerserker
@@ -1904,9 +1873,9 @@ namespace Mooege.Core.GS.Powers.Implementations
                 attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(20));
                 attack.AddWeaponDamage(ScriptFormula(17), DamageType.Physical);
                 attack.OnHit = HitPayload =>
-                    {
-                        Knockback(User.Position, HitPayload.Target, ScriptFormula(18), ScriptFormula(19));
-                    };
+                {
+                    Knockback(User.Position, HitPayload.Target, ScriptFormula(18), ScriptFormula(19));
+                };
             }
             if (Rune_E > 0)
             {
@@ -1982,5 +1951,5 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
     */
-            //12 Passive Skills
+    //12 Passive Skills
 }

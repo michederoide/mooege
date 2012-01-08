@@ -93,7 +93,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     yield return WaitSeconds(ScriptFormula(13));
             }
         }
-        
+
         [ImplementsPowerBuff(0)]
         class ExplosionBuff : PowerBuff
         {
@@ -152,7 +152,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             GeneratePrimaryResource(ScriptFormula(25));
 
             float targetDistance = PowerMath.Distance2D(User.Position, TargetPosition);
-            
+
             // create grenade projectiles with shared detonation timer
             TickTimer timeout = WaitSeconds(ScriptFormula(2));
             Projectile[] grenades = new Projectile[Rune_C > 0 ? 1 : 3];
@@ -289,7 +289,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 var attackDelay = WaitSeconds(ScriptFormula(20));
                 var demonPosition = RandomDirection(castedPosition, ScriptFormula(24), ScriptFormula(25));
 
-                var demon = SpawnEffect(149949, demonPosition, ScriptFormula(22), WaitSeconds(5.0f));                    
+                var demon = SpawnEffect(149949, demonPosition, ScriptFormula(22), WaitSeconds(5.0f));
                 demon.OnUpdate = () =>
                 {
                     if (attackDelay.TimedOut)
@@ -398,7 +398,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         AddBuff(hitPayload.Target, new DebuffStunned(WaitSeconds(ScriptFormula(37))));
                     };
-                    attack.Apply();                    
+                    attack.Apply();
                 };
 
                 yield return WaitSeconds(ScriptFormula(4));
@@ -433,7 +433,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: needs the actor position fixed, since the arrow jumps from position to positions when changing direction
     #region HungeringArrow
@@ -500,53 +500,53 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Main()
         {
             var proj = new Projectile(this, RuneSelect(220527, 222102, 222115, 222128, 220527, 222141), User.Position);
-                proj.Position.Z += 5f;  // fix height
-                proj.OnCollision = (hit) =>
-                {
-                    hit.PlayEffectGroup(RuneSelect(221164, 222107, 222120, 222133, 221164, 222146));
-                    WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
-                    /*AttackPayload attack = new AttackPayload(this);
-                    attack.Target = hit;
-                    attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
-                    attack.OnHit = (HitPayload) =>
+            proj.Position.Z += 5f;  // fix height
+            proj.OnCollision = (hit) =>
+            {
+                hit.PlayEffectGroup(RuneSelect(221164, 222107, 222120, 222133, 221164, 222146));
+                WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
+                /*AttackPayload attack = new AttackPayload(this);
+                attack.Target = hit;
+                attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                attack.OnHit = (HitPayload) =>
+                    {
+                        if (HitPayload.IsCriticalHit)
                         {
-                            if (HitPayload.IsCriticalHit)
+                            if (Rune_E > 0)
                             {
-                                if (Rune_E > 0)
-                                {
-                                    WeaponDamage(HitPayload.Target, ScriptFormula(13), DamageType.Physical);
-                                }
+                                WeaponDamage(HitPayload.Target, ScriptFormula(13), DamageType.Physical);
                             }
-                        };
-                    attack.Apply();*/
-
-                    if (Rune_A > 0)
-                    {
-                        //Nothing goes here.
-                    }
-                    else
-                    {
-                        if (Rune_B > 0)
-                        {
-                            Knockback(User.Position, hit, ScriptFormula(4));
-                            AddBuff(hit, new DebuffStunned(WaitSeconds(ScriptFormula(6))));
                         }
-                        if (Rune_C > 0)
-                        {
-                            AddBuff(hit, new addsDOTDamage());
-                        }
-                        proj.Destroy();
+                    };
+                attack.Apply();*/
 
-                    }
-                };
-                proj.Launch(TargetPosition, ScriptFormula(2));
-
-                if (Rune_D > 0)
+                if (Rune_A > 0)
                 {
-                    SpawnEffect(222156, User.Position);
-                    //User.PlayEffectGroup(222155);
-                    WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(11)), ScriptFormula(12), DamageType.Physical);
+                    //Nothing goes here.
                 }
+                else
+                {
+                    if (Rune_B > 0)
+                    {
+                        Knockback(User.Position, hit, ScriptFormula(4));
+                        AddBuff(hit, new DebuffStunned(WaitSeconds(ScriptFormula(6))));
+                    }
+                    if (Rune_C > 0)
+                    {
+                        AddBuff(hit, new addsDOTDamage());
+                    }
+                    proj.Destroy();
+
+                }
+            };
+            proj.Launch(TargetPosition, ScriptFormula(2));
+
+            if (Rune_D > 0)
+            {
+                SpawnEffect(222156, User.Position);
+                //User.PlayEffectGroup(222155);
+                WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(11)), ScriptFormula(12), DamageType.Physical);
+            }
 
             yield return WaitSeconds(1f);
         }
@@ -580,7 +580,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: BackFlip function and D and E <- these runes pretty much finish when backflip is corrected
     //TODO: Rune_C -> poison bomb.
@@ -635,9 +635,9 @@ namespace Mooege.Core.GS.Powers.Implementations
                     else
                     {
                         hit.PlayEffectGroup(RuneSelect(134836, 150801, 150807, 150803, 150804, 150805));
-                        WeaponDamage(hit, ScriptFormula(3), RuneSelect(DamageType.Physical,DamageType.Fire,DamageType.Physical,DamageType.Poison, DamageType.Lightning, DamageType.Physical));
+                        WeaponDamage(hit, ScriptFormula(3), RuneSelect(DamageType.Physical, DamageType.Fire, DamageType.Physical, DamageType.Poison, DamageType.Lightning, DamageType.Physical));
                     }
-                        
+
                     proj.Destroy();
                 };
                 proj.Launch(position, ScriptFormula(2));
@@ -678,28 +678,28 @@ namespace Mooege.Core.GS.Powers.Implementations
             var caltropsGround = SpawnEffect(196030, GroundSpot.Position, 0, WaitSeconds(ScriptFormula(9)));
             caltropsGround.UpdateDelay = 0.25f;
             caltropsGround.OnUpdate = () =>
+            {
+                if (GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(0)).Actors.Count > 0)
                 {
-                    if (GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(0)).Actors.Count > 0)
+                    caltropsGround.Destroy();
+                    var calTrops = SpawnEffect(RuneSelect(129784, 154811, 155734, 155159, 155848, 155376), GroundSpot.Position, 0, WaitSeconds(ScriptFormula(2)));
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(0));
+                    attack.OnHit = (hit) =>
                     {
-                        caltropsGround.Destroy();
-                        var calTrops = SpawnEffect(RuneSelect(129784, 154811, 155734, 155159, 155848, 155376), GroundSpot.Position, 0, WaitSeconds(ScriptFormula(2)));
-                        AttackPayload attack = new AttackPayload(this);
-                        attack.Targets = GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(0));
-                        attack.OnHit = (hit) =>
-                            {
-                                if (AddBuff(hit.Target, new ActiveCalTrops()))
-                                { }
-                                else
-                                AddBuff(hit.Target, new ActiveCalTrops());
-                            };
-                        attack.Apply();
+                        if (AddBuff(hit.Target, new ActiveCalTrops()))
+                        { }
+                        else
+                            AddBuff(hit.Target, new ActiveCalTrops());
+                    };
+                    attack.Apply();
 
-                        if (Rune_E > 0)
-                        {
-                            //Increase Crit Hit while inside Radius. May have to redo skill for this?
-                        }
+                    if (Rune_E > 0)
+                    {
+                        //Increase Crit Hit while inside Radius. May have to redo skill for this?
                     }
-                };
+                }
+            };
 
             yield break;
         }
@@ -738,17 +738,17 @@ namespace Mooege.Core.GS.Powers.Implementations
                         attack.AddWeaponDamage(ScriptFormula(20), DamageType.Physical);
                     }
                     attack.OnHit = HitPayload =>
+                    {
+                        if (Rune_C > 0)
                         {
-                            if (Rune_C > 0)
-                            {
-                                //Immobilize for ScriptFormula(24)
-                            }
+                            //Immobilize for ScriptFormula(24)
+                        }
 
-                            if (AddBuff(HitPayload.Target, new DebuffSlowed(ScriptFormula(3), WaitSeconds(ScriptFormula(4)))))
-                            { }
-                            else
+                        if (AddBuff(HitPayload.Target, new DebuffSlowed(ScriptFormula(3), WaitSeconds(ScriptFormula(4)))))
+                        { }
+                        else
                             AddBuff(HitPayload.Target, new DebuffSlowed(ScriptFormula(3), WaitSeconds(ScriptFormula(4))));
-                        };
+                    };
                     attack.Apply();
                 }
 
@@ -854,7 +854,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             public override void Remove()
             {
-                base.Remove(); 
+                base.Remove();
                 Target.Attributes[GameAttribute.Movement_Scalar_Reduction_Percent] -= ScriptFormula(0);
                 Target.Attributes.BroadcastChangedIfRevealed();
             }
@@ -870,7 +870,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
-            
+
             var proj = new Projectile(this, RuneSelect(77604, 131664, 155092, 155749, 155938, 154674), User.Position);
             if (Rune_C > 0)
             { proj.Position.Z += 3f; }
@@ -897,7 +897,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (Rune_C > 0)
                 {
                     WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
-                
+
                     if (Rand.NextDouble() < ScriptFormula(5))
                     {
                         AddBuff(hit, new FearedDebuff());
@@ -916,12 +916,12 @@ namespace Mooege.Core.GS.Powers.Implementations
                 }
                 else
                     WeaponDamage(hit, ScriptFormula(0), DamageType.Fire);
-                
+
             };
             if (Rune_B > 0 || Rune_D > 0)
             { proj.Launch(TargetPosition, ScriptFormula(20)); }
             else
-            proj.Launch(TargetPosition, ScriptFormula(1));
+                proj.Launch(TargetPosition, ScriptFormula(1));
 
             yield break;
         }
@@ -981,7 +981,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (Rune_A > 0)
                 {
                     Target.Attributes[GameAttribute.Movement_Bonus_Run_Speed] += ScriptFormula(2);
-                } 
+                }
                 if (Rune_B > 0)
                 {
                     Target.Attributes[GameAttribute.Resource_Regen_Bonus_Percent] += ScriptFormula(3);
@@ -1038,26 +1038,30 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             if (Rune_C > 0)
             {
-                TickTimer timeout = WaitSeconds(ScriptFormula(4));
-                //TODO:there needs to be a traget for this. and needs to be its own function because you're planting it on a target.
-                if (timeout.TimedOut)
+                /*var proj1 = new Projectile(this, 87564, User.Position);
+                proj1.Position.Z += 5f;
+                proj1.OnCollision = (hit) =>
                 {
-                    WeaponDamage(GetEnemiesInRadius(Target.Position, ScriptFormula(6)), ScriptFormula(0), DamageType.Fire);
-                }
+                    AddBuff(hit, new curseDebuff());
+                };
+                proj1.Launch(TargetPosition, ScriptFormula(12));
+                */
+                //TODO:there needs to be a traget for this. and needs to be its own function because you're planting it on a target.
+                // WeaponDamage(GetEnemiesInRadius(Target.Position, ScriptFormula(6)), ScriptFormula(0), DamageType.Fire);
             }
             else
             {
                 var GroundSpot = SpawnProxy(User.Position);
-                var caltropsGround = SpawnEffect(111330, GroundSpot.Position, 0, WaitSeconds(ScriptFormula(4)));
+                var spikeTrapGround = SpawnEffect(111330, GroundSpot.Position, 0, WaitSeconds(ScriptFormula(4)));
 
                 yield return WaitSeconds(ScriptFormula(3));
 
-                caltropsGround.UpdateDelay = 0.25f;
-                caltropsGround.OnUpdate = () =>
+                spikeTrapGround.UpdateDelay = 0.25f;
+                spikeTrapGround.OnUpdate = () =>
                 {
                     if (GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(5)).Actors.Count > 0)
                     {
-                        caltropsGround.Destroy();
+                        spikeTrapGround.Destroy();
                         var calTrops = SpawnEffect(75887, GroundSpot.Position);
                         AttackPayload attack = new AttackPayload(this);
                         attack.Targets = GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(5));
@@ -1069,6 +1073,32 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
 
             yield break;
+        }
+        [ImplementsPowerBuff(1)]
+        class curseDebuff : PowerBuff
+        {
+
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(4));
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+            public override void Remove() { base.Remove(); }
+
+            public override void OnPayload(Payload payload)
+            {
+                if (payload.Target == Target && payload is DeathPayload)
+                {
+                    Target.PlayEffectGroup(159027);
+                    WeaponDamage(GetEnemiesInRadius(Target.Position, ScriptFormula(6)), ScriptFormula(0), DamageType.Fire);
+                }
+            }
         }
     }
     #endregion
@@ -1085,8 +1115,8 @@ namespace Mooege.Core.GS.Powers.Implementations
             User.PlayEffectGroup(RuneSelect(77647, 154203, 154204, 154208, 154211, 154212));
             AttackPayload attack = new AttackPayload(this);
             attack.Targets = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(21), ScriptFormula(23));
-            attack.AddWeaponDamage(ScriptFormula(0), 
-                RuneSelect(DamageType.Physical, DamageType.Physical, DamageType.Physical, DamageType.Physical, 
+            attack.AddWeaponDamage(ScriptFormula(0),
+                RuneSelect(DamageType.Physical, DamageType.Physical, DamageType.Physical, DamageType.Physical,
                 DamageType.Lightning, DamageType.Physical));
             if (Rune_E > 0)
             {
@@ -1157,10 +1187,17 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             StartDefaultCooldown();
             UseSecondaryResource(ScriptFormula(2));
-            
+
+            var cloudCover = SpawnProxy(User.Position, WaitSeconds(ScriptFormula(4)));
+            cloudCover.PlayEffectGroup(131425);
+            cloudCover.OnTimeout = () =>
+            {
+                cloudCover.World.BuffManager.RemoveAllBuffs(cloudCover);
+            };
+
             AddBuff(User, new SmokeScreenBuff());
-                
-            //AddBuff(GroundArea, new SmokeScreenCloud());
+
+            AddBuff(cloudCover, new SmokeScreenCloud());
 
             yield break;
         }
@@ -1205,6 +1242,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 base.Remove();
             }
         }
+        //may not be for every cast, does not show the cloud animation around you in a video..
         [ImplementsPowerBuff(2)]
         class SmokeScreenBuff : PowerBuff
         {
@@ -1222,7 +1260,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     return false;
                 User.Attributes[GameAttribute.Look_Override] = 0x04E733FD;
                 User.Attributes[GameAttribute.Stealthed] = true;
-                
+
                 if (Rune_E > 0)
                 {
                     User.Attributes[GameAttribute.Movement_Bonus_Run_Speed] += ScriptFormula(12);
@@ -1250,6 +1288,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Remove()
             {
                 base.Remove();
+                //User.PlayEffectGroup(133698); //reappear
                 User.Attributes[GameAttribute.Stealthed] = false;
                 User.Attributes[GameAttribute.Look_Override] = 0;
 
@@ -1328,8 +1367,8 @@ namespace Mooege.Core.GS.Powers.Implementations
             UseSecondaryResource(EvalTag(PowerKeys.ResourceCost));
             //StartDefaultCooldown();
 
-                
-                AddBuff(Target, new DeathMarkBuff());
+
+            AddBuff(Target, new DeathMarkBuff());
 
 
             yield break;
@@ -1387,7 +1426,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 }
                 else
                     StartCooldown(WaitSeconds(120f));
-                    GenerateSecondaryResource(999f);
+                GenerateSecondaryResource(999f);
             }
             else
             {
@@ -1561,8 +1600,8 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield break;
         }
     }
-    #endregion    
-    
+    #endregion
+
     //TODO:Pet class.
     #region Companion
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.Companion)]
