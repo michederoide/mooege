@@ -33,10 +33,12 @@ namespace Mooege.Core.GS.Powers.Payloads
     public class DeathPayload : Payload
     {
         public DamageType DeathDamageType;
+        public bool LootAndExp; //HACK: As we currently just give out random exp and loot, this is in to prevent giving this out for mobs that shouldn't give it.
 
-        public DeathPayload(PowerContext context, DamageType deathDamageType, Actor target)
+        public DeathPayload(PowerContext context, DamageType deathDamageType, Actor target, bool grantsLootAndExp = true)
             : base(context, target)
         {
+            this.LootAndExp = grantsLootAndExp;
             this.DeathDamageType = deathDamageType;
         }
 
@@ -47,12 +49,12 @@ namespace Mooege.Core.GS.Powers.Payloads
             // HACK: add to hackish list thats used to defer deleting actor and filter it from powers targetting
             this.Target.World.PowerManager.AddDeletingActor(this.Target);
 
-            // kill brain if monster
-            if (this.Target is Monster)
+            // kill brain if living
+            if (this.Target is Living)
             {
-                Monster mon = (Monster)this.Target;
-                if (mon.Brain != null)
-                    mon.Brain.Kill();
+                Living actor = (Living)this.Target;
+                if (actor.Brain != null)
+                    actor.Brain.Kill();
             }
             
             // send this death payload to buffs
@@ -87,21 +89,27 @@ namespace Mooege.Core.GS.Powers.Payloads
             this.Target.Attributes.BroadcastChangedIfRevealed();
 
             // Spawn Random item and give exp for each player in range
-            List<Player> players = this.Target.GetPlayersInRange(26f);
-            foreach (Player plr in players)
+            if (LootAndExp)
             {
-                plr.UpdateExp(this.Target.Attributes[GameAttribute.Experience_Granted]);
-                this.Target.World.SpawnRandomItemDrop(this.Target, plr);
+                List<Player> players = this.Target.GetPlayersInRange(26f);
+                foreach (Player plr in players)
+                {
+                    plr.UpdateExp(this.Target.Attributes[GameAttribute.Experience_Granted]);
+                    this.Target.World.SpawnRandomItemDrop(this.Target, plr);
+                }
             }
 
-            if (this.Context.User is Player)
+            if (LootAndExp)
             {
-                Player player = (Player)this.Context.User;
+                if (this.Context.User is Player)
+                {
+                    Player player = (Player)this.Context.User;
 
-                player.ExpBonusData.Update(player.GBHandle.Type, this.Target.GBHandle.Type);
-                this.Target.World.SpawnGold(this.Target, player);
-                if (Mooege.Common.Helpers.Math.RandomHelper.Next(1, 100) < 20)
-                    this.Target.World.SpawnHealthGlobe(this.Target, player, this.Target.Position);
+                    player.ExpBonusData.Update(player.GBHandle.Type, this.Target.GBHandle.Type);
+                    this.Target.World.SpawnGold(this.Target, player);
+                    if (Mooege.Common.Helpers.Math.RandomHelper.Next(1, 100) < 20)
+                        this.Target.World.SpawnHealthGlobe(this.Target, player, this.Target.Position);
+                }
             }
 
             if (this.Target is Monster)
@@ -114,17 +122,20 @@ namespace Mooege.Core.GS.Powers.Payloads
         private int _FindBestDeathAnimationSNO()
         {
             // check if power has special death animation, and roll chance to use it
-            TagKeyInt specialDeathTag = _GetTagForSpecialDeath(this.Context.EvalTag(PowerKeys.SpecialDeathType));
-            if (specialDeathTag != null)
+            if (this.Context != null)
             {
-                float specialDeathChance = this.Context.EvalTag(PowerKeys.SpecialDeathChance);
-                if (PowerContext.Rand.NextDouble() < specialDeathChance)
+                TagKeyInt specialDeathTag = _GetTagForSpecialDeath(this.Context.EvalTag(PowerKeys.SpecialDeathType));
+                if (specialDeathTag != null)
                 {
-                    int specialSNO = _GetSNOFromTag(specialDeathTag);
-                    if (specialSNO != -1)
-                        return specialSNO;
+                    float specialDeathChance = this.Context.EvalTag(PowerKeys.SpecialDeathChance);
+                    if (PowerContext.Rand.NextDouble() < specialDeathChance)
+                    {
+                        int specialSNO = _GetSNOFromTag(specialDeathTag);
+                        if (specialSNO != -1)
+                            return specialSNO;
+                    }
+                    // decided not to use special death or actor doesn't have it, just fall back to normal death anis
                 }
-                // decided not to use special death or actor doesn't have it, just fall back to normal death anis
             }
 
             int sno = _GetSNOFromTag(this.DeathDamageType.DeathAnimationTag);

@@ -120,7 +120,7 @@ namespace Mooege.Core.GS.Powers
                 (User as Player).UseSecondaryResource(amount);
             }
         }
-        
+
         public void WeaponDamage(Actor target, float damageMultiplier, DamageType damageType)
         {
             AttackPayload payload = new AttackPayload(this);
@@ -213,7 +213,6 @@ namespace Mooege.Core.GS.Powers
             // Query() needs to gather using circle-circle collision, until then just extend the search radius by the default
             // actor radius currently used.
             float actorRadiusCompensation = 1.5f;
-
             TargetList targets = new TargetList();
             int count = 0;
             foreach (Actor actor in World.QuadTree.Query<Actor>(new Circle(center.X, center.Y, radius + actorRadiusCompensation)))
@@ -235,7 +234,6 @@ namespace Mooege.Core.GS.Powers
                     }
                 }
             }
-
             return targets;
         }
 
@@ -243,10 +241,10 @@ namespace Mooege.Core.GS.Powers
         {
             get
             {
-                if (User is Player)
+                if (User is Player || User is Minion)
                     return (actor) => actor is Monster;
                 else
-                    return (actor) => actor is Player;
+                    return (actor) => actor is Player || actor is Minion;
             }
         }
 
@@ -254,8 +252,8 @@ namespace Mooege.Core.GS.Powers
         {
             get
             {
-                if (User is Player)
-                    return (actor) => actor is Player;
+                if (User is Player || User is Minion)
+                    return (actor) => actor is Player || actor is Minion;
                 else
                     return (actor) => actor is Monster;
             }
@@ -276,7 +274,7 @@ namespace Mooege.Core.GS.Powers
                 Speed = speed,
             }, actor);
         }
-        
+
         public TickTimer Knockback(Actor target, float magnitude, float arcHeight = 3.0f, float arcGravity = -0.03f)
         {
             var buff = new Implementations.KnockbackBuff(magnitude, arcHeight, arcGravity);

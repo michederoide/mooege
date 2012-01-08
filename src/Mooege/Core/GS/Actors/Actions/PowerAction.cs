@@ -46,6 +46,7 @@ namespace Mooege.Core.GS.Actors.Actions
             : base(owner)
         {
             _power = PowerLoader.CreateImplementationForPowerSNO(powerSNO);
+            _power.World = owner.World;
             _power.User = owner;
             _powerRan = false;
             _baseAttackRadius = this.Owner.ActorData.Cylinder.Ax2 + _power.EvalTag(PowerKeys.AttackRadius) + 1.5f;
@@ -72,9 +73,10 @@ namespace Mooege.Core.GS.Actors.Actions
             // try to get nearest target if no target yet acquired
             if (_target == null)
             {
-                _target = this.Owner.GetPlayersInRange(MaxTargetRange).OrderBy(
+                /*_target = this.Owner.GetPlayersInRange(MaxTargetRange).OrderBy(
                     (player) => PowerMath.Distance2D(player.Position, this.Owner.Position))
-                    .FirstOrDefault();
+                    .FirstOrDefault();*/
+                _target = _power.GetEnemiesInRadius(Owner.Position, MaxTargetRange).GetClosestTo(Owner.Position);
             }
 
             if (_target != null)
