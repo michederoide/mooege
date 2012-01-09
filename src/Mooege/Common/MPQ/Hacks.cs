@@ -326,9 +326,24 @@ namespace Mooege.Common.MPQ
             }
         }
 
+        public static void DumpActorsWithTag(int tagKey)
+        {
+            foreach (var entry in MPQStorage.Data.Assets[SNOGroup.Actor].Values)
+            {
+                if (entry.Data != null)
+                {
+                    var data = (Actor)entry.Data;
+                    if (data.TagMap.ContainsKey(tagKey))
+                    {
+                        Log("{0} in {1} ({2})", data.TagMap[tagKey], StringSNO(entry.SNOId), entry.SNOId);
+                    }
+                }
+            }
+        }
+
         public static void OnMPQLoaded()
         {
-            DumpBehaviorsForMonsters();
+            DumpActorsWithTag(67858);
 
             Logger.Debug("OnMPQLoaded() finished!");
         }
