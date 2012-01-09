@@ -72,7 +72,7 @@ namespace Mooege.Net.GS
 
                 client.Game = game;
 
-                if (toon.Owner.LoggedInClient == null)
+                if (toon.GameAccount.LoggedInClient == null)
                 {
                     Logger.Warn("Client doesn't seem to be connected to moonet, dropping him..");
                     client.Connection.Disconnect();
@@ -80,11 +80,11 @@ namespace Mooege.Net.GS
                 }
 
                 // Set references between MooNetClient and GameClient.
-                client.BnetClient = toon.Owner.LoggedInClient;
+                client.BnetClient = toon.GameAccount.LoggedInClient;
                 client.BnetClient.InGameClient = client;
 
                 client.Player = new Player(game.StartingWorld, client, toon);
-                Logger.Info("Player {0}[PlayerIndex: {1}] connected.", client.Player.Toon.Name, client.Player.PlayerIndex);
+                Logger.Info("Player {0}[PlayerIndex: {1}] connected.", client.Player.Toon.HeroNameField.Value, client.Player.PlayerIndex);
 
                 client.SendMessage(new VersionsMessage(message.SNOPackHash));
 

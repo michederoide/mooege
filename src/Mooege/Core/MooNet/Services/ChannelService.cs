@@ -54,21 +54,21 @@ namespace Mooege.Core.MooNet.Services
 
         public override void SendMessage(Google.ProtocolBuffers.IRpcController controller, bnet.protocol.channel.SendMessageRequest request, System.Action<bnet.protocol.NoData> done)
         {
-            Logger.Trace("{0} sent a message to channel {1}.", this.Client.CurrentToon, this.Client.CurrentChannel);
+            Logger.Trace("{0} sent a message to channel {1}.", this.Client.Account.CurrentGameAccount.CurrentToon, this.Client.CurrentChannel);
 
             var builder = bnet.protocol.NoData.CreateBuilder();
             done(builder.Build());
 
-            if (!request.HasMessage) 
+            if (!request.HasMessage)
                 return; // only continue if the request actually contains a message.
-            
+
             if (request.Message.AttributeCount == 0 || !request.Message.AttributeList.First().HasValue)
                 return; // check if it has attributes.
 
             var channel = ChannelManager.GetChannelByDynamicId(this.LastCallHeader.ObjectId);
             var parsedAsCommand = CommandManager.TryParse(request.Message.AttributeList[0].Value.StringValue, this.Client); // try parsing the message as a command
 
-            if(!parsedAsCommand)
+            if (!parsedAsCommand)
                 channel.SendMessage(this.Client, request.Message); // if it's not parsed as an command - let channel itself to broadcast message to it's members.              
         }
 
@@ -111,7 +111,7 @@ namespace Mooege.Core.MooNet.Services
 
                     if (!attribute.HasValue || attribute.Value.MessageValue.IsEmpty) //Sometimes not present -Egris
                     {
-                        var newScreen = this.Client.Account.ScreenStatus;
+                        var newScreen = this.Client.Account.CurrentGameAccount.ScreenStatus;
 
                         var attr = bnet.protocol.attribute.Attribute.CreateBuilder()
                             .SetName("D3.Party.ScreenStatus")
@@ -121,7 +121,7 @@ namespace Mooege.Core.MooNet.Services
                     else
                     {
                         var oldScreen = D3.PartyMessage.ScreenStatus.ParseFrom(attribute.Value.MessageValue);
-                        this.Client.Account.ScreenStatus = oldScreen;
+                        this.Client.Account.CurrentGameAccount.ScreenStatus = oldScreen;
 
                         // TODO: save screen status for use with friends -Egris
                         var attr = bnet.protocol.attribute.Attribute.CreateBuilder()
@@ -178,13 +178,22 @@ namespace Mooege.Core.MooNet.Services
                 channelState.PrivacyLevel = request.StateChange.PrivacyLevel;
 
             var notification = bnet.protocol.channel.UpdateChannelStateNotification.CreateBuilder()
-                .SetAgentId(this.Client.CurrentToon.BnetEntityID)
+                .SetAgentId(this.Client.Account.CurrentGameAccount.BnetEntityId)
                 .SetStateChange(channelState)
                 .Build();
 
+            if (this.Client.CurrentChannel == null) //Client left channel already
+                return;
+
+            //Notify all Channel members
+            foreach (var member in this.Client.CurrentChannel.Members.Keys)
+            {
+                member.MakeTargetedRPC(this.Client.CurrentChannel, () =>
+                    bnet.protocol.channel.ChannelSubscriber.CreateStub(member).NotifyUpdateChannelState(null, notification, callback => { }));
+            }
             // Send UpdateChannelStateNotification RPC call.
-            this.Client.MakeTargetedRPC(this.Client.CurrentChannel, () =>
-                bnet.protocol.channel.ChannelSubscriber.CreateStub(this.Client).NotifyUpdateChannelState(null, notification, callback => { }));
+            //this.Client.MakeTargetedRPC(this.Client.CurrentChannel, () =>
+            //    bnet.protocol.channel.ChannelSubscriber.CreateStub(this.Client).NotifyUpdateChannelState(null, notification, callback => { }));
         }
 
         public override void UpdateMemberState(Google.ProtocolBuffers.IRpcController controller, bnet.protocol.channel.UpdateMemberStateRequest request, System.Action<bnet.protocol.NoData> done)

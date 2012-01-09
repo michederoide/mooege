@@ -26,6 +26,7 @@ using System.Linq;
 using Mooege.Core.GS.Ticker;
 using Mooege.Common.Helpers.Math;
 using Mooege.Common.Logging;
+using Mooege.Core.GS.Actors.Implementations.Monsters;
 
 namespace Mooege.Core.GS.Powers
 {
@@ -116,8 +117,9 @@ namespace Mooege.Core.GS.Powers
                 int spawn_count = 3;
 
                 // list of actorSNO values to pick from when spawning
-                int[] actorSNO_values = { 5387, 6652, 5346 };
-                int actorSNO = actorSNO_values[RandomHelper.Next(actorSNO_values.Length)];
+                //int[] actorSNO_values = { 5387, 6652, 5346 };
+                //int[] actorSNO_values = { 187664, 128781, 4982 }; - Quilldemons.
+                int actorSNO = 4982;//actorSNO_values[RandomHelper.Next(actorSNO_values.Length)];
                 Logger.Debug("3 monsters spawning with actor sno {0}", actorSNO);
 
                 for (int n = 0; n < spawn_count; ++n)
@@ -145,7 +147,7 @@ namespace Mooege.Core.GS.Powers
                         position.Y += (float)(RandomHelper.NextDouble() - 0.5) * 20;
                         position.Z = user.Position.Z;
                     }
-
+                    /*
                     Monster mon = new Monster(user.World, actorSNO, null);
                     mon.SetBrain(new Mooege.Core.GS.AI.Brains.MonsterBrain(mon));
                     mon.Position = position;
@@ -158,6 +160,11 @@ namespace Mooege.Core.GS.Powers
                     mon.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
                     mon.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
                     mon.Attributes[GameAttribute.Casting_Speed_Total] = 1.0f;
+                    user.World.Enter(mon);*/
+
+                    Monster mon = new QuillDemon(user.World, actorSNO, null);
+                    mon.Position = position;
+                    mon.Scale = 1f;
                     user.World.Enter(mon);
                 }
 

@@ -43,8 +43,11 @@ namespace Mooege.Net.GS.Message
                 {
                     foreach (var opcode in attribute.Opcodes)
                     {
-                        MessageTypes.Add(opcode, type);
-                        MessageConsumers.Add(opcode, attribute.Consumer);
+                        if (!MessageTypes.ContainsKey(opcode))
+                        {
+                            MessageTypes.Add(opcode, type);
+                            MessageConsumers.Add(opcode, attribute.Consumer);
+                        }
                     }
                 }
             }

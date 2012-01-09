@@ -305,7 +305,7 @@ namespace Mooege.Core.GS.Players
                     Gender = (player.Toon.Gender == 0) ? VoiceGender.Male : VoiceGender.Female,
                     AudioClass = (Class)player.Toon.VoiceClassID,
                     SNOSpeakerActor = GetSpeaker(currentLineNode.Speaker1).ActorSNO.Id,
-                    Name = player.Toon.Name,
+                    Name = player.Toon.HeroNameField.Value,
                     Field11 = 0x00000000,  // is this field I1? and if...what does it do?? 2 for level up -farmy
                     AnimationTag = currentLineNode.AnimationTag,
                     Duration = duration,
