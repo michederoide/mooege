@@ -29,8 +29,17 @@ using Mooege.Core.GS.Common.Types.TagMap;
 using Mooege.Net.GS.Message;
 using Mooege.Core.GS.Players;
 
-//TODO: ADD TO buffs. Targets in Radius receiving debuff.
-//TODO any projectile that pierces through enemies, somehow needs to stop doing rapid damage. (somewhere around 2/3 hits per mob)
+//TODO List
+/* Channeled Skills seem to be very confusing when you try to add runes/attackpayload/etc.
+ * EnergyTwister has a bunch of issues
+ * Disintegrate -> override the hitting effect from spell.
+ * Wave of Force -> Repelling Projectiles needs to be added (to a couple other spells as well)
+ * Storm Armor -> Rune_E which is "your attacks have a chance"
+ * Ice Armor -> "your attacks have a chance" to frost nova
+ * Diamond Skin -> Reflecting and Absorbing
+ * Energy Armor -> Absorption and Retweaking it so it uses the other buff selections(only if needed [if there are effects])
+ * SlowTime -> Making an outer ring to see if zombies had buff from inner ring to add a new buff w/ longer duration in outer.
+ */
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
@@ -1839,6 +1848,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             public override void OnPayload(Payload payload)
             {
+                //TODO:Rune_E -> Whenever you cast a spell that critically hits, you also shock a nearby enemy for 319% weapon damage as Lightning. 
                 if (payload.Target == Target && payload is HitPayload)
                 {
                     //projectile? ScriptFormula(3) is speed.

@@ -33,6 +33,7 @@ using Mooege.Net.GS.Message.Definitions.ACD;
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
+    //TODO: Check through these first 10 skills. "I haven't checked for runes" /wet
     #region DeadlyReach
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.DeadlyReach)]
     public class MonkDeadlyReach : ComboSkill
