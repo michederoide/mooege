@@ -364,23 +364,11 @@ namespace Mooege.Core.GS.Powers.Implementations
     //Hydras are (most likely) Pets so this is incorrect
     #region Hydra
     [ImplementsPowerSNO(Skills.Skills.Wizard.Offensive.Hydra)]
-    //No Rune = Default
-    //Rune_A = Hydra_Frost
-    //Rune_B = Hydra_Lightning
-    //Rune_C = Hydra_Acid
-    //Rune_D = Hydra_Big
-    //Rune_E = Hydra_Arcane
-
     public class WizardHydra : Skill
     {
-        const float BeamLength = 50f;
-
         public override IEnumerable<TickTimer> Main()
         {
             UsePrimaryResource(60f);
-
-            //This works much better, but all three heads fire at the same target, 
-            //then need to be firing off less than a second a part, like .5s.
 
             Vector3D userCastPosition = new Vector3D(User.Position);
             Vector3D[] spawnPoints = PowerMath.GenerateSpreadPositions(TargetPosition, new Vector3D(TargetPosition.X, TargetPosition.Y + 0.7f, TargetPosition.Z), 120, 3);
@@ -417,10 +405,46 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                 };
             }
+            else if (Rune_A > 0)
+            {
+
+                var hydra1 = SpawnEffect(actorSNOs[0], spawnPoints[0], 0, timeout);
+                hydra1.UpdateDelay = 1.5f; // attack every half-second
+                hydra1.OnUpdate = () =>
+                {
+                    var target = GetEnemiesInRadius(hydra1.Position, 15f).GetClosestTo(hydra1.Position);
+                    float castAngle = MovementHelpers.GetFacingAngle(hydra1.Position, target.Position);
+                    hydra1.TranslateFacing(target.Position, true);
+                    var ConeOfCold = SpawnEffect(83043, hydra1.Position, castAngle, WaitSeconds(ScriptFormula(7)));
+                    ConeOfCold.UpdateDelay = ScriptFormula(6);
+                    ConeOfCold.OnUpdate = () =>
+                    {
+                        WeaponDamage(GetEnemiesInArcDirection(hydra1.Position, Target.Position, ScriptFormula(3), ScriptFormula(2)), 1.00f, DamageType.Cold);
+                    };
+
+                };
+            }
+            else if (Rune_B > 0)
+            {
+                var hydra1 = SpawnEffect(actorSNOs[0], spawnPoints[0], 0, timeout);
+                hydra1.UpdateDelay = 1.5f; // attack every half-second
+                hydra1.OnUpdate = () =>
+                {
+                    var targets = GetEnemiesInRadius(hydra1.Position, 50f);
+                    if (targets.Actors.Count > 0 && targets != null)
+                    {
+                        //capsule width TODO
+                        targets.SortByDistanceFrom(hydra1.Position);
+                        hydra1.TranslateFacing(targets.Actors[0].Position, true);
+                        hydra1.AddRopeEffect(83875, targets.Actors[0]);
+                        WeaponDamage(targets.Actors[0], 1.00f, DamageType.Lightning);
+                    }
+                };
+            }
             else
             {
                 var hydra1 = SpawnEffect(actorSNOs[0], spawnPoints[0], 0, timeout);
-                hydra1.UpdateDelay = 1f; // attack every half-second
+                hydra1.UpdateDelay = 1.5f; // attack every half-second
                 hydra1.OnUpdate = () =>
                 {
                     var targets = GetEnemiesInRadius(hydra1.Position, 60f);
@@ -431,60 +455,31 @@ namespace Mooege.Core.GS.Powers.Implementations
                         proj.Position.Z += 5f;  // fix height
                         proj.OnCollision = (hit) =>
                         {
-                            hit.PlayEffectGroup(RuneSelect(219760, 219770, 219776, 219789, -1, 81739));
-                            WeaponDamage(hit, 1.00f, DamageType.Fire);
+                            if (Rune_C > 0)
+                            {
+                                hit.PlayEffectGroup(RuneSelect(219760, 219770, 219776, 219789, -1, 81739));
+                                hit.PlayEffectGroup(215394);
+                                var PoisonCloud = SpawnProxy(hit.Position, WaitSeconds(ScriptFormula(5)));
+                                PoisonCloud.UpdateDelay = ScriptFormula(4); // attack every half-second
+                                PoisonCloud.OnUpdate = () =>
+                                {
+                                    WeaponDamage(GetEnemiesInRadius(hit.Position, ScriptFormula(6)), 1.00f, DamageType.Poison);
+                                };
+                            }
+                            else if (Rune_E > 0)
+                            {
+                                hit.PlayEffectGroup(81874);
+                                WeaponDamage(GetEnemiesInRadius(hit.Position, ScriptFormula(0)), 1.00f, DamageType.Arcane);
+                            }
+                            else
+                            {
+                                hit.PlayEffectGroup(RuneSelect(219760, 219770, 219776, 219789, -1, 81739));
+                                WeaponDamage(hit, 1.00f, DamageType.Fire);
+                            }
 
                             proj.Destroy();
                         };
                         hydra1.TranslateFacing(targets.Actors[0].Position, true);
-                        //need to fix how fast it fires -> its firing before head turns.
-                        proj.Launch(targets.Actors[0].Position, ScriptFormula(2));
-                    }
-
-                };
-
-                var hydra2 = SpawnEffect(actorSNOs[1], spawnPoints[1], 0, timeout);
-                hydra2.UpdateDelay = 1f; // attack every half-second
-                hydra2.OnUpdate = () =>
-                {
-                    var targets = GetEnemiesInRadius(hydra2.Position, 60f);
-                    if (targets.Actors.Count > 0 && targets != null)
-                    {
-                        targets.SortByDistanceFrom(hydra2.Position);
-                        var proj = new Projectile(this, RuneSelect(77116, 83043, -1, 77109, 86082, 77097), hydra2.Position);
-                        proj.Position.Z += 5f;  // fix height
-                        proj.OnCollision = (hit) =>
-                        {
-                            hit.PlayEffectGroup(RuneSelect(219760, 219770, 219776, 219789, -1, 81739));
-                            WeaponDamage(hit, 1.00f, DamageType.Fire);
-
-                            proj.Destroy();
-                        };
-                        //need to fix how fast it fires -> its firing before head turns.
-                        hydra2.TranslateFacing(targets.Actors[0].Position, true);
-                        proj.Launch(targets.Actors[0].Position, ScriptFormula(2));
-                    }
-
-                };
-
-                var hydra3 = SpawnEffect(actorSNOs[2], spawnPoints[2], 0, timeout);
-                hydra3.UpdateDelay = 1f; // attack every half-second
-                hydra3.OnUpdate = () =>
-                {
-                    var targets = GetEnemiesInRadius(hydra3.Position, 60f);
-                    if (targets.Actors.Count > 0 && targets != null)
-                    {
-                        targets.SortByDistanceFrom(hydra3.Position);
-                        var proj = new Projectile(this, RuneSelect(77116, 83043, -1, 77109, 86082, 77097), hydra3.Position);
-                        proj.Position.Z += 5f;  // fix height
-                        proj.OnCollision = (hit) =>
-                        {
-                            hit.PlayEffectGroup(RuneSelect(219760, 219770, 219776, 219789, -1, 81739));
-                            WeaponDamage(hit, 1.00f, DamageType.Fire);
-
-                            proj.Destroy();
-                        };
-                        hydra3.TranslateFacing(targets.Actors[0].Position, true);
                         //need to fix how fast it fires -> its firing before head turns.
                         proj.Launch(targets.Actors[0].Position, ScriptFormula(2));
                     }
