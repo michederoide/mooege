@@ -31,10 +31,15 @@ using Mooege.Net.GS.Message.Definitions.ACD;
 using Mooege.Net.GS.Message.Definitions.Player;
 using Mooege.Net.GS.Message.Definitions.Trade;
 
+using Mooege.Common.Logging;
+
+
 namespace Mooege.Core.GS.Powers.Payloads
 {
     public class DeathPayload : Payload
     {
+        static readonly Logger Logger = LogManager.CreateLogger();
+
         public DamageType DeathDamageType;
 
         public DeathPayload(PowerContext context, DamageType deathDamageType, Actor target)
@@ -46,15 +51,12 @@ namespace Mooege.Core.GS.Powers.Payloads
         public void Apply()
         {
             if (this.Target.World == null) return;
-
+            Logger.Debug("DeathPayload Actor: {0}", this.Target);
             if (this.Target is Player)
             {
                 DoPlayerDeath();
                 return;
             }
-
-            // HACK: add to hackish list thats used to defer deleting actor and filter it from powers targetting
-            this.Target.World.PowerManager.AddDeletingActor(this.Target);
 
             // kill brain if monster
             if (this.Target is Monster)
@@ -118,8 +120,7 @@ namespace Mooege.Core.GS.Powers.Payloads
             if (this.Target is Monster)
                 (this.Target as Monster).PlayLore();
 
-            // HACK: instead of deleting actor right here, its added to a list (near the top of this function)
-            //this.Target.Destroy();
+            this.Target.Destroy();
         }
 
         private void DoPlayerDeath()

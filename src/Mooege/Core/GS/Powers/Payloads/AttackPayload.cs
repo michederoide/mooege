@@ -109,9 +109,12 @@ namespace Mooege.Core.GS.Powers.Payloads
             // main targets
             foreach (Actor target in this.Targets.Actors)
             {
+                //TODO: In a proper threaded workflow there should be no null targets selected.
+                //Taken the check out so flags will be raised when this happens
+
                 // filter null and killed targets
-                if (target == null || target.World != null && target.World.PowerManager.IsDeletingActor(target))
-                    continue;
+                //if (target == null || target.World != null)
+                //    continue;
 
                 // TODO: calculate hit chance for monsters instead of always hitting
 

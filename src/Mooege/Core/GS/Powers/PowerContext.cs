@@ -219,7 +219,7 @@ namespace Mooege.Core.GS.Powers
             int count = 0;
             foreach (Actor actor in World.QuadTree.Query<Actor>(new Circle(center.X, center.Y, radius + actorRadiusCompensation)))
             {
-                if (filter(actor) && !actor.Attributes[GameAttribute.Untargetable] && !World.PowerManager.IsDeletingActor(actor) &&
+                if (filter(actor) && !actor.Attributes[GameAttribute.Untargetable] &&
                     actor != User)
                 {
                     if (targetFilter(actor))

@@ -27,11 +27,20 @@ using Mooege.Core.GS.Ticker;
 using Mooege.Common.Helpers.Math;
 using Mooege.Common.Logging;
 using Mooege.Core.GS.Actors.Implementations.Monsters;
+using System.Collections.Concurrent;
+using Mooege.Common.Helpers.Concurrency;
+using System.Threading;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 
 namespace Mooege.Core.GS.Powers
 {
     public class PowerManager
     {
+        //used to lock the Executing Script list for multithreading
+        private static object _locker = new object();
+        private static bool _go = true; //True so update can start first time
+
         static readonly Logger Logger = LogManager.CreateLogger();
 
         // list of all actively channeled skills
@@ -44,50 +53,52 @@ namespace Mooege.Core.GS.Powers
             public PowerScript Script;
         }
         private List<ExecutingScript> _executingScripts = new List<ExecutingScript>();
-        
-        // list of actors that were killed and are waiting to be deleted
-        // rather ugly hack needed because deleting actors immediatly when they have visual buff effects
-        // applied causes the effects to stay around forever.
+
         private Dictionary<Actor, TickTimer> _deletingActors = new Dictionary<Actor, TickTimer>();
-        
+
         public PowerManager()
         {
         }
 
         public void Update()
         {
-            _UpdateDeletingActors();
-            _UpdateExecutingScripts();
+            //Always run update in a new thread for scalability.
+            //Should not be run on the same thread as cancel powers as some of scripts result in cancel of all scripts for a target
+            Thread updateThread = new Thread(_UpdateExecutingScripts);
+            updateThread.Start();
         }
 
         public bool RunPower(Actor user, PowerScript power, Actor target = null,
                              Vector3D targetPosition = null, TargetMessage targetMessage = null)
         {
-            // replace power with existing channel instance if one exists
-            if (power is ChanneledSkill)
+            lock (_locker)
             {
-                var existingChannel = _FindChannelingSkill(user, power.PowerSNO);
-                if (existingChannel != null)
+                // replace power with existing channel instance if one exists
+                if (power is ChanneledSkill)
                 {
-                    power = existingChannel;
+                    var existingChannel = _FindChannelingSkill(user, power.PowerSNO);
+                    if (existingChannel != null)
+                    {
+                        power = existingChannel;
+                    }
+                    else  // new channeled skill, add it to the list
+                    {
+                        _channeledSkills.Add((ChanneledSkill)power);
+                    }
                 }
-                else  // new channeled skill, add it to the list
-                {
-                    _channeledSkills.Add((ChanneledSkill)power);
-                }
+
+                // copy in context params
+                power.User = user;
+                power.Target = target;
+                power.World = user.World;
+                power.TargetPosition = targetPosition;
+                power.TargetMessage = targetMessage;
+
+                _StartScript(power);
             }
-
-            // copy in context params
-            power.User = user;
-            power.Target = target;
-            power.World = user.World;
-            power.TargetPosition = targetPosition;
-            power.TargetMessage = targetMessage;
-
-            _StartScript(power);
             return true;
         }
-        
+
         // HACK: used for item spawn helper in StartPower()
         private bool _spawnedHelperItems = false;
 
@@ -108,7 +119,7 @@ namespace Mooege.Core.GS.Powers
 
                 targetPosition = target.Position;
             }
-                        
+
             #region Items and Monster spawn HACK
             // HACK: intercept hotbar skill 1 to always spawn test mobs.
             if (user is Player && powerSNO == (user as Player).SkillSet.HotBarSkills[4].SNOSkill)
@@ -177,7 +188,7 @@ namespace Mooege.Core.GS.Powers
                     for (int n = 0; n < 30; ++n)
                         Items.ItemGenerator.Cook((Players.Player)user, "Runestone_Unattuned_07").EnterWorld(user.Position);
                 }
-                
+
                 return true;
             }
             #endregion
@@ -203,33 +214,92 @@ namespace Mooege.Core.GS.Powers
         private void _UpdateExecutingScripts()
         {
             // process all powers, removing from the list the ones that expire
-            _executingScripts.RemoveAll(script =>
+
+            //Read: http://www.albahari.com/threading/part4.aspx
+            //Due to compiler optimization this starts the loop and at the same time Cancel all powers can happen
+            //A signal semaphor bool is used in this case to prevent this from happening.
+            lock (_locker)
             {
-                if (script.PowerEnumerator.Current.TimedOut)
+                //wait for Update if in progress
+                while (!_go)
+                    Monitor.Wait(_locker);
+                _go = false;
+
+                //Logger.Warn("Number of scripts before update: {0} ThreadId: {1}", _executingScripts.Count, Thread.CurrentThread.ManagedThreadId);
+                //List<ExecutingScript> scriptsToDelete = new List<ExecutingScript>();
+                //foreach (var script in _executingScripts)
+                //{
+                //    if (script.PowerEnumerator.Current.TimedOut)
+                //    {
+                //        try
+                //        {
+                //            Logger.Debug("BeforeMoveNextSucceded: {0}, ThreadId: {1}", _executingScripts.Count, Thread.CurrentThread.ManagedThreadId);
+                //            if (script.PowerEnumerator.MoveNext())
+                //            {
+                //                Logger.Debug("MoveNextSucceded: {0}, ThreadId: {1}", _executingScripts.Count, Thread.CurrentThread.ManagedThreadId);
+                //                if (script.PowerEnumerator.Current == PowerScript.StopExecution) scriptsToDelete.Add(script);
+                //            }
+                //            else
+                //                //Logger.Debug("Else: {0}, ThreadId: {1}", _executingScripts.Count, Thread.CurrentThread.ManagedThreadId);
+                //                scriptsToDelete.Add(script);
+                //        }
+                //        catch
+                //        {
+                //            Logger.Warn("Invalid script: {0}", script);
+                //        }
+                //    }
+                //}
+                //foreach (var script in scriptsToDelete)
+                //{
+                //    _executingScripts.Remove(script);
+                //}
+                //Logger.Warn("Number of scripts after update: {0} ThreadId: {1}", _executingScripts.Count, Thread.CurrentThread.ManagedThreadId);
+                //restart all other threads waiting on this
+
+                _executingScripts.RemoveAll(script =>
                 {
-                    if (script.PowerEnumerator.MoveNext())
-                        return script.PowerEnumerator.Current == PowerScript.StopExecution;
+                    if (script.PowerEnumerator.Current.TimedOut)
+                    {
+                        try
+                        {
+                            if (script.PowerEnumerator.MoveNext())
+                                return script.PowerEnumerator.Current == PowerScript.StopExecution;
+                            else
+                                return true;
+                        }
+                        catch
+                        {
+                            Logger.Warn("Invalid script: {0}", script);
+                            return true;
+                        }
+                    }
                     else
-                        return true;
-                }
-                else
-                {
-                    return false;
-                }
-            });
+                    {
+                        return false;
+                    }
+                });
+                _go = true;
+                Monitor.PulseAll(_locker);
+
+            }
+
+
         }
 
         public void CancelChanneledSkill(Actor user, int powerSNO)
         {
-            var channeledSkill = _FindChannelingSkill(user, powerSNO);
-            if (channeledSkill != null)
+            lock (_locker)
             {
-                channeledSkill.CloseChannel();
-                _channeledSkills.Remove(channeledSkill);
-            }
-            else
-            {
-                Logger.Debug("cancel channel for power {0}, but it doesn't have an open channel to cancel", powerSNO);
+                var channeledSkill = _FindChannelingSkill(user, powerSNO);
+                if (channeledSkill != null)
+                {
+                    channeledSkill.CloseChannel();
+                    _channeledSkills.Remove(channeledSkill);
+                }
+                else
+                {
+                    Logger.Debug("cancel channel for power {0}, but it doesn't have an open channel to cancel", powerSNO);
+                }
             }
         }
 
@@ -242,52 +312,68 @@ namespace Mooege.Core.GS.Powers
 
         private void _StartScript(PowerScript script)
         {
-            var powerEnum = script.Run().GetEnumerator();
-            if (powerEnum.MoveNext() && powerEnum.Current != PowerScript.StopExecution)
+            //TODO: If any executing script starts another script this needs to be executed in it's own thread as it will create a circular multi-threading lock
+            lock (_locker)
             {
-                _executingScripts.Add(new ExecutingScript
+                //wait for Update if in progress
+                while (!_go)
+                    Monitor.Wait(_locker);
+                //Block updates and everything else until full addition of effects is done. 
+                //Otherwise yield returns that have a wait timer will mess up update collection and block forever
+                _go = false;
+                var powerEnum = script.Run().GetEnumerator();
+                if (powerEnum.MoveNext() && powerEnum.Current != PowerScript.StopExecution)
                 {
-                    PowerEnumerator = powerEnum,
-                    Script = script
-                });
-            }
-        }
-
-        private void _UpdateDeletingActors()
-        {
-            foreach (var key in _deletingActors.Keys.ToArray())
-            {
-                if (_deletingActors[key].TimedOut)
-                {
-                    key.Destroy();
-                    _deletingActors.Remove(key);
+                    _executingScripts.Add(new ExecutingScript
+                    {
+                        PowerEnumerator = powerEnum,
+                        Script = script
+                    });
                 }
+                //Release all threads waiting on this
+                _go = true;
+                Monitor.PulseAll(_locker);
             }
-        }
-
-        public void AddDeletingActor(Actor actor)
-        {
-            _deletingActors.Add(actor, new SecondsTickTimer(actor.World.Game, 0.2f));
-        }
-
-        public bool IsDeletingActor(Actor actor)
-        {
-            return _deletingActors.ContainsKey(actor);
         }
 
         public void CancelAllPowers(Actor user)
         {
-            _channeledSkills.RemoveAll(impl =>
-            {
-                if (impl.User == user && impl.IsChannelOpen)
-                {
-                    impl.CloseChannel();
-                    return true;
-                }
-                return false;
-            });
+            //Execute all cancels in a new thread to not block the update thread if it generates calls to this during execution of some scripts
+            Thread cancelAllPowersThread = new Thread(CancelAllPowersThreaded);
+            cancelAllPowersThread.Start(user);
+        }
 
-            _executingScripts.RemoveAll((script) => script.Script.User == user);
+        public void CancelAllPowersThreaded(object userObject)
+        {
+            lock (_locker)
+            {
+
+                //wait for Update if in progress under a different thread
+                while (!_go)
+                    Monitor.Wait(_locker);
+                Actor user = (Actor)userObject;
+
+                _channeledSkills.RemoveAll(impl =>
+                {
+                    if (impl.User == user && impl.IsChannelOpen)
+                    {
+                        impl.CloseChannel();
+                        return true;
+                    }
+                    return false;
+                });
+
+                //Let next Update clean up the scripts so just expire them instead of removing them (Otherwise visual effects might remain for ever.)
+                foreach (var script in _executingScripts)
+                {
+                    if (script.Script.User == user || script.Script.Target == user)
+                        script.PowerEnumerator.Current.Update(0);
+                }
+
+                //remove both targeting and initiated by user
+                //_executingScripts.RemoveAll((script) => script.Script.User == user || script.Script.Target == user);
+
+            }
         }
     }
 }
