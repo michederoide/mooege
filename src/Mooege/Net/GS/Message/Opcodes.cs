@@ -243,8 +243,8 @@ namespace Mooege.Net.GS.Message
         TimedEventStartedMessage = 228, // len: 	20
         SNODataMessage4 = 229, // len: 	12
         ActTransitionStartedMessage = 230, // len: 	16
-        RequestBuySharedStashSlotsMessage = 231, // len: 	8   former SimpleMessage17
-        SimpleMessage17 = 232, // len: 	8 //added in 7728
+        SimpleMessage17 = 231, // len: 	8 //added in 7728
+        RequestBuySharedStashSlotsMessage = 232, // len: 	8   former SimpleMessage17
         PlayerQuestMessage1 = 233, // len: 	16
         PlayerQuestMessage2 = 234, // len: 	16
         PlayerDeSyncSnapMessage = 235, // len: 	28

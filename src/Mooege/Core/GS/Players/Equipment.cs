@@ -152,6 +152,26 @@ namespace Mooege.Core.GS.Players
             return _inventoryGold;
         }
 
+        internal Item RemoveGoldAmount(int amount)
+        {
+            _inventoryGold.Attributes[GameAttribute.ItemStackQuantityLo] -= amount;
+            _inventoryGold.Attributes.SendChangedMessage(_owner.InGameClient);
+            return _inventoryGold;
+        }
+
+        internal bool ContainsGoldAmount(int amount)
+        {
+            int amountInventory = _inventoryGold.Attributes[GameAttribute.ItemStackQuantityLo];
+            if (amountInventory - amount >= 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         internal Item GetEquipment(int targetEquipSlot)
         {
             return GetItem(this._equipment[targetEquipSlot]);
