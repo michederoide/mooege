@@ -32,6 +32,7 @@ using Mooege.Common.Helpers.Concurrency;
 using System.Threading;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Globalization;
 
 namespace Mooege.Core.GS.Powers
 {
@@ -65,6 +66,7 @@ namespace Mooege.Core.GS.Powers
             //Always run update in a new thread for scalability.
             //Should not be run on the same thread as cancel powers as some of scripts result in cancel of all scripts for a target
             Thread updateThread = new Thread(_UpdateExecutingScripts);
+            updateThread.CurrentCulture = CultureInfo.InvariantCulture;
             updateThread.Start();
         }
 
@@ -340,6 +342,7 @@ namespace Mooege.Core.GS.Powers
         {
             //Execute all cancels in a new thread to not block the update thread if it generates calls to this during execution of some scripts
             Thread cancelAllPowersThread = new Thread(CancelAllPowersThreaded);
+            cancelAllPowersThread.CurrentCulture = CultureInfo.InvariantCulture;
             cancelAllPowersThread.Start(user);
         }
 
