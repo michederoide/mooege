@@ -621,9 +621,9 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             foreach (Vector3D position in targetDirs)
             {
-                User.PlayEffectGroup(134689);
-                var proj = new Projectile(this, 178987, User.Position);
-                proj.Position.Z += 5f;  // fix height
+                //using BoneArrow Projectile for now, unknown where SafetyShot Projectile went.
+                var proj = new Projectile(this, 129932, User.Position);
+                proj.Position.Z += 6f;  // fix height
                 proj.OnCollision = (hit) =>
                 {
                     // hit effect
@@ -799,6 +799,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             //projectiles
             var proj1 = new Projectile(this, 150061, User.Position);
             proj1.Position.Z += 5f;
+            //TargetPosition needs to have a general spread of fire.
             proj1.Launch(TargetPosition, ScriptFormula(2));
             proj1.OnCollision = (hit) =>
             {
@@ -824,7 +825,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             proj1.OnCollision = (hit) =>
             {
                 //TODO: Rope effect to mobs
-                hit.PlayEffectGroup(76228); // impact effect (fix height)
+                hit.PlayEffectGroup(76093); // impact effect (fix height)
                 proj1.Destroy();
                 WeaponDamage(hit, ScriptFormula(5), DamageType.Physical);
                 AddBuff(hit, new EntangleDebuff());
@@ -846,8 +847,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
 
-                Target.Attributes[GameAttribute.Movement_Scalar_Reduction_Percent] += ScriptFormula(0);
-                Target.Attributes.BroadcastChangedIfRevealed();
+                AddBuff(Target, new DebuffSlowed(0.7f, WaitSeconds(ScriptFormula(4))));
 
                 return true;
             }
@@ -855,8 +855,6 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Remove()
             {
                 base.Remove();
-                Target.Attributes[GameAttribute.Movement_Scalar_Reduction_Percent] -= ScriptFormula(0);
-                Target.Attributes.BroadcastChangedIfRevealed();
             }
         }
     }
@@ -1338,7 +1336,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             UsePrimaryResource(ScriptFormula(19));
             //projectiles
-            var Target = GetEnemiesInRadius(User.Position, ScriptFormula(2)).GetClosestTo(User.Position);
+            var Target = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(2), 180f).GetClosestTo(User.Position);
             //todo:else should it fire if there are no mobs? seems like it should but unknown how that should work.  
 
             var proj1 = new Projectile(this, 149790, User.Position);
@@ -1348,10 +1346,10 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 SpawnEffect(218504, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 6f)); // impact effect (fix height)
                 proj1.Destroy();
-                WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
+                WeaponDamage(hit, ScriptFormula(1), DamageType.Physical);
             };
 
-            yield return WaitSeconds(ScriptFormula(1));
+            yield return WaitSeconds(ScriptFormula(4));
         }
     }
     #endregion
