@@ -44,6 +44,9 @@ namespace Mooege.Core.GS.Players
         // Access by ID
         private readonly Player _owner; // Used, because most information is not in the item class but Actors managed by the world
 
+        //Values for buying new slots on stash
+        private readonly int[] _stashBuyValue = { 10000, 50000, 250000, 500000 };
+
         private Equipment _equipment;
         private InventoryGrid _inventoryGrid;
         private InventoryGrid _stashGrid;
@@ -418,10 +421,19 @@ namespace Mooege.Core.GS.Players
 
         private void OnBuySharedStashSlots(RequestBuySharedStashSlotsMessage requestBuySharedStashSlotsMessage)
         {
-            // TODO: Take that money away ;)
-            _owner.Attributes[GameAttribute.Shared_Stash_Slots] += 14;
-            _owner.Attributes.BroadcastChangedIfRevealed();
-            _stashGrid.ResizeGrid(_owner.Attributes[GameAttribute.Shared_Stash_Slots] / 7, 7);
+            int amount = 2500;
+
+            if (_stashGrid.Rows % 10 == 0)
+            {
+                amount = _stashBuyValue[_stashGrid.Rows / 10 - 1];
+            }
+            if (_equipment.ContainsGoldAmount(amount))
+            {
+                _equipment.RemoveGoldAmount(amount);
+                _owner.Attributes[GameAttribute.Shared_Stash_Slots] += 14;
+                _owner.Attributes.BroadcastChangedIfRevealed();
+                _stashGrid.ResizeGrid(_owner.Attributes[GameAttribute.Shared_Stash_Slots] / 7, 7);
+            }
         }
 
         // TODO: The inventory's gold item should not be created here. /komiga
