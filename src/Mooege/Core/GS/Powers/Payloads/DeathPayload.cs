@@ -170,11 +170,10 @@ namespace Mooege.Core.GS.Powers.Payloads
             this.Target.Attributes[GameAttribute.Banter_Cooldown, 0x000FFFFF] = -1;
             this.Target.Attributes[GameAttribute.Buff_Active, 0x00020C51] = false;
 
-            ////[07.01.2012 09:25:27.103] [ Dump] [PacketReader]: [O] GameMessage(0x0073)
-            ////ANNDataMessage:
-            ////{
-            //// ActorID: 0x78AF004F (2024734799)
-            ////}
+            this.Target.World.BroadcastIfRevealed(new ANNDataMessage(Opcodes.ANNDataMessage13)
+            {
+                ActorID = this.Target.DynamicID
+            }, this.Target);
 
             this.Target.Attributes[GameAttribute.Look_Override] = 0x0782CAC5;
             this.Target.Attributes[GameAttribute.Buff_Icon_Count0, 0x0002F39E] = 1;
@@ -207,8 +206,9 @@ namespace Mooege.Core.GS.Powers.Payloads
             this.Target.Attributes[GameAttribute.CantStartDisplayedPowers] = true;
             this.Target.PlayEffect(Net.GS.Message.Definitions.Effect.Effect.Unknown22);
             this.Target.Attributes.BroadcastChangedIfRevealed();
-
-            //TODO: There should be a 1-2 sec wait timer here so client shows the nice eeffect
+            this.Target.World.BuffManager.RemoveAllBuffs(this.Target);
+            this.Target.World.PowerManager.CancelAllPowers(this.Target);
+            //TODO: There should be a 1-2 sec wait timer here so client shows the nice effect
 
             //move user to new position
             //TODO: Find last waypoint
@@ -244,9 +244,10 @@ namespace Mooege.Core.GS.Powers.Payloads
             playerWarpedMessage.Field1 = 0;
 
             this.Target.Attributes[GameAttribute.Buff_Visual_Effect, 0x000FFFFF] = true;
-            this.Target.Attributes[GameAttribute.Hitpoints_Max_Total] = 80; //originally set to 1
-            this.Target.Attributes[GameAttribute.Hitpoints_Max] = 80; //originally set to 0.0009994507F
+            this.Target.Attributes[GameAttribute.Hitpoints_Max_Total] = 80; //Orig = 1;
+            this.Target.Attributes[GameAttribute.Hitpoints_Max] = 80;  //Orig = 0.0009994507F;
             this.Target.Attributes[GameAttribute.Hitpoints_Healed_Target] = 80; //heal up -should be w/e needs to be
+            ((Player)this.Target).AddPercentageHP(100);
             //start reverting buffs
             this.Target.Attributes[GameAttribute.Buff_Icon_End_Tick0, 0x00033C40] = 0;
             this.Target.Attributes[GameAttribute.Immobolize] = false;

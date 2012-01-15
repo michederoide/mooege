@@ -187,7 +187,7 @@ namespace Mooege.Core.GS.Players
             this.PlayerIndex = Interlocked.Increment(ref this.InGameClient.Game.PlayerIndexCounter); // get a new playerId for the player and make it atomic.
             this.Toon = bnetToon;
             this.GBHandle.Type = (int)GBHandleType.Player;
-            this.GBHandle.GBID = this.Toon.ClassID;
+            this.GBHandle.GBID = this.Toon.HeroClassFieldTransform((int)this.Toon.HeroClassField.Value);
 
             this.Field2 = 0x00000009;
             this.Scale = this.ModelScale;

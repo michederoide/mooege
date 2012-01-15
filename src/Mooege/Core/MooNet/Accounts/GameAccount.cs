@@ -416,7 +416,8 @@ namespace Mooege.Core.MooNet.Accounts
                     }
                     else if (queryKey.Group == 3 && queryKey.Field == 1) // Hero's class (GbidClass)
                     {
-                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue(this.CurrentToon.ClassID).Build());
+                        //TODO: Set queryfields as normal persistent fields
+                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue(this.CurrentToon.HeroClassFieldTransform((int)CurrentToon.HeroClassField.Value)).Build());
                     }
                     else if (queryKey.Group == 3 && queryKey.Field == 2) // Hero's current level
                     {

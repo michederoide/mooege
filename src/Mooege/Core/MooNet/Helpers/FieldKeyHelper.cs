@@ -71,26 +71,6 @@ namespace Mooege.Core.MooNet.Helpers
             }
         }
 
-        //TODO: Use covariance and refactor this
-        public void SetIntPresenceFieldValue(IntPresenceField field)
-        {
-            if (field != null)
-            {
-                var key = Create(field.Program, field.OriginatingClass, field.FieldNumber, field.Index);
-                this.SetFieldValue(key, field.GetFieldOperation());
-            }
-        }
-
-        //TODO: Use covariance and refactor this
-        public void SetStringPresenceFieldValue(StringPresenceField field)
-        {
-            if (field != null)
-            {
-                var key = Create(field.Program, field.OriginatingClass, field.FieldNumber, field.Index);
-                this.SetFieldValue(key, field.GetFieldOperation());
-            }
-        }
-
         public List<FieldOperation> GetChangedFieldList()
         {
             return new List<FieldOperation>(_FieldValues.Values);
