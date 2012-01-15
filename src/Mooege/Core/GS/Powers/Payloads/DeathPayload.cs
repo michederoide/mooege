@@ -244,8 +244,8 @@ namespace Mooege.Core.GS.Powers.Payloads
             playerWarpedMessage.Field1 = 0;
 
             this.Target.Attributes[GameAttribute.Buff_Visual_Effect, 0x000FFFFF] = true;
-            this.Target.Attributes[GameAttribute.Hitpoints_Max_Total] = 1;
-            this.Target.Attributes[GameAttribute.Hitpoints_Max] = 0.0009994507F;
+            this.Target.Attributes[GameAttribute.Hitpoints_Max_Total] = 80; //originally set to 1
+            this.Target.Attributes[GameAttribute.Hitpoints_Max] = 80; //originally set to 0.0009994507F
             this.Target.Attributes[GameAttribute.Hitpoints_Healed_Target] = 80; //heal up -should be w/e needs to be
             //start reverting buffs
             this.Target.Attributes[GameAttribute.Buff_Icon_End_Tick0, 0x00033C40] = 0;

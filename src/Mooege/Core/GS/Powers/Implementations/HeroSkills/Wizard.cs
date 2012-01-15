@@ -1204,12 +1204,11 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: Rune_A,B,C,E
+    //TODO: Rune_A,C,E
     #region RayOfFrost
     [ImplementsPowerSNO(Skills.Skills.Wizard.Offensive.RayOfFrost)]
     public class WizardRayOfFrost : ChanneledSkill
     {
-        //Rune_B - Create a swirling storm of sleet dealing [99 * 100}]% weapon damage as Cold to all enemies caught within it.
 
         //We need to change how frost beam powermath works -> Beam radius (SF(10)) and Beam end Radius (SF(11)), currently the function has a weird visual
         //for other rune effects with a wider starting effect
@@ -1229,19 +1228,22 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelOpen()
         {
             EffectsPerSecond = 0.1f;
-            _calcTargetPosition();
-            _target = SpawnEffect(6535, TargetPosition, 0, WaitInfinite());
-            User.AddComplexEffect(RuneSelect(19327, 149835, -1, 149836, 149869, 149879), _target);
-
-            //148061 - swirling storm, is more of a user.playeffectgroup and not a rope
+            if (Rune_B > 0)
+            {
+                AddBuff(User, new IceDomeBuff());
+            }
+            else
+            {
+                _calcTargetPosition();
+                _target = SpawnEffect(6535, TargetPosition, 0, WaitInfinite());
+                User.AddComplexEffect(RuneSelect(19327, 149835, -1, 149836, 149869, 149879), _target);
+            }
         }
 
         public override void OnChannelClose()
         {
             if (_target != null)
                 _target.Destroy();
-
-
         }
 
         public override void OnChannelUpdated()
@@ -1249,6 +1251,10 @@ namespace Mooege.Core.GS.Powers.Implementations
             _calcTargetPosition();
             User.TranslateFacing(TargetPosition);
             // client updates target actor position
+            if (Rune_B > 0)
+            {
+                AddBuff(User, new IceDomeBuff());
+            }
         }
 
         public override IEnumerable<TickTimer> Main()
@@ -1256,29 +1262,40 @@ namespace Mooege.Core.GS.Powers.Implementations
             //Rune_D
             UsePrimaryResource((Math.Max(ScriptFormula(19), 8f)) * EffectsPerSecond);
 
+            if (Rune_B > 0)
+            {
+                foreach (Actor actor in GetEnemiesInRadius(User.Position, ScriptFormula(7)).Actors)
+                {
+                    WeaponDamage(actor, 2.70f * EffectsPerSecond, DamageType.Cold);
+                }
+            }
+
+            else
             foreach (Actor actor in GetEnemiesInRadius(User.Position, BeamLength + 10f).Actors)
             {
                 if (PowerMath.PointInBeam(actor.Position, User.Position, TargetPosition, 3f))
                 {
                     if (Rune_A > 0)
                     {
-                        //takes 1.5 seconds to reach the new maximum dmg(SF(20)) from the minimum dmg(base?)
-                        //Slows targets movement by 40%
-                        //targets attack speed by 30% for 5 seconds
+                        //TODO:takes 1.5 seconds to reach the new maximum dmg(SF(20)) from the minimum dmg(base?)
+                        AddBuff(actor, new DebuffChilled(0.3f, WaitSeconds(0.5f))); //slow 40%, atk spd 30%
+                        //this does attack and movement, but doesnt do the difference which is needed.
 
                     }
                     else if (Rune_C > 0)
                     {
-                        //WeaponDamage(actor, 2.70f * EffectsPerSecond, DamageType.Cold);
-                        //Slows targets movement [ScriptFormula(4)]
-                        //Chill Amount % {ScriptFormula(14)}
-                        //Atk Speed Reduction % {SF(24)}
+                        WeaponDamage(actor, 2.70f * EffectsPerSecond, DamageType.Cold);
+                        AddBuff(actor, new DebuffChilled(ScriptFormula(14), WaitSeconds(ScriptFormula(4)))); //slow 40%, atk spd 30%
+                        //Atk Speed Reduction % {SF(24)} to monster //AddBuff(actor, new AtkSpeedDebuff
                         //Dmg Reduction {SF(25)}
                         //targets attack speed by 30% for 5 seconds
                     }
-                    WeaponDamage(actor, 2.70f * EffectsPerSecond, DamageType.Cold);
-                    //Slows targets movement by 40%
-                    //targets attack speed by 30% for 5 seconds
+                    else
+                    {
+                        WeaponDamage(actor, 2.70f * EffectsPerSecond, DamageType.Cold);
+                        AddBuff(actor, new DebuffChilled(0.3f, WaitSeconds(0.5f))); //slow 40%, atk spd 30%
+                        //this does attack and movement, but doesnt do the difference which is needed.
+                    }
                 }
             }
 
@@ -1303,7 +1320,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             //Rune_C
             public override void Init()
             {
-                Timeout = WaitSeconds(2f);
+                Timeout = WaitSeconds(0.1f);
             }
         }
     }

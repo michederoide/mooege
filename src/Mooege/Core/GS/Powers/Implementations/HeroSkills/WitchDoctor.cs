@@ -229,6 +229,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     _damageTimer = WaitSeconds(_damageRate);
 
                     AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInRadius(Target.Position, 1f); //TODO: hack, it should only be applied to individual targets, not all in 1f.
                     attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
                     attack.Apply();
                     attack.OnDeath = (DeathPayload) =>
