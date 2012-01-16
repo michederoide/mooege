@@ -26,6 +26,7 @@ using Mooege.Core.MooNet.Accounts;
 using Mooege.Core.MooNet.Helpers;
 using Mooege.Core.MooNet.Objects;
 using Mooege.Net.MooNet;
+using Mooege.Core.GS.Players;
 
 
 namespace Mooege.Core.MooNet.Toons
@@ -310,6 +311,7 @@ namespace Mooege.Core.MooNet.Toons
         {
             try
             {
+                //save hero
                 if (ExistsInDB())
                 {
                     var query =
@@ -329,6 +331,39 @@ namespace Mooege.Core.MooNet.Toons
 
                     var cmd = new SQLiteCommand(query, DBManager.Connection);
                     cmd.ExecuteNonQuery();
+
+                }
+
+                //save main gear
+                for (int slot = 0; slot < 8; slot++ )
+                {
+                    var visualItem = this.HeroVisualEquipmentField.Value.GetVisualItem(slot);
+                    //item_identity_id = gbid
+                    if (VisualItemExistsInDb(slot))
+                    {
+                        var itemQuery =
+                                string.Format(
+                                "UPDATE inventory SET item_entity_id={0} WHERE toon_id={1} and inventory_slot={2}",
+                                visualItem.Gbid, this.PersistentID, slot);
+                        var itemCmd = new SQLiteCommand(itemQuery, DBManager.Connection);
+                        itemCmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        var itemQuery =
+                            string.Format(
+                            "INSERT INTO inventory (toon_id, inventory_loc_x, inventory_loc_y, inventory_slot, item_entity_id) VALUES({0},{1},{2},{3},{4})",
+                            this.PersistentID, 0, 0, slot, visualItem.Gbid);
+                        var itemCmd = new SQLiteCommand(itemQuery, DBManager.Connection);
+                        itemCmd.ExecuteNonQuery();
+                    }
+
+
+                    //save other inventory
+
+                    //save stash
+
+                    //save gold
                 }
             }
             catch (Exception e)
@@ -343,6 +378,11 @@ namespace Mooege.Core.MooNet.Toons
             {
                 // Remove from DB
                 if (!ExistsInDB()) return false;
+
+                //delete visualEquipment from DB
+                var itemQuery = string.Format("DELETE FROM inventory WHERE toon_id={0}", this.PersistentID);
+                var itemCmd = new SQLiteCommand(itemQuery, DBManager.Connection);
+                itemCmd.ExecuteNonQuery();
 
                 var query = string.Format("DELETE FROM toons WHERE id={0}", this.PersistentID);
                 var cmd = new SQLiteCommand(query, DBManager.Connection);
@@ -363,6 +403,17 @@ namespace Mooege.Core.MooNet.Toons
                     "SELECT id from toons where id={0}",
                     this.PersistentID);
 
+            var cmd = new SQLiteCommand(query, DBManager.Connection);
+            var reader = cmd.ExecuteReader();
+            return reader.HasRows;
+        }
+
+        private bool VisualItemExistsInDb(int slot)
+        {
+            var query =
+                string.Format(
+                    "Select toon_id from inventory where toon_id = {0} and inventory_slot = {1}",
+                    this.PersistentID, slot);
             var cmd = new SQLiteCommand(query, DBManager.Connection);
             var reader = cmd.ExecuteReader();
             return reader.HasRows;

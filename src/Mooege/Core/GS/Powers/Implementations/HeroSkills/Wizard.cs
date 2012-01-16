@@ -1731,17 +1731,17 @@ namespace Mooege.Core.GS.Powers.Implementations
     //Incomplete
     #region ShockPulse
     [ImplementsPowerSNO(Skills.Skills.Wizard.Signature.ShockPulse)]
-    public class WizardShockPulse : PowerScript
+    public class WizardShockPulse : Skill
     {
         //A:Casts out bolts of fire to deal 195% weapon damage as Fire. 
         //B:Turn the bolts into a floating orb of static lightning that drifts directly forward, zapping up to 5 nearby enemies for 46% weapon damage as Lightning. 
         //C:Merge the bolts in a a single giant orb that oscillates forward dealing 95% weapon damage as Lightning to everything it hits with a 100% chance to pierce through enemies. 
         //DONE -> D:Every target hit by a pulse restores 7 Arcane Power. 
         //E:Slain enemies have a 100% chance to explode dealing 450% weapon damage as Lightning to every enemy within 10 yards. 
-        public override IEnumerable<TickTimer> Run()
+        public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(ScriptFormula(13));
-            User.PlayEffectGroup(RuneSelect(176277, 176290, 176354, 176355, 176250, 176353)); // cast effect
+           /* UsePrimaryResource(ScriptFormula(13)); //No resource used
+            User.PlayEffectGroup(67099); // cast effect
             if (Rune_B > 0 || Rune_C > 0)
             {
                 _SpawnBolt();
@@ -1751,7 +1751,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 for (int n = 0; n < 3; ++n)
                     _SpawnBolt();
             }
-
+            */
             yield break;
         }
 
@@ -1787,12 +1787,12 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             /*
              * private void _calcTargetPosition()
-        {
+            {
             // project beam end to always be a certain length
             TargetPosition = PowerMath.TranslateDirection2D(User.Position, TargetPosition,
                                                              new Vector3D(User.Position.X, User.Position.Y, TargetPosition.Z),
                                                              50f);
-        }
+            }
              * _calcTargetPosition();
 
             
