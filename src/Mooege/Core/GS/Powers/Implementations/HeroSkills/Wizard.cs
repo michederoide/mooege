@@ -155,7 +155,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             User.TranslateFacing(TargetPosition);
 
-            UsePrimaryResource(ScriptFormula(4));
+            //No more Resource Cost
 
             if (Rune_A > 0)
             {
@@ -369,7 +369,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(60f);
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
+            //ScriptFormula(6) = Max Hydra Clusters
 
             Vector3D userCastPosition = new Vector3D(User.Position);
             Vector3D[] spawnPoints = PowerMath.GenerateSpreadPositions(TargetPosition, new Vector3D(TargetPosition.X, TargetPosition.Y + 0.7f, TargetPosition.Z), 120, 3);
@@ -1261,7 +1263,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Main()
         {
             //Rune_D
-            UsePrimaryResource((Math.Max(ScriptFormula(19), 8f)) * EffectsPerSecond);
+            UsePrimaryResource(ScriptFormula(19) * EffectsPerSecond); //total casting cost * effects per second??
 
             if (Rune_B > 0)
             {
@@ -1563,8 +1565,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UsePrimaryResource(25f);
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             AddBuff(User, new IceArmorBuff());
             if (Rune_D > 0)
             {
@@ -1834,8 +1835,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UsePrimaryResource(25f);
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             AddBuff(User, new StormArmorBuff());
             if (Rune_D > 0)
             {
@@ -1976,7 +1977,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             //UsePrimaryResource(25f);
             AddBuff(User, new DiamondSkinBuff());
             yield break;
@@ -2185,8 +2186,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UsePrimaryResource(25f);
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             AddBuff(User, new EnergyArmorBuff());
             yield break;
         }
@@ -2489,7 +2490,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //StartDefaultCooldown();
+            //StartCooldown(EvalTag(PowerKeys.CooldownTime));
             //UsePrimaryResource(ScriptFormula(12));
             yield break;
         }

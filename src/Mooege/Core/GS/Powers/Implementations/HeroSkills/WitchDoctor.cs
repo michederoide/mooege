@@ -172,7 +172,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Main()
         {
             UsePrimaryResource(ScriptFormula(5));
-            StartDefaultCooldown();
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
 
             if (Rune_B > 0)
             {
@@ -195,7 +195,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 {
                     foreach (Actor enemy in GetEnemiesInRadius(TargetPosition, ScriptFormula(3)).Actors)
                     {
-                        AddBuff(enemy, new DebuffSlowed(ScriptFormula(19), WaitSeconds(ScriptFormula(8))));
+                        AddBuff(enemy, new DebuffSlowed(ScriptFormula(19), WaitSeconds(ScriptFormula(2))));
                         AddBuff(enemy, new DamageGroundDebuff());
                     }
                 };
@@ -211,7 +211,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Init()
             {
                 base.Init();
-                Timeout = WaitSeconds(ScriptFormula(8));
+                Timeout = WaitSeconds(ScriptFormula(2));
             }
             /*public override void OnPayload(Payload payload)
             {
@@ -624,7 +624,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(ScriptFormula(0));
+            UsePrimaryResource(ScriptFormula(0));
             if (Rune_A > 0)
             {
                 //Projectile Giant Bat Actors
@@ -853,6 +853,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            //Total Cooldown = SF(2)
+            //Newest Patch adds Run Speed Increase = SF(16) "0.50"
             Vector3D DecoySpot = new Vector3D(User.Position);
             Actor blast = SpawnProxy(DecoySpot);
 
@@ -1437,6 +1439,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            //new cooldown added in latest script formulas = "CoolDown Time" SF_12 * SF_11
             var ShamSpot = SpawnProxy(TargetPosition, WaitSeconds(ScriptFormula(0) + 1f));
             SpawnEffect(RuneSelect(117574, 182271, 182276, 182278, 182283, 117574), TargetPosition, 0, WaitSeconds(ScriptFormula(0))).PlayEffectGroup(181291);
             AddBuff(ShamSpot, new AuraBuff());
@@ -1725,7 +1728,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             yield break;
         }
     }

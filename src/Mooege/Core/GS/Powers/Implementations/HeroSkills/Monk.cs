@@ -141,6 +141,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.SevenSidedStrike)]
     public class MonkSevenSidedStrike : Skill
     {
+        //Max Teleport Distance added in last patch 8101.
         public override IEnumerable<TickTimer> Main()
         {
             //UsePrimaryResource(50f);
@@ -427,7 +428,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             //UsePrimaryResource(15f);
 
             // dashing strike never specifies the target's id so we just search for the closest target
-            Target = GetEnemiesInRadius(TargetPosition, 8f).GetClosestTo(TargetPosition);
+            Target = GetEnemiesInRadius(TargetPosition, ScriptFormula(0)).GetClosestTo(TargetPosition);
 
             if (Target != null)
             {
@@ -470,7 +471,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     return false;
 
                 // dash speed seems to always be actor speed * 10
-                float speed = Target.Attributes[GameAttribute.Running_Rate_Total] * 10f;
+                float speed = Target.Attributes[GameAttribute.Running_Rate_Total] * ScriptFormula(5);
 
                 Target.TranslateFacing(_destination, true);
                 _mover = new ActorMover(Target);
@@ -513,7 +514,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            //No more cooldown
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new CasterBuff());
             AddBuff(User, new CastBonusBuff());
@@ -746,7 +748,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelOpen()
         {
             EffectsPerSecond = 0.25f;
-            UsePrimaryResource(15f);
+            UsePrimaryResource(ScriptFormula(16));
             //User.Attributes[GameAttribute.Movement_Bonus_Run_Speed] += ScriptFormula(14);
             if (Rune_C > 0)
             {
@@ -909,7 +911,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AttackPayload attack = new AttackPayload(this);
@@ -1041,7 +1043,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            //No more cooldown since latest patch 8101
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new CastEffect(WaitSeconds(ScriptFormula(5))));
@@ -1158,7 +1160,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            //No more cooldown
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new CastEffect(WaitSeconds(ScriptFormula(4) * 60f)));
@@ -1312,7 +1314,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            //No more cooldown
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
 

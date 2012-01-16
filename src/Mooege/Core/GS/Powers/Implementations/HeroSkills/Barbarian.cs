@@ -149,8 +149,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            //there is a changed walking speed multiplier from 8101 patch.
             bool hitAnything = false;
-            //StartCooldown(WaitSeconds(10f));
+            StartCooldown(EvalTag(PowerKeys.ResourceCost));
             if (Rune_C > 0)
             {
                 AttackPayload launch = new AttackPayload(this);
@@ -287,6 +288,26 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 Timeout = WaitSeconds(ScriptFormula(0));
             }
+            
+            //This needs to be added into whirlwind, because your walking speed does become slower once whirlwind is active.
+            /*public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+            //unsure if whirlwind still uses running_rate or walking_rate?
+                float speed = User.Attributes[GameAttribute.Running_Rate_Total] * EvalTag(PowerKeys.WalkingSpeedMultiplier);
+
+
+                User.Attributes.BroadcastChangedIfRevealed();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                User.Attributes.BroadcastChangedIfRevealed();
+
+            }*/
 
             public override bool Update()
             {
@@ -296,7 +317,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (_damageTimer == null || _damageTimer.TimedOut)
                 {
                     _damageTimer = WaitSeconds(ScriptFormula(0));
-                    //UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+                    UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
                     WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(2)),
                                  ScriptFormula(1), Rune_A > 0 ? DamageType.Fire : DamageType.Physical);
@@ -337,7 +358,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartCooldown(WaitSeconds(10f));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             if (Rune_B > 0)
             {
                 Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(9) / 5f, (int)ScriptFormula(11));
@@ -345,6 +366,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 for (int i = 0; i < projDestinations.Length; i++)
                 {
                     var proj = new Projectile(this, 161891, User.Position);
+                    proj.Scale = 3f;
                     proj.Timeout = WaitSeconds(0.5f);
                     proj.OnCollision = (hit) =>
                     {
@@ -382,6 +404,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 for (int i = 0; i < projDestinations.Length; i++)
                 {
                     var proj = new Projectile(this, 161894, User.Position);
+                    proj.Scale = 3f;
                     proj.Timeout = WaitSeconds(0.5f);
                     proj.OnCollision = (hit) =>
                     {
@@ -413,6 +436,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             else if (Rune_A > 0)
             {
                 var projectile = new Projectile(this, 161890, User.Position);
+                projectile.Scale = 3f;
                 projectile.Timeout = WaitSeconds(0.5f);
                 projectile.OnCollision = (hit) =>
                 {
@@ -445,6 +469,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             else
             {
                 var projectile = new Projectile(this, RuneSelect(74636, -1, -1, 161892, 161893, -1), User.Position);
+                projectile.Scale = 3f;
                 projectile.Timeout = WaitSeconds(0.5f);
                 projectile.OnCollision = (hit) =>
                 {
@@ -482,6 +507,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             Vector3D inFrontOfUser = PowerMath.TranslateDirection2D(User.Position, spawnPosition, User.Position, 5f);
 
             var return_proj = new Projectile(this, 79400, new Vector3D(spawnPosition.X, spawnPosition.Y, User.Position.Z));
+            return_proj.Scale = 3f;
             return_proj.DestroyOnArrival = true;
             return_proj.LaunchArc(inFrontOfUser, 1f, -0.03f);
             User.AddRopeEffect(79402, return_proj);
@@ -497,8 +523,6 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Main()
         {
             UsePrimaryResource(20f);
-            //User.PlayEffectGroup(RuneSelect(18705, 99810, 216339, 99798, 201534, 99821));
-            //User.PlayEffectGroup(202891); //Yell Sound
             foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(9)).Actors)
             {
                 AddBuff(enemy, new ShoutDeBuff());
@@ -676,7 +700,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(20f);
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new BattleRageEffect());
 
@@ -768,18 +792,15 @@ namespace Mooege.Core.GS.Powers.Implementations
             AttackPayload attack = new AttackPayload(this);
             //SF(27) is 120 degrees, SF(26) is range.
             attack.Targets = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(27), ScriptFormula(26));
-            attack.AddWeaponDamage(ScriptFormula(18), DamageType.Physical);
+            attack.AddWeaponDamage(ScriptFormula(16), DamageType.Physical);
             attack.OnHit = hitPayload =>
             {
                 if (Rune_B > 0)
                 {
-                    foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(14)).Actors)
+                    foreach (Actor enemy in GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(27), ScriptFormula(26)).Actors)
                     {
-                        Knockback(enemy, ScriptFormula(13));
-                    }
-                    foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(21)).Actors)
-                    {
-                        Knockback(enemy, ScriptFormula(20));
+                        //Snare Duration = SF(14)
+                        //Snare Magnitude = SF(20)
                     }
                 }
                 if (Rune_C > 0)
@@ -1507,7 +1528,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
 
-                float speed = User.Attributes[GameAttribute.Running_Rate_Total] * 10f;
+                float speed = User.Attributes[GameAttribute.Running_Rate_Total] * EvalTag(PowerKeys.WalkingSpeedMultiplier);
 
                 User.TranslateFacing(_destination, true);
                 _mover = new ActorMover(User);
@@ -1741,7 +1762,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //StartCooldown(WaitSeconds(ScriptFormula(20)));
+            //StartCooldown(WaitSeconds(ScriptFormula(5)));
             User.PlayEffectGroup(55689);
             WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(0)), ScriptFormula(19), DamageType.Physical);
             var Quake = SpawnEffect(168440, User.Position, 0, WaitSeconds(ScriptFormula(1)));
@@ -1866,6 +1887,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             AddBuff(User, new BerserkerBuff());
             if (Rune_B > 0)
             {

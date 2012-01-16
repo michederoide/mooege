@@ -773,6 +773,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelOpen()
         {
             EffectsPerSecond = 0.1f;
+            //initial hatred cost
+            UsePrimaryResource(ScriptFormula(4));
             //User.PlayEffectGroup(150049); //unknown where this could go.
             User.Attributes[GameAttribute.Projectile_Speed] = User.Attributes[GameAttribute.Projectile_Speed] * ScriptFormula(22);
             User.Attributes.BroadcastChangedIfRevealed();
@@ -794,8 +796,6 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
-            //initial hatred cost (4)
-            UsePrimaryResource(1.5f);
             //projectiles
             var proj1 = new Projectile(this, 150061, User.Position);
             proj1.Position.Z += 5f;
@@ -807,6 +807,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 proj1.Destroy();
                 WeaponDamage(hit, ScriptFormula(0), DamageType.Arcane);
             };
+            UsePrimaryResource(ScriptFormula(19));
 
             yield return WaitSeconds(ScriptFormula(1));
         }
@@ -954,6 +955,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            //patch added attack speed = 1.5
             UseSecondaryResource(EvalTag(PowerKeys.ResourceCost));
             //if Female
             AddBuff(User, new ShadowPowerFemale());
@@ -974,7 +976,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (!base.Apply())
                     return false;
-                Target.Attributes[GameAttribute.Attacks_Per_Second_Percent] += ScriptFormula(0);
+                Target.Attributes[GameAttribute.Attacks_Per_Second_Percent] += ScriptFormula(1);
 
                 if (Rune_A > 0)
                 {
@@ -1334,7 +1336,6 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             //"Use SpecialWalk Steering"
 
-            UsePrimaryResource(ScriptFormula(19));
             //projectiles
             var Target = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(2), 180f).GetClosestTo(User.Position);
             //todo:else should it fire if there are no mobs? seems like it should but unknown how that should work.  
@@ -1348,6 +1349,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 proj1.Destroy();
                 WeaponDamage(hit, ScriptFormula(1), DamageType.Physical);
             };
+            UsePrimaryResource(ScriptFormula(19));
 
             yield return WaitSeconds(ScriptFormula(4));
         }
