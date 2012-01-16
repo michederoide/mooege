@@ -195,20 +195,22 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         ropeSource.AddRopeEffect(0x78c0, curTarget);
                         ropeSource = curTarget;
-
-                        WeaponDamage(curTarget, damage, DamageType.Lightning);
-                        /*AttackPayload attack = new AttackPayload(this);
+                        AttackPayload attack = new AttackPayload(this);
+                        attack.AddWeaponDamage(damage, DamageType.Lightning);
+                        attack.Targets = new TargetList();
+                        attack.Targets.Actors.Add(curTarget);
+                        attack.Apply();
                         attack.OnHit = HitPayload =>
                         {
                             if (Rune_E > 0)
                             {
                                 if (HitPayload.IsCriticalHit)
                                 {
-                                    Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, 72f, (int)ScriptFormula(14));
+                                    Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, Target.Position, 72f, (int)ScriptFormula(14));
 
                                     foreach (Vector3D missilePos in projDestinations)
                                     {
-                                        var proj = new Projectile(this, 176247, TargetPosition);
+                                        var proj = new Projectile(this, 176247, Target.Position);
                                         proj.OnCollision = (hit) =>
                                         {
                                             SpawnEffect(176262, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
@@ -221,7 +223,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                             }
 
                         };
-                        attack.Apply();*/
 
                         if (Rune_B > 0)
                         {

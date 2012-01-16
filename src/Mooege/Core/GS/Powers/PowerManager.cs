@@ -227,37 +227,6 @@ namespace Mooege.Core.GS.Powers
                     Monitor.Wait(_locker);
                 _go = false;
 
-                //Logger.Warn("Number of scripts before update: {0} ThreadId: {1}", _executingScripts.Count, Thread.CurrentThread.ManagedThreadId);
-                //List<ExecutingScript> scriptsToDelete = new List<ExecutingScript>();
-                //foreach (var script in _executingScripts)
-                //{
-                //    if (script.PowerEnumerator.Current.TimedOut)
-                //    {
-                //        try
-                //        {
-                //            Logger.Debug("BeforeMoveNextSucceded: {0}, ThreadId: {1}", _executingScripts.Count, Thread.CurrentThread.ManagedThreadId);
-                //            if (script.PowerEnumerator.MoveNext())
-                //            {
-                //                Logger.Debug("MoveNextSucceded: {0}, ThreadId: {1}", _executingScripts.Count, Thread.CurrentThread.ManagedThreadId);
-                //                if (script.PowerEnumerator.Current == PowerScript.StopExecution) scriptsToDelete.Add(script);
-                //            }
-                //            else
-                //                //Logger.Debug("Else: {0}, ThreadId: {1}", _executingScripts.Count, Thread.CurrentThread.ManagedThreadId);
-                //                scriptsToDelete.Add(script);
-                //        }
-                //        catch
-                //        {
-                //            Logger.Warn("Invalid script: {0}", script);
-                //        }
-                //    }
-                //}
-                //foreach (var script in scriptsToDelete)
-                //{
-                //    _executingScripts.Remove(script);
-                //}
-                //Logger.Warn("Number of scripts after update: {0} ThreadId: {1}", _executingScripts.Count, Thread.CurrentThread.ManagedThreadId);
-                //restart all other threads waiting on this
-
                 _executingScripts.RemoveAll(script =>
                 {
                     if (script.PowerEnumerator.Current.TimedOut)
@@ -282,17 +251,45 @@ namespace Mooege.Core.GS.Powers
                 });
                 _go = true;
                 Monitor.PulseAll(_locker);
-
             }
+        }
 
 
+        //Stores the object for creating a cancel channeled skill thread
+        private struct ChanneledSkillObject
+        {
+            public Actor user;
+            public int powerSNO;
         }
 
         public void CancelChanneledSkill(Actor user, int powerSNO)
         {
+            //Execute all cancels in a new thread to not block the update thread if it generates calls here during execution of some scripts
+
+            ChanneledSkillObject _channeledSkillObject = new ChanneledSkillObject();
+            _channeledSkillObject.user = user;
+            _channeledSkillObject.powerSNO = powerSNO;
+
+            Thread cancelChanneledSkillThread = new Thread(CancelChanneledSkill);
+            cancelChanneledSkillThread.CurrentCulture = CultureInfo.InvariantCulture;
+            cancelChanneledSkillThread.Start(_channeledSkillObject);
+
+        }
+
+        private void CancelChanneledSkill(object channeledSkillObject)
+        {
+            //TODO: Don't remove channeled skills but expire them
             lock (_locker)
             {
-                var channeledSkill = _FindChannelingSkill(user, powerSNO);
+                //wait for Update if in progress
+                while (!_go)
+                    Monitor.Wait(_locker);
+                //Block updates and everything else until full addition of effects is done. 
+                //Otherwise yield returns that have a wait timer will mess up update collection and block forever
+                _go = false;
+
+                ChanneledSkillObject _channeledSkillObject = (ChanneledSkillObject)channeledSkillObject;
+                var channeledSkill = _FindChannelingSkill(_channeledSkillObject.user, _channeledSkillObject.powerSNO);
                 if (channeledSkill != null)
                 {
                     channeledSkill.CloseChannel();
@@ -300,8 +297,11 @@ namespace Mooege.Core.GS.Powers
                 }
                 else
                 {
-                    Logger.Debug("cancel channel for power {0}, but it doesn't have an open channel to cancel", powerSNO);
+                    Logger.Debug("cancel channel for power {0}, but it doesn't have an open channel to cancel", _channeledSkillObject.powerSNO);
                 }
+                //Release all threads waiting on this
+                _go = true;
+                Monitor.PulseAll(_locker);
             }
         }
 
