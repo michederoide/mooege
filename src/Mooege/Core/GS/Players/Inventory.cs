@@ -33,6 +33,7 @@ using Mooege.Net.GS.Message.Definitions.Misc;
 using System.Collections.Generic;
 using System.Linq;
 using Mooege.Core.GS.Items.Implementations;
+using Mooege.Core.MooNet.Toons;
 
 namespace Mooege.Core.GS.Players
 {
@@ -90,6 +91,11 @@ namespace Mooege.Core.GS.Players
              //player.InGameClient.SendMessage(message);
              player.World.BroadcastGlobal(message);
          }
+
+        public D3.Hero.VisualEquipment GetVisualEquipment()
+        {
+            return this._equipment.GetVisualEquipmentForToon();   
+        }
 
 
         public bool HasInventorySpace(Item item)

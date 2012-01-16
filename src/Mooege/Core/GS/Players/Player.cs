@@ -787,6 +787,11 @@ namespace Mooege.Core.GS.Players
         public override void OnLeave(World world)
         {
             this.Conversations.StopAll();
+            //save visual equipment
+            this.Toon.HeroVisualEquipmentField.Value = this.Inventory.GetVisualEquipment();
+            this.Toon.HeroLevelField.Value = this.Attributes[GameAttribute.Level];
+            this.Toon.GameAccount.ChangedFields.SetPresenceFieldValue(this.Toon.HeroVisualEquipmentField);
+            this.Toon.GameAccount.ChangedFields.SetPresenceFieldValue(this.Toon.HeroLevelField);
         }
 
         public override bool Reveal(Player player)
