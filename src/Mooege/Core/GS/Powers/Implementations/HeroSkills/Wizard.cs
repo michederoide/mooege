@@ -262,7 +262,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(ScriptFormula(7));
+            //No more resource cost
             User.PlayEffectGroup(19305); // cast effect
             if (Rune_B > 0)
             {
@@ -839,7 +839,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Complete, Rune_E seems slow but correct i guess?
+    //Complete, Rune_E seems slow but correct i guess? - Once attack speed gets calculated in later, it will be correct.
     #region ExplosiveBlast
     [ImplementsPowerSNO(Skills.Skills.Wizard.Offensive.ExplosiveBlast)]
     public class ExplosiveBlast : Skill
@@ -849,27 +849,15 @@ namespace Mooege.Core.GS.Powers.Implementations
             Vector3D blastspot = new Vector3D(User.Position);
             Actor blast = SpawnProxy(blastspot);
 
-            if (Rune_D > 0)
+            if (Rune_A > 0)
             {
                 UsePrimaryResource(ScriptFormula(15));
-                StartCooldown(WaitSeconds(1f));
-                User.PlayEffectGroup(89449);
-            }
-            else if (Rune_A > 0)
-            {
-                UsePrimaryResource(ScriptFormula(15));
-                StartCooldown(WaitSeconds(1f));
-            }
-            else if (Rune_C > 0)
-            {
-                UsePrimaryResource(ScriptFormula(15));
-                StartCooldown(WaitSeconds(1f));
-                blast.PlayEffectGroup(89449);
+                StartCooldown(EvalTag(PowerKeys.CooldownTime));
             }
             else
             {
                 UsePrimaryResource(ScriptFormula(15));
-                StartCooldown(WaitSeconds(1f));
+                StartCooldown(EvalTag(PowerKeys.CooldownTime));
                 User.PlayEffectGroup(89449);
             }
 
@@ -945,7 +933,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(20f * EffectsPerSecond);
+            UsePrimaryResource(ScriptFormula(30) * EffectsPerSecond);
 
             //if (Rune_C > 0)
 
@@ -1039,6 +1027,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             if (Rune_C > 0)
             {
+                //No Resouce Cost
                 StartCooldown(WaitSeconds(ScriptFormula(3)));
                 var frozenMist = SpawnEffect(RuneSelect(4402, 189047, 189048, 75631, 189049, 189050), User.Position, 0, WaitSeconds(ScriptFormula(9)));
                 frozenMist.UpdateDelay = 1f;
@@ -1336,10 +1325,10 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Run()
         {
-            UsePrimaryResource(15f);
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             if (!(Rune_E > 0 || Rune_D > 0))
             {
-                StartCooldown(WaitSeconds(ScriptFormula(20)));
+                StartCooldown(EvalTag(PowerKeys.CooldownTime));
             }
 
             if (Rune_D > 0)
@@ -1483,9 +1472,9 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Run()
         {
 
-            UsePrimaryResource(15f);
+            //No more Resouce Cost
             //these are changed around to actually identify with their rune color : visual effects
-            User.PlayEffectGroup(RuneSelect(19343, 189477, 19343, 189413, 188944, 189362));
+            User.PlayEffectGroup(19343);
 
             TargetPosition = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, 9f);
 
@@ -1566,6 +1555,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Main()
         {
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+
             AddBuff(User, new IceArmorBuff());
             if (Rune_D > 0)
             {
@@ -1728,7 +1719,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Incomplete
+    //Broken
     #region ShockPulse
     [ImplementsPowerSNO(Skills.Skills.Wizard.Signature.ShockPulse)]
     public class WizardShockPulse : Skill
@@ -1837,6 +1828,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             StartCooldown(EvalTag(PowerKeys.CooldownTime));
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             AddBuff(User, new StormArmorBuff());
             if (Rune_D > 0)
             {
@@ -1978,7 +1970,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Main()
         {
             StartCooldown(EvalTag(PowerKeys.CooldownTime));
-            //UsePrimaryResource(25f);
+            //No Resource Cost
             AddBuff(User, new DiamondSkinBuff());
             yield break;
         }
@@ -2065,14 +2057,14 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             if (Rune_D > 0)
             {
-                StartCooldown(ScriptFormula(15) - ScriptFormula(14));
-                UsePrimaryResource(25f);
+                StartCooldown(EvalTag(PowerKeys.CooldownTime));
+                //No Resouce Cost
                 AddBuff(User, new SlowTimeBuff());
                 yield break;
             }
             else
-                StartCooldown(ScriptFormula(15));
-            UsePrimaryResource(25f);
+                StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            //No Resouce Cost
             AddBuff(User, new SlowTimeBuff());
             yield break;
         }
@@ -2282,8 +2274,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UsePrimaryResource(25f);
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             AddBuff(User, new MagicWeaponBuff());
             yield break;
         }
@@ -2539,20 +2532,4 @@ namespace Mooege.Core.GS.Powers.Implementations
 
     //[Hard Skills TODO] Mirror Image, Familiar, Archon
     //14 passive skills
-    /*
-     * Power Hungry
-     * Temporal Flux
-     * Glass Cannon
-     * Prodigy
-     * Virtuoso
-     * Astral Presence
-     * Illusionist
-     * Conflagration
-     * Glavanizing Ward
-     * Blur
-     * Arcane Dynamo
-     * Critical Mass
-     * Evocation
-     * Unstable Anomal
-     */
 }
