@@ -117,10 +117,10 @@ namespace Mooege.Core.MooNet.Toons
 
         //OBSOLETE: NEVER USED
         //TODO: Remove this in next commit
-        ///// <summary>
-        ///// Toon handle struct.
-        ///// </summary>
-        //public ToonHandleHelper ToonHandle { get; private set; }
+        /// <summary>
+        /// Toon handle struct.
+        /// </summary>
+        public ToonHandleHelper ToonHandle { get; private set; }
 
         /// <summary>
         /// Toon's owner account.

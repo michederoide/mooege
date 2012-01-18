@@ -140,7 +140,7 @@ namespace Mooege.Core.MooNet.Objects
             foreach (var subscriber in this.Subscribers)
             {
                 var gameAccount = subscriber.Account.CurrentGameAccount;
-                if (gameAccount.IsOnline) //This should never be false, subscribers should be unsubscribed if disconnected
+                if (gameAccount.GameAccountStatusField.Value) //This should never be false, subscribers should be unsubscribed if disconnected
                 {
                     var state = bnet.protocol.presence.ChannelState.CreateBuilder().SetEntityId(this.BnetEntityId).AddRangeFieldOperation(operations).Build();
 
@@ -179,7 +179,7 @@ namespace Mooege.Core.MooNet.Objects
             //TODO: Split notifications per game type
             foreach (var gameClient in client.Account.GameAccounts)
             {
-                if (gameClient.Value.IsOnline)
+                if (gameClient.Value.GameAccountStatusField.Value) //true if game online
                 {
                     gameClient.Value.LoggedInClient.MakeTargetedRPC(this, () =>
                         bnet.protocol.channel.ChannelSubscriber.CreateStub(gameClient.Value.LoggedInClient).NotifyAdd(null, builder.Build(), callback => { }));

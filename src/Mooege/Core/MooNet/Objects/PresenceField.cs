@@ -25,22 +25,6 @@ using System.Text;
 
 namespace Mooege.Core.MooNet.Objects
 {
-    /// <summary>
-    /// Holds a list of persistence fields. Used for updates in RPC Derived objects
-    /// </summary>
-    public class PersistenceFieldList : List<object>
-    {
-        new public void Add(object field)
-        {
-            if (field is PresenceFieldBase)
-            {
-                base.Add(field);
-            }
-
-            //((PresenceField<object>)item).isSynced = true;
-        }
-    }
-
     public class EntityIdPresenceFieldList
     {
         public List<bnet.protocol.EntityId> Value = new List<bnet.protocol.EntityId>();
@@ -79,8 +63,22 @@ namespace Mooege.Core.MooNet.Objects
         {
         }
 
+        /// <summary>
+        /// Delegate to add a specific transformation before sending the Operation
+        /// </summary>
+        /// <param name="value"></param>
+        public delegate bool TransformValueDel(bool a);
+        public TransformValueDel transformDelegate = null;
+
         public bnet.protocol.presence.Field GetField()
         {
+            var _valueToSend = Value;
+            // Prepare Value for sending
+            // Example computing a hash (see toon.cs persistence fields delegates)
+            if (transformDelegate != null)
+            {
+                _valueToSend = transformDelegate.Invoke((bool)Value);
+            }
             var variantValue = bnet.protocol.attribute.Variant.CreateBuilder().SetBoolValue(Value).Build();
             return base.GetField(variantValue);
         }

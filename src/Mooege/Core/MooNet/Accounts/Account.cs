@@ -61,7 +61,7 @@ namespace Mooege.Core.MooNet.Accounts
                 //check if anygameAccounts are online
                 foreach (var gameAccount in GameAccounts)
                 {
-                    if (gameAccount.Value.IsOnline) return true;
+                    if (gameAccount.Value.GameAccountStatusField.Value) return true;
                 }
                 return false;
             }

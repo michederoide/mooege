@@ -63,6 +63,19 @@ namespace Mooege.Core.MooNet.Accounts
         public BoolPresenceField GameAccountStatusField
             = new BoolPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 1, 0, false);
 
+        /// <summary>
+        /// Transforms from normal value to the notification send value whenever a notification is sent
+        /// Used here only to set the value before is sent
+        /// TODO: Maybe there is no need for this if value is set as soon as LoggedInClient is set
+        /// </summary>
+        //public bool GameAccountStatusFieldTransform(bool value)
+        //{
+        //    return this.LoggedInClient != null;
+        //}
+
+        //public bool IsOnline { get { return this.LoggedInClient != null; } }
+
+
         public IntPresenceField GameAccountStatusIdField
             = new IntPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 5, 0);
 
@@ -136,7 +149,7 @@ namespace Mooege.Core.MooNet.Accounts
         {
             get
             {
-                if (_lastPlayedHeroId == AccountHasNoToons && this.Toons.Count > 0 && !this.IsOnline)
+                if (_lastPlayedHeroId == AccountHasNoToons && this.Toons.Count > 0 && !this.GameAccountStatusField.Value)
                 {
                     _lastPlayedHeroId = this.CurrentHeroIdField.Value = this.Toons.First().Value.D3EntityID;
                     this._currentToon = ToonManager.GetToonByLowID(_lastPlayedHeroId.IdLow);
@@ -232,7 +245,6 @@ namespace Mooege.Core.MooNet.Accounts
 
         }
 
-        public bool IsOnline { get { return this.LoggedInClient != null; } }
 
         //TODO: Why do we need a logged in client in this class. Each logged in client should have a game account associated.
         private MooNetClient _loggedInClient;
@@ -247,8 +259,8 @@ namespace Mooege.Core.MooNet.Accounts
             {
                 this._loggedInClient = value;
 
-                this.GameAccountStatusField.Value = this.IsOnline;
-                this.GameAccountStatusIdField.Value = (int)(this.IsOnline == true ? 1324923597904795 : 0);
+                this.GameAccountStatusField.Value = value != null;
+                this.GameAccountStatusIdField.Value = (int)(this.GameAccountStatusField.Value == true ? 1324923597904795 : 0);
 
                 ChangedFields.SetPresenceFieldValue(this.GameAccountStatusField);
                 ChangedFields.SetPresenceFieldValue(this.GameAccountStatusIdField);
@@ -309,8 +321,8 @@ namespace Mooege.Core.MooNet.Accounts
         public override List<bnet.protocol.presence.FieldOperation> GetSubscriptionNotifications()
         {
             //for now set it here
-            this.GameAccountStatusField.Value = this.IsOnline;
-            this.GameAccountStatusIdField.Value = (int)(this.IsOnline == true ? 1324923597904795 : 0);
+            //this.GameAccountStatusField.Value = this.IsOnline;
+            this.GameAccountStatusIdField.Value = (int)(this.GameAccountStatusField.Value == true ? 1324923597904795 : 0);
 
             var operationList = new List<bnet.protocol.presence.FieldOperation>();
 

@@ -106,7 +106,7 @@ namespace Mooege.Core.MooNet.Friends
 
             foreach (var inviterGameAccount in inviterGameAccounts)
             {
-                if (inviterGameAccount.IsOnline)
+                if (inviterGameAccount.GameAccountStatusField.Value) //true if client online
                 {
                     inviterGameAccount.LoggedInClient.MakeTargetedRPC(FriendManager.Instance, () =>
                         bnet.protocol.friends.FriendsNotify.CreateStub(inviterGameAccount.LoggedInClient).NotifyReceivedInvitationRemoved(null, notificationToInviter, callback => { }));
@@ -118,7 +118,7 @@ namespace Mooege.Core.MooNet.Friends
 
             foreach (var inviteeGameAccount in inviteeGameAccounts)
             {
-                if (inviteeGameAccount.IsOnline)
+                if (inviteeGameAccount.GameAccountStatusField.Value) //true if client online
                 {
                     inviteeGameAccount.LoggedInClient.MakeTargetedRPC(FriendManager.Instance, () =>
                         bnet.protocol.friends.FriendsNotify.CreateStub(inviteeGameAccount.LoggedInClient).NotifyFriendAdded(null, friendAddedNotificationToInvitee, callback => { }));
@@ -146,7 +146,7 @@ namespace Mooege.Core.MooNet.Friends
 
             foreach (var inviterGameAccount in inviterGameAccounts)
             {
-                if (inviterGameAccount.IsOnline)
+                if (inviterGameAccount.GameAccountStatusField.Value) //true if client online
                 {
                     inviterGameAccount.LoggedInClient.MakeTargetedRPC(FriendManager.Instance, () =>
                         bnet.protocol.friends.FriendsNotify.CreateStub(inviterGameAccount.LoggedInClient).NotifyReceivedInvitationRemoved(null, declinedNotification, callback => { }));
@@ -155,7 +155,7 @@ namespace Mooege.Core.MooNet.Friends
 
             foreach (var inviteeGameAccount in inviteeGameAccounts)
             {
-                if (inviteeGameAccount.IsOnline)
+                if (inviteeGameAccount.GameAccountStatusField.Value) //true if client online
                 {
                     inviteeGameAccount.LoggedInClient.MakeTargetedRPC(FriendManager.Instance, () =>
                         bnet.protocol.friends.FriendsNotify.CreateStub(inviteeGameAccount.LoggedInClient).NotifyReceivedInvitationRemoved(null, declinedNotification, callback => { }));
@@ -186,7 +186,7 @@ namespace Mooege.Core.MooNet.Friends
             var removeeGameAccounts = GameAccountManager.GetGameAccountsForAccount(removee).Values;
             foreach (var removeeGameAccount in removeeGameAccounts)
             {
-                if (removeeGameAccount.IsOnline)
+                if (removeeGameAccount.GameAccountStatusField.Value) //true if online
                 {
                     var notifyRemovee = bnet.protocol.friends.FriendNotification.CreateBuilder().SetTarget(removerAsFriend).Build();
                     removeeGameAccount.LoggedInClient.MakeTargetedRPC(FriendManager.Instance, () =>
