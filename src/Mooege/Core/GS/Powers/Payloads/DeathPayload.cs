@@ -127,7 +127,7 @@ namespace Mooege.Core.GS.Powers.Payloads
         {
             this.Target.PlayEffect(Net.GS.Message.Definitions.Effect.Effect.Unknown38);
             //not sure why count does not appear
-            this.Target.Attributes[GameAttribute.Death_Count] = 1;
+            this.Target.Attributes[GameAttribute.Death_Count] += 1;
 
 
             //TODO: there seems to be a special trade message on death, maybe blocking trades with user...
@@ -244,9 +244,9 @@ namespace Mooege.Core.GS.Powers.Payloads
             playerWarpedMessage.Field1 = 0;
 
             this.Target.Attributes[GameAttribute.Buff_Visual_Effect, 0x000FFFFF] = true;
-            this.Target.Attributes[GameAttribute.Hitpoints_Max_Total] = 80; //Orig = 1;
-            this.Target.Attributes[GameAttribute.Hitpoints_Max] = 80;  //Orig = 0.0009994507F;
-            this.Target.Attributes[GameAttribute.Hitpoints_Healed_Target] = 80; //heal up -should be w/e needs to be
+            //this.Target.Attributes[GameAttribute.Hitpoints_Max_Total] = 80; //Orig = 1;
+            //this.Target.Attributes[GameAttribute.Hitpoints_Max] = 80;  //Orig = 0.0009994507F;
+            this.Target.Attributes[GameAttribute.Hitpoints_Healed_Target] = this.Target.Attributes[GameAttribute.Hitpoints_Max_Total]; //heal up -should be w/e needs to be
             ((Player)this.Target).AddPercentageHP(100);
             //start reverting buffs
             this.Target.Attributes[GameAttribute.Buff_Icon_End_Tick0, 0x00033C40] = 0;
