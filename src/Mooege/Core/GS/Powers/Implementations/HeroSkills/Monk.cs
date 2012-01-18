@@ -29,9 +29,11 @@ using Mooege.Core.GS.Players;
 using Mooege.Core.GS.Ticker;
 using Mooege.Core.GS.Common.Types.TagMap;
 using Mooege.Core.GS.Powers.Payloads;
+using Mooege.Net.GS.Message.Definitions.ACD;
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
+    //TODO: Check through these first 10 skills. "I haven't checked for runes" /wet
     #region DeadlyReach
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.DeadlyReach)]
     public class MonkDeadlyReach : ComboSkill
@@ -139,6 +141,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.SevenSidedStrike)]
     public class MonkSevenSidedStrike : Skill
     {
+        //Max Teleport Distance added in last patch 8101.
         public override IEnumerable<TickTimer> Main()
         {
             //UsePrimaryResource(50f);
@@ -425,7 +428,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             //UsePrimaryResource(15f);
 
             // dashing strike never specifies the target's id so we just search for the closest target
-            Target = GetEnemiesInRadius(TargetPosition, 8f).GetClosestTo(TargetPosition);
+            Target = GetEnemiesInRadius(TargetPosition, ScriptFormula(0)).GetClosestTo(TargetPosition);
 
             if (Target != null)
             {
@@ -468,11 +471,11 @@ namespace Mooege.Core.GS.Powers.Implementations
                     return false;
 
                 // dash speed seems to always be actor speed * 10
-                float speed = Target.Attributes[GameAttribute.Running_Rate_Total] * 10f;
+                float speed = Target.Attributes[GameAttribute.Running_Rate_Total] * ScriptFormula(5);
 
                 Target.TranslateFacing(_destination, true);
                 _mover = new ActorMover(Target);
-                _mover.Move(_destination, speed, new NotifyActorMovementMessage
+                _mover.Move(_destination, speed, new ACDTranslateNormalMessage
                 {
                     TurnImmediately = true,
                     Field5 = 0x9206, // alt: 0x920e, not sure what this param is for.
@@ -511,7 +514,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            //No more cooldown
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new CasterBuff());
             AddBuff(User, new CastBonusBuff());
@@ -744,7 +748,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelOpen()
         {
             EffectsPerSecond = 0.25f;
-            UsePrimaryResource(15f);
+            UsePrimaryResource(ScriptFormula(16));
             //User.Attributes[GameAttribute.Movement_Bonus_Run_Speed] += ScriptFormula(14);
             if (Rune_C > 0)
             {
@@ -840,10 +844,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 attack.OnHit = hit =>
                     {
                         Knockback(hit.Target, ScriptFormula(5), ScriptFormula(6), ScriptFormula(7));
-                        if (!AddBuff(hit.Target, new DOTbuff(WaitSeconds(ScriptFormula(9)))))
-                        {
                             AddBuff(hit.Target, new DOTbuff(WaitSeconds(ScriptFormula(9))));
-                        }
                     };
 
             }
@@ -910,7 +911,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AttackPayload attack = new AttackPayload(this);
@@ -1042,7 +1043,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            //No more cooldown since latest patch 8101
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new CastEffect(WaitSeconds(ScriptFormula(5))));
@@ -1159,7 +1160,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            //No more cooldown
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new CastEffect(WaitSeconds(ScriptFormula(4) * 60f)));
@@ -1313,7 +1314,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            //No more cooldown
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
 
@@ -1570,17 +1571,10 @@ namespace Mooege.Core.GS.Powers.Implementations
                 Sanctuary.UpdateDelay = 0.3f;
                 Sanctuary.OnUpdate = () =>
                     {
-
-                        if (!AddBuff(User, new RegenBuff()))
-                        {
                             AddBuff(User, new RegenBuff());
-                        }
                         foreach (Actor ally in GetAlliesInRadius(GroundSpot.Position, ScriptFormula(1)).Actors)
                         {
-                            if (!AddBuff(User, new RegenAllyBuff()))
-                            {
                                 AddBuff(User, new RegenAllyBuff());
-                            }
                         }
                     };
             }
@@ -1596,10 +1590,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         foreach (Actor enemy in GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(1)).Actors)
                         {
-                            if (!AddBuff(enemy, new DebuffSlowed(ScriptFormula(30), WaitSeconds(ScriptFormula(31)))))
-                            {
                             AddBuff(enemy, new DebuffSlowed(ScriptFormula(30), WaitSeconds(ScriptFormula(31))));
-                            }
                         }
                     };
             }
@@ -1700,5 +1691,32 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO: Runes.
+    #region CycloneStrike
+    [ImplementsPowerSNO(223473)]
+    public class CycloneStrike : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            //rune-D -> spirit
+            //crits -> Rune_E
+            //debuff -> Rune_C
+            //multi -> Rune_B
+            //randomAOE -> Rune_A
+            AttackPayload attack = new AttackPayload(this);
+            attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2), (int)ScriptFormula(5));
+            attack.OnHit = hit =>
+                {
+                    Knockback(hit.Target, -25f, ScriptFormula(1), ScriptFormula(29));
+                };
+            attack.Apply();
+            yield return WaitSeconds(0.5f);
+            User.PlayEffectGroup(224247);
+            WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(16) + ScriptFormula(17)), ScriptFormula(10), Rune_A > 0 ? DamageType.Fire : DamageType.Holy);
+
+            yield break;
+        }
+    }
+    #endregion
     //11 Passives
 }

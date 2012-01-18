@@ -42,7 +42,13 @@ namespace Mooege.Core.MooNet.Toons
         public static Account GetOwnerAccountByToonLowId(ulong id)
         {
             var toon = (from pair in Toons where pair.Value.PersistentID == id select pair.Value).FirstOrDefault();
-            return (toon != null) ? toon.Owner : null;
+            return (toon != null) ? toon.GameAccount.Owner : null;
+        }
+
+        public static GameAccount GetOwnerGameAccountByToonLowId(ulong id)
+        {
+            var toon = (from pair in Toons where pair.Value.PersistentID == id select pair.Value).FirstOrDefault();
+            return (toon != null) ? toon.GameAccount : null;
         }
 
         public static Toon GetToonByLowID(ulong id)
@@ -50,10 +56,15 @@ namespace Mooege.Core.MooNet.Toons
             return (from pair in Toons where pair.Value.PersistentID == id select pair.Value).FirstOrDefault();
         }
 
-        public static Dictionary<ulong, Toon> GetToonsForAccount(Account account)
+        public static Dictionary<ulong, Toon> GetToonsForGameAccount(GameAccount account)
         {
-            return Toons.Where(pair => pair.Value.Owner != null).Where(pair => pair.Value.Owner.PersistentID == account.PersistentID).ToDictionary(pair => pair.Key, pair => pair.Value);
+            return Toons.Where(pair => pair.Value.GameAccount != null).Where(pair => pair.Value.GameAccount.PersistentID == account.PersistentID).ToDictionary(pair => pair.Key, pair => pair.Value);
         }
+
+        //public static Dictionary<ulong, Toon> GetToonsForAccount(Account account)
+        //{
+        //    return Toons.Where(pair => pair.Value.GameAccount.Owner != null).Where(pair => pair.Value.GameAccount.Owner.PersistentID == account.PersistentID).ToDictionary(pair => pair.Key, pair => pair.Value);
+        //}
 
         public static int TotalToons
         {
@@ -71,9 +82,9 @@ namespace Mooege.Core.MooNet.Toons
             }
 
             Toons.Add(toon.PersistentID, toon);
-            toon.SaveToDB(); //possible concurrency problem? 2 toon created with same name at same time could introduce a race condition for the same hashcode(chance of 1 in (1000-amount of toons with that name))
+            toon.SaveToDB();
 
-            Logger.Trace("Character {0} with HashCode #{1} added to database", toon.Name, toon.HashCodeString);
+            Logger.Trace("Character {0} added to database", toon.HeroNameField.Value);
 
             return true;
         }
@@ -100,7 +111,31 @@ namespace Mooege.Core.MooNet.Toons
             while (reader.Read())
             {
                 var databaseId = (ulong)reader.GetInt64(0);
-                var toon = new Toon(databaseId, reader.GetString(1), reader.GetInt32(6), reader.GetByte(2), reader.GetByte(3), reader.GetByte(4), reader.GetInt64(5),(uint)reader.GetInt32(7));
+                //TODO: Move this to toon class only create a toon with id and call load from DB
+                var toon = new Toon(databaseId, reader.GetString(1), reader.GetByte(2), reader.GetByte(3), reader.GetByte(4), reader.GetInt64(5), (uint)reader.GetInt32(7), (int)reader.GetInt32(8));
+                //add visual equipment
+                //TODO: Load all visualEquipment at once
+                D3.Hero.VisualItem[] visualItems = new D3.Hero.VisualItem[8];
+                var itemQuery =
+                    string.Format("SELECT * from inventory WHERE toon_id = {0}", databaseId);
+                var itemCmd = new SQLiteCommand(itemQuery, DBManager.Connection);
+                var itemReader = itemCmd.ExecuteReader();
+                if (itemReader.HasRows)
+                {
+                    while (itemReader.Read())
+                    {
+                        var slot = (int)itemReader.GetInt64(3);
+                        var gbid = (int)itemReader.GetInt64(4);
+                        visualItems[slot] = D3.Hero.VisualItem.CreateBuilder()
+                            .SetGbid(gbid)
+                            .SetEffectLevel(0)
+                            .Build();
+                    }
+
+                    toon.HeroVisualEquipmentField.Value = D3.Hero.VisualEquipment.CreateBuilder().AddRangeVisualItem(visualItems).Build();
+                }
+
+
                 Toons.Add(databaseId, toon);
             }
         }

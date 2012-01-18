@@ -241,7 +241,13 @@ namespace Mooege.Core.GS.Map
             player.InGameClient.SendMessage(new RevealWorldMessage() // Reveal world to player
             {
                 WorldID = this.DynamicID,
-                WorldSNO = this.WorldSNO.Id
+                WorldSNO = this.WorldSNO.Id,
+                Field2 = 540,
+                Field3 = -600,
+                Field4 = 60,
+                Field5 = 60,
+                Field6 = 3300,
+                Field7 = 5040
             });
 
             player.InGameClient.SendMessage(new EnterWorldMessage()
@@ -384,6 +390,7 @@ namespace Mooege.Core.GS.Map
 
         /// <summary>
         /// Update the flippy animations and remove them once they have timed out
+        /// TODO: This generates an exception, needs to be multithreaded with a lock on the collection
         /// </summary>
         /// <param name="tickCounter"></param>
         private void UpdateFlippy(int tickCounter)

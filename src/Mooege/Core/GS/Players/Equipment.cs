@@ -46,8 +46,8 @@ namespace Mooege.Core.GS.Players
             this._equipment = new uint[17];
             this._owner = owner;
             this.Items = new Dictionary<uint, Item>();
-            this._inventoryGold = ItemGenerator.CreateGold(_owner, 0);
-            this._inventoryGold.Attributes[GameAttribute.ItemStackQuantityLo] = 0;
+            this._inventoryGold = ItemGenerator.CreateGold(_owner, _owner.Toon.GoldAmount);
+            this._inventoryGold.Attributes[GameAttribute.ItemStackQuantityLo] = _owner.Toon.GoldAmount;
             this._inventoryGold.SetInventoryLocation(18, 0, 0);
             this._inventoryGold.Owner = _owner;
             this.Items.Add(_inventoryGold.DynamicID,_inventoryGold);
@@ -107,6 +107,7 @@ namespace Mooege.Core.GS.Players
             return IsItemEquipped(item.DynamicID);
         }
 
+        //TODO: Soon to become obsolete as D3.Hero classes will be used
         private VisualItem GetEquipmentItem(EquipmentSlotId equipSlot)
         {
             if (_equipment[(int)equipSlot] == 0)
@@ -119,12 +120,28 @@ namespace Mooege.Core.GS.Players
                     Field3 = 0,
                 };
             }
-            else
-            {
-                return Items[(_equipment[(int)equipSlot])].CreateVisualItem();
-            }
+
+            return Items[(_equipment[(int)equipSlot])].CreateVisualItem();
+            
         }
 
+        private D3.Hero.VisualItem GetEquipmentItemForToon(EquipmentSlotId equipSlot)
+        {
+            if (_equipment[(int)equipSlot] == 0)
+            {
+                return D3.Hero.VisualItem.CreateBuilder()
+                    .SetGbid(-1)
+                    .SetDyeType(0)
+                    .SetEffectLevel(0)
+                    .SetItemEffectType(-1)
+                    .Build();
+            }
+
+            return Items[(_equipment[(int)equipSlot])].GetVisualItem();
+            
+        }
+
+        //TODO: Soon to become obsolete: Save this at toon level
         public VisualItem[] GetVisualEquipment(){
             return new VisualItem[8]
                     {
@@ -139,6 +156,22 @@ namespace Mooege.Core.GS.Players
                     };
         }
 
+        public D3.Hero.VisualEquipment GetVisualEquipmentForToon()
+        {
+            var visualItems = new[]
+            {       
+                    GetEquipmentItemForToon(EquipmentSlotId.Helm),
+                    GetEquipmentItemForToon(EquipmentSlotId.Chest),
+                    GetEquipmentItemForToon(EquipmentSlotId.Feet),
+                    GetEquipmentItemForToon(EquipmentSlotId.Hands),
+                    GetEquipmentItemForToon(EquipmentSlotId.Main_Hand),
+                    GetEquipmentItemForToon(EquipmentSlotId.Off_Hand),
+                    GetEquipmentItemForToon(EquipmentSlotId.Shoulders),
+                    GetEquipmentItemForToon(EquipmentSlotId.Legs),
+            };
+            return D3.Hero.VisualEquipment.CreateBuilder().AddRangeVisualItem(visualItems).Build();
+        }
+
         public Item AddGoldItem(Item collectedItem)
         {
 
@@ -150,6 +183,26 @@ namespace Mooege.Core.GS.Players
             _inventoryGold.Attributes[GameAttribute.ItemStackQuantityLo] += amount;
             _inventoryGold.Attributes.SendChangedMessage(_owner.InGameClient);
             return _inventoryGold;
+        }
+
+        internal Item RemoveGoldAmount(int amount)
+        {
+            _inventoryGold.Attributes[GameAttribute.ItemStackQuantityLo] -= amount;
+            _inventoryGold.Attributes.SendChangedMessage(_owner.InGameClient);
+            return _inventoryGold;
+        }
+
+        internal bool ContainsGoldAmount(int amount)
+        {
+            int amountInventory = _inventoryGold.Attributes[GameAttribute.ItemStackQuantityLo];
+            if (amountInventory - amount >= 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         internal Item GetEquipment(int targetEquipSlot)
@@ -189,6 +242,11 @@ namespace Mooege.Core.GS.Players
             if (!Items.TryGetValue(itemId, out item))
                 return null;
             return item;
+        }
+
+        public int Gold()
+        {
+            return _inventoryGold.Attributes[GameAttribute.ItemStackQuantityLo];
         }
     }
 }

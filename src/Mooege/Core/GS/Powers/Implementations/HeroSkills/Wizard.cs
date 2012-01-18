@@ -29,9 +29,17 @@ using Mooege.Core.GS.Common.Types.TagMap;
 using Mooege.Net.GS.Message;
 using Mooege.Core.GS.Players;
 
-//TODO (IMPORTANT): GO BACK through and any WaitSeconds/GameAttributes must be in Buff Apply() and Remove()
-//TODO: ADD TO buffs. Targets in Radius receiving debuff.
-//TODO any projectile that pierces through enemies needs to be inside an updater, so it doesnt constantly attack.
+//TODO List
+/* Channeled Skills seem to be very confusing when you try to add runes/attackpayload/etc.
+ * EnergyTwister has a bunch of issues
+ * Disintegrate -> override the hitting effect from spell.
+ * Wave of Force -> Repelling Projectiles needs to be added (to a couple other spells as well)
+ * Storm Armor -> Rune_E which is "your attacks have a chance"
+ * Ice Armor -> "your attacks have a chance" to frost nova
+ * Diamond Skin -> Reflecting and Absorbing
+ * Energy Armor -> Absorption and Retweaking it so it uses the other buff selections(only if needed [if there are effects])
+ * SlowTime -> Making an outer ring to see if zombies had buff from inner ring to add a new buff w/ longer duration in outer.
+ */
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
@@ -147,7 +155,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             User.TranslateFacing(TargetPosition);
 
-            UsePrimaryResource(ScriptFormula(4));
+            //No more Resource Cost
 
             if (Rune_A > 0)
             {
@@ -187,20 +195,22 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         ropeSource.AddRopeEffect(0x78c0, curTarget);
                         ropeSource = curTarget;
-
-                        WeaponDamage(curTarget, damage, DamageType.Lightning);
-                        /*AttackPayload attack = new AttackPayload(this);
+                        AttackPayload attack = new AttackPayload(this);
+                        attack.AddWeaponDamage(damage, DamageType.Lightning);
+                        attack.Targets = new TargetList();
+                        attack.Targets.Actors.Add(curTarget);
+                        attack.Apply();
                         attack.OnHit = HitPayload =>
                         {
                             if (Rune_E > 0)
                             {
                                 if (HitPayload.IsCriticalHit)
                                 {
-                                    Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, 72f, (int)ScriptFormula(14));
+                                    Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, Target.Position, 72f, (int)ScriptFormula(14));
 
                                     foreach (Vector3D missilePos in projDestinations)
                                     {
-                                        var proj = new Projectile(this, 176247, TargetPosition);
+                                        var proj = new Projectile(this, 176247, Target.Position);
                                         proj.OnCollision = (hit) =>
                                         {
                                             SpawnEffect(176262, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
@@ -213,7 +223,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                             }
 
                         };
-                        attack.Apply();*/
 
                         if (Rune_B > 0)
                         {
@@ -253,7 +262,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(ScriptFormula(7));
+            //No more resource cost
             User.PlayEffectGroup(19305); // cast effect
             if (Rune_B > 0)
             {
@@ -356,23 +365,13 @@ namespace Mooege.Core.GS.Powers.Implementations
     //Hydras are (most likely) Pets so this is incorrect
     #region Hydra
     [ImplementsPowerSNO(Skills.Skills.Wizard.Offensive.Hydra)]
-    //No Rune = Default
-    //Rune_A = Hydra_Frost
-    //Rune_B = Hydra_Lightning
-    //Rune_C = Hydra_Acid
-    //Rune_D = Hydra_Big
-    //Rune_E = Hydra_Arcane
-
     public class WizardHydra : Skill
     {
-        const float BeamLength = 50f;
-
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(60f);
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
-            //This works much better, but all three heads fire at the same target, 
-            //then need to be firing off less than a second a part, like .5s.
+            //ScriptFormula(6) = Max Hydra Clusters
 
             Vector3D userCastPosition = new Vector3D(User.Position);
             Vector3D[] spawnPoints = PowerMath.GenerateSpreadPositions(TargetPosition, new Vector3D(TargetPosition.X, TargetPosition.Y + 0.7f, TargetPosition.Z), 120, 3);
@@ -409,10 +408,46 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                 };
             }
+            else if (Rune_A > 0)
+            {
+
+                var hydra1 = SpawnEffect(actorSNOs[0], spawnPoints[0], 0, timeout);
+                hydra1.UpdateDelay = 1.5f; // attack every half-second
+                hydra1.OnUpdate = () =>
+                {
+                    var target = GetEnemiesInRadius(hydra1.Position, 15f).GetClosestTo(hydra1.Position);
+                    float castAngle = MovementHelpers.GetFacingAngle(hydra1.Position, target.Position);
+                    hydra1.TranslateFacing(target.Position, true);
+                    var ConeOfCold = SpawnEffect(83043, hydra1.Position, castAngle, WaitSeconds(ScriptFormula(7)));
+                    ConeOfCold.UpdateDelay = ScriptFormula(6);
+                    ConeOfCold.OnUpdate = () =>
+                    {
+                        WeaponDamage(GetEnemiesInArcDirection(hydra1.Position, Target.Position, ScriptFormula(3), ScriptFormula(2)), 1.00f, DamageType.Cold);
+                    };
+
+                };
+            }
+            else if (Rune_B > 0)
+            {
+                var hydra1 = SpawnEffect(actorSNOs[0], spawnPoints[0], 0, timeout);
+                hydra1.UpdateDelay = 1.5f; // attack every half-second
+                hydra1.OnUpdate = () =>
+                {
+                    var targets = GetEnemiesInRadius(hydra1.Position, 50f);
+                    if (targets.Actors.Count > 0 && targets != null)
+                    {
+                        //capsule width TODO
+                        targets.SortByDistanceFrom(hydra1.Position);
+                        hydra1.TranslateFacing(targets.Actors[0].Position, true);
+                        hydra1.AddRopeEffect(83875, targets.Actors[0]);
+                        WeaponDamage(targets.Actors[0], 1.00f, DamageType.Lightning);
+                    }
+                };
+            }
             else
             {
                 var hydra1 = SpawnEffect(actorSNOs[0], spawnPoints[0], 0, timeout);
-                hydra1.UpdateDelay = 1f; // attack every half-second
+                hydra1.UpdateDelay = 1.5f; // attack every half-second
                 hydra1.OnUpdate = () =>
                 {
                     var targets = GetEnemiesInRadius(hydra1.Position, 60f);
@@ -423,60 +458,31 @@ namespace Mooege.Core.GS.Powers.Implementations
                         proj.Position.Z += 5f;  // fix height
                         proj.OnCollision = (hit) =>
                         {
-                            hit.PlayEffectGroup(RuneSelect(219760, 219770, 219776, 219789, -1, 81739));
-                            WeaponDamage(hit, 1.00f, DamageType.Fire);
+                            if (Rune_C > 0)
+                            {
+                                hit.PlayEffectGroup(RuneSelect(219760, 219770, 219776, 219789, -1, 81739));
+                                hit.PlayEffectGroup(215394);
+                                var PoisonCloud = SpawnProxy(hit.Position, WaitSeconds(ScriptFormula(5)));
+                                PoisonCloud.UpdateDelay = ScriptFormula(4); // attack every half-second
+                                PoisonCloud.OnUpdate = () =>
+                                {
+                                    WeaponDamage(GetEnemiesInRadius(hit.Position, ScriptFormula(6)), 1.00f, DamageType.Poison);
+                                };
+                            }
+                            else if (Rune_E > 0)
+                            {
+                                hit.PlayEffectGroup(81874);
+                                WeaponDamage(GetEnemiesInRadius(hit.Position, ScriptFormula(0)), 1.00f, DamageType.Arcane);
+                            }
+                            else
+                            {
+                                hit.PlayEffectGroup(RuneSelect(219760, 219770, 219776, 219789, -1, 81739));
+                                WeaponDamage(hit, 1.00f, DamageType.Fire);
+                            }
 
                             proj.Destroy();
                         };
                         hydra1.TranslateFacing(targets.Actors[0].Position, true);
-                        //need to fix how fast it fires -> its firing before head turns.
-                        proj.Launch(targets.Actors[0].Position, ScriptFormula(2));
-                    }
-
-                };
-
-                var hydra2 = SpawnEffect(actorSNOs[1], spawnPoints[1], 0, timeout);
-                hydra2.UpdateDelay = 1f; // attack every half-second
-                hydra2.OnUpdate = () =>
-                {
-                    var targets = GetEnemiesInRadius(hydra2.Position, 60f);
-                    if (targets.Actors.Count > 0 && targets != null)
-                    {
-                        targets.SortByDistanceFrom(hydra2.Position);
-                        var proj = new Projectile(this, RuneSelect(77116, 83043, -1, 77109, 86082, 77097), hydra2.Position);
-                        proj.Position.Z += 5f;  // fix height
-                        proj.OnCollision = (hit) =>
-                        {
-                            hit.PlayEffectGroup(RuneSelect(219760, 219770, 219776, 219789, -1, 81739));
-                            WeaponDamage(hit, 1.00f, DamageType.Fire);
-
-                            proj.Destroy();
-                        };
-                        //need to fix how fast it fires -> its firing before head turns.
-                        hydra2.TranslateFacing(targets.Actors[0].Position, true);
-                        proj.Launch(targets.Actors[0].Position, ScriptFormula(2));
-                    }
-
-                };
-
-                var hydra3 = SpawnEffect(actorSNOs[2], spawnPoints[2], 0, timeout);
-                hydra3.UpdateDelay = 1f; // attack every half-second
-                hydra3.OnUpdate = () =>
-                {
-                    var targets = GetEnemiesInRadius(hydra3.Position, 60f);
-                    if (targets.Actors.Count > 0 && targets != null)
-                    {
-                        targets.SortByDistanceFrom(hydra3.Position);
-                        var proj = new Projectile(this, RuneSelect(77116, 83043, -1, 77109, 86082, 77097), hydra3.Position);
-                        proj.Position.Z += 5f;  // fix height
-                        proj.OnCollision = (hit) =>
-                        {
-                            hit.PlayEffectGroup(RuneSelect(219760, 219770, 219776, 219789, -1, 81739));
-                            WeaponDamage(hit, 1.00f, DamageType.Fire);
-
-                            proj.Destroy();
-                        };
-                        hydra3.TranslateFacing(targets.Actors[0].Position, true);
                         //need to fix how fast it fires -> its firing before head turns.
                         proj.Launch(targets.Actors[0].Position, ScriptFormula(2));
                     }
@@ -833,7 +839,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Complete, Rune_E seems slow but correct i guess?
+    //Complete, Rune_E seems slow but correct i guess? - Once attack speed gets calculated in later, it will be correct.
     #region ExplosiveBlast
     [ImplementsPowerSNO(Skills.Skills.Wizard.Offensive.ExplosiveBlast)]
     public class ExplosiveBlast : Skill
@@ -843,27 +849,15 @@ namespace Mooege.Core.GS.Powers.Implementations
             Vector3D blastspot = new Vector3D(User.Position);
             Actor blast = SpawnProxy(blastspot);
 
-            if (Rune_D > 0)
+            if (Rune_A > 0)
             {
                 UsePrimaryResource(ScriptFormula(15));
-                StartCooldown(WaitSeconds(1f));
-                User.PlayEffectGroup(89449);
-            }
-            else if (Rune_A > 0)
-            {
-                UsePrimaryResource(ScriptFormula(15));
-                StartCooldown(WaitSeconds(1f));
-            }
-            else if (Rune_C > 0)
-            {
-                UsePrimaryResource(ScriptFormula(15));
-                StartCooldown(WaitSeconds(1f));
-                blast.PlayEffectGroup(89449);
+                StartCooldown(EvalTag(PowerKeys.CooldownTime));
             }
             else
             {
                 UsePrimaryResource(ScriptFormula(15));
-                StartCooldown(WaitSeconds(1f));
+                StartCooldown(EvalTag(PowerKeys.CooldownTime));
                 User.PlayEffectGroup(89449);
             }
 
@@ -939,7 +933,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(20f * EffectsPerSecond);
+            UsePrimaryResource(ScriptFormula(30) * EffectsPerSecond);
 
             //if (Rune_C > 0)
 
@@ -1033,6 +1027,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             if (Rune_C > 0)
             {
+                //No Resouce Cost
                 StartCooldown(WaitSeconds(ScriptFormula(3)));
                 var frozenMist = SpawnEffect(RuneSelect(4402, 189047, 189048, 75631, 189049, 189050), User.Position, 0, WaitSeconds(ScriptFormula(9)));
                 frozenMist.UpdateDelay = 1f;
@@ -1201,12 +1196,11 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: Rune_A,B,C,E
+    //TODO: Rune_A,C,E
     #region RayOfFrost
     [ImplementsPowerSNO(Skills.Skills.Wizard.Offensive.RayOfFrost)]
     public class WizardRayOfFrost : ChanneledSkill
     {
-        //Rune_B - Create a swirling storm of sleet dealing [99 * 100}]% weapon damage as Cold to all enemies caught within it.
 
         //We need to change how frost beam powermath works -> Beam radius (SF(10)) and Beam end Radius (SF(11)), currently the function has a weird visual
         //for other rune effects with a wider starting effect
@@ -1226,19 +1220,22 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelOpen()
         {
             EffectsPerSecond = 0.1f;
-            _calcTargetPosition();
-            _target = SpawnEffect(6535, TargetPosition, 0, WaitInfinite());
-            User.AddComplexEffect(RuneSelect(19327, 149835, -1, 149836, 149869, 149879), _target);
-
-            //148061 - swirling storm, is more of a user.playeffectgroup and not a rope
+            if (Rune_B > 0)
+            {
+                AddBuff(User, new IceDomeBuff());
+            }
+            else
+            {
+                _calcTargetPosition();
+                _target = SpawnEffect(6535, TargetPosition, 0, WaitInfinite());
+                User.AddComplexEffect(RuneSelect(19327, 149835, -1, 149836, 149869, 149879), _target);
+            }
         }
 
         public override void OnChannelClose()
         {
             if (_target != null)
                 _target.Destroy();
-
-
         }
 
         public override void OnChannelUpdated()
@@ -1246,36 +1243,51 @@ namespace Mooege.Core.GS.Powers.Implementations
             _calcTargetPosition();
             User.TranslateFacing(TargetPosition);
             // client updates target actor position
+            if (Rune_B > 0)
+            {
+                AddBuff(User, new IceDomeBuff());
+            }
         }
 
         public override IEnumerable<TickTimer> Main()
         {
             //Rune_D
-            UsePrimaryResource((Math.Max(ScriptFormula(19), 8f)) * EffectsPerSecond);
+            UsePrimaryResource(ScriptFormula(19) * EffectsPerSecond); //total casting cost * effects per second??
 
+            if (Rune_B > 0)
+            {
+                foreach (Actor actor in GetEnemiesInRadius(User.Position, ScriptFormula(7)).Actors)
+                {
+                    WeaponDamage(actor, 2.70f * EffectsPerSecond, DamageType.Cold);
+                }
+            }
+
+            else
             foreach (Actor actor in GetEnemiesInRadius(User.Position, BeamLength + 10f).Actors)
             {
                 if (PowerMath.PointInBeam(actor.Position, User.Position, TargetPosition, 3f))
                 {
                     if (Rune_A > 0)
                     {
-                        //takes 1.5 seconds to reach the new maximum dmg(SF(20)) from the minimum dmg(base?)
-                        //Slows targets movement by 40%
-                        //targets attack speed by 30% for 5 seconds
+                        //TODO:takes 1.5 seconds to reach the new maximum dmg(SF(20)) from the minimum dmg(base?)
+                        AddBuff(actor, new DebuffChilled(0.3f, WaitSeconds(0.5f))); //slow 40%, atk spd 30%
+                        //this does attack and movement, but doesnt do the difference which is needed.
 
                     }
                     else if (Rune_C > 0)
                     {
-                        //WeaponDamage(actor, 2.70f * EffectsPerSecond, DamageType.Cold);
-                        //Slows targets movement [ScriptFormula(4)]
-                        //Chill Amount % {ScriptFormula(14)}
-                        //Atk Speed Reduction % {SF(24)}
+                        WeaponDamage(actor, 2.70f * EffectsPerSecond, DamageType.Cold);
+                        AddBuff(actor, new DebuffChilled(ScriptFormula(14), WaitSeconds(ScriptFormula(4)))); //slow 40%, atk spd 30%
+                        //Atk Speed Reduction % {SF(24)} to monster //AddBuff(actor, new AtkSpeedDebuff
                         //Dmg Reduction {SF(25)}
                         //targets attack speed by 30% for 5 seconds
                     }
-                    WeaponDamage(actor, 2.70f * EffectsPerSecond, DamageType.Cold);
-                    //Slows targets movement by 40%
-                    //targets attack speed by 30% for 5 seconds
+                    else
+                    {
+                        WeaponDamage(actor, 2.70f * EffectsPerSecond, DamageType.Cold);
+                        AddBuff(actor, new DebuffChilled(0.3f, WaitSeconds(0.5f))); //slow 40%, atk spd 30%
+                        //this does attack and movement, but doesnt do the difference which is needed.
+                    }
                 }
             }
 
@@ -1300,7 +1312,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             //Rune_C
             public override void Init()
             {
-                Timeout = WaitSeconds(2f);
+                Timeout = WaitSeconds(0.1f);
             }
         }
     }
@@ -1313,10 +1325,10 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Run()
         {
-            UsePrimaryResource(15f);
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             if (!(Rune_E > 0 || Rune_D > 0))
             {
-                StartCooldown(WaitSeconds(ScriptFormula(20)));
+                StartCooldown(EvalTag(PowerKeys.CooldownTime));
             }
 
             if (Rune_D > 0)
@@ -1460,9 +1472,9 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Run()
         {
 
-            UsePrimaryResource(15f);
+            //No more Resouce Cost
             //these are changed around to actually identify with their rune color : visual effects
-            User.PlayEffectGroup(RuneSelect(19343, 189477, 19343, 189413, 188944, 189362));
+            User.PlayEffectGroup(19343);
 
             TargetPosition = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, 9f);
 
@@ -1542,8 +1554,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UsePrimaryResource(25f);
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+
             AddBuff(User, new IceArmorBuff());
             if (Rune_D > 0)
             {
@@ -1637,12 +1650,11 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
         //Rune_D
-        [ImplementsPowerBuff(2)]
+        [ImplementsPowerBuff(2, true)]
         class BonusStackEffect : PowerBuff
         {
             public override void Init()
             {
-                //TODO: this needs to reset to original set time each time hit.
                 Timeout = WaitSeconds(ScriptFormula(27));
                 MaxStackCount = (int)ScriptFormula(11);
             }
@@ -1707,20 +1719,20 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Incomplete
+    //Broken
     #region ShockPulse
     [ImplementsPowerSNO(Skills.Skills.Wizard.Signature.ShockPulse)]
-    public class WizardShockPulse : PowerScript
+    public class WizardShockPulse : Skill
     {
         //A:Casts out bolts of fire to deal 195% weapon damage as Fire. 
         //B:Turn the bolts into a floating orb of static lightning that drifts directly forward, zapping up to 5 nearby enemies for 46% weapon damage as Lightning. 
         //C:Merge the bolts in a a single giant orb that oscillates forward dealing 95% weapon damage as Lightning to everything it hits with a 100% chance to pierce through enemies. 
         //DONE -> D:Every target hit by a pulse restores 7 Arcane Power. 
         //E:Slain enemies have a 100% chance to explode dealing 450% weapon damage as Lightning to every enemy within 10 yards. 
-        public override IEnumerable<TickTimer> Run()
+        public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(ScriptFormula(13));
-            User.PlayEffectGroup(RuneSelect(176277, 176290, 176354, 176355, 176250, 176353)); // cast effect
+           /* UsePrimaryResource(ScriptFormula(13)); //No resource used
+            User.PlayEffectGroup(67099); // cast effect
             if (Rune_B > 0 || Rune_C > 0)
             {
                 _SpawnBolt();
@@ -1730,7 +1742,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 for (int n = 0; n < 3; ++n)
                     _SpawnBolt();
             }
-
+            */
             yield break;
         }
 
@@ -1766,12 +1778,12 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             /*
              * private void _calcTargetPosition()
-        {
+            {
             // project beam end to always be a certain length
             TargetPosition = PowerMath.TranslateDirection2D(User.Position, TargetPosition,
                                                              new Vector3D(User.Position.X, User.Position.Y, TargetPosition.Z),
                                                              50f);
-        }
+            }
              * _calcTargetPosition();
 
             
@@ -1814,8 +1826,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UsePrimaryResource(25f);
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             AddBuff(User, new StormArmorBuff());
             if (Rune_D > 0)
             {
@@ -1841,6 +1854,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             public override void OnPayload(Payload payload)
             {
+                //TODO:Rune_E -> Whenever you cast a spell that critically hits, you also shock a nearby enemy for 319% weapon damage as Lightning. 
                 if (payload.Target == Target && payload is HitPayload)
                 {
                     //projectile? ScriptFormula(3) is speed.
@@ -1955,8 +1969,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            //UsePrimaryResource(25f);
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            //No Resource Cost
             AddBuff(User, new DiamondSkinBuff());
             yield break;
         }
@@ -2043,14 +2057,14 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             if (Rune_D > 0)
             {
-                StartCooldown(ScriptFormula(15) - ScriptFormula(14));
-                UsePrimaryResource(25f);
+                StartCooldown(EvalTag(PowerKeys.CooldownTime));
+                //No Resouce Cost
                 AddBuff(User, new SlowTimeBuff());
                 yield break;
             }
             else
-                StartCooldown(ScriptFormula(15));
-            UsePrimaryResource(25f);
+                StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            //No Resouce Cost
             AddBuff(User, new SlowTimeBuff());
             yield break;
         }
@@ -2094,12 +2108,10 @@ namespace Mooege.Core.GS.Powers.Implementations
                     {
                         foreach (Actor actor in targets.Actors)
                         {
-                            if (!AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(0)))))
                                 AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(0))));
 
                             if (Rune_A > 0)
                             {
-                                if (!AddBuff(actor, new AttackDamageBuff()))
                                 AddBuff(actor, new AttackDamageBuff());
                             }
                         }
@@ -2111,7 +2123,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                         {
                             foreach (Actor actor in friendlytargets.Actors)
                             {
-                                if(!AddBuff(actor, new SpeedBuff(ScriptFormula(16), WaitSeconds(ScriptFormula(0)))))
                                 AddBuff(actor, new SpeedBuff(ScriptFormula(16), WaitSeconds(ScriptFormula(0))));
                             }
                         }
@@ -2123,7 +2134,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                         var OutOfRangeTargets = GetEnemiesInRadius(User.Position, ScriptFormula(2) + 2f);
                         foreach (Actor actor in OutOfRangeTargets.Actors)
                         {
-                            if(!AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(7)))))
                             AddBuff(actor, new SlowTimeDebuff(ScriptFormula(3), WaitSeconds(ScriptFormula(7))));
                         }
                     }
@@ -2168,8 +2178,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UsePrimaryResource(25f);
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             AddBuff(User, new EnergyArmorBuff());
             yield break;
         }
@@ -2264,8 +2274,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UsePrimaryResource(25f);
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             AddBuff(User, new MagicWeaponBuff());
             yield break;
         }
@@ -2472,7 +2483,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //StartDefaultCooldown();
+            //StartCooldown(EvalTag(PowerKeys.CooldownTime));
             //UsePrimaryResource(ScriptFormula(12));
             yield break;
         }
@@ -2521,20 +2532,4 @@ namespace Mooege.Core.GS.Powers.Implementations
 
     //[Hard Skills TODO] Mirror Image, Familiar, Archon
     //14 passive skills
-    /*
-     * Power Hungry
-     * Temporal Flux
-     * Glass Cannon
-     * Prodigy
-     * Virtuoso
-     * Astral Presence
-     * Illusionist
-     * Conflagration
-     * Glavanizing Ward
-     * Blur
-     * Arcane Dynamo
-     * Critical Mass
-     * Evocation
-     * Unstable Anomal
-     */
 }

@@ -54,7 +54,7 @@ namespace Mooege.Core.GS.Powers
         {
             get
             {
-                return User is Player && (User as Player).Toon.Gender == 1;  // 1 = female
+                return User is Player && (User as Player).Toon.Gender == 2;  // 2 = female
             }
         }
 

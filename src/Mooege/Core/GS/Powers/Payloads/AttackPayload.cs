@@ -23,11 +23,14 @@ using System.Text;
 using Mooege.Net.GS.Message;
 using Mooege.Core.GS.Actors;
 using Mooege.Core.GS.Players;
+using Mooege.Common.Logging;
 
 namespace Mooege.Core.GS.Powers.Payloads
 {
     public class AttackPayload : Payload
     {
+        static readonly Logger Logger = LogManager.CreateLogger();
+
         // list of targets to try and hit with this payload, must be set before calling Apply()
         public TargetList Targets;
 
@@ -107,11 +110,20 @@ namespace Mooege.Core.GS.Powers.Payloads
             }
             
             // main targets
+            if (this.Targets == null)
+            {
+                Logger.Warn("FIXME: Tried to Apply AttackPayload with null targets.");
+                return;
+            }
+
             foreach (Actor target in this.Targets.Actors)
             {
+                //TODO: In a proper threaded workflow there should be no null targets selected.
+                //Taken the check out so flags will be raised when this happens
+
                 // filter null and killed targets
-                if (target == null || target.World != null && target.World.PowerManager.IsDeletingActor(target))
-                    continue;
+                //if (target == null)
+                //    continue;
 
                 // TODO: calculate hit chance for monsters instead of always hitting
 

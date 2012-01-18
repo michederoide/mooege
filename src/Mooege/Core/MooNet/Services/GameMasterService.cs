@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using Google.ProtocolBuffers;
 using Mooege.Common.Logging;
 using Mooege.Core.MooNet.Games;
+using Mooege.Core.MooNet.Accounts;
 using Mooege.Core.MooNet.Toons;
 using Mooege.Net.MooNet;
 
@@ -35,7 +36,14 @@ namespace Mooege.Core.MooNet.Services
 
         public override void JoinGame(IRpcController controller, bnet.protocol.game_master.JoinGameRequest request, Action<bnet.protocol.game_master.JoinGameResponse> done)
         {
-            throw new NotImplementedException();
+            Logger.Trace("Client {0} attempted to join game {1}.", this.Client, request.GameHandle.GameId.Low);
+            //var game = GameFactoryManager.FindGameByEntityId(request.GameHandle.GameId);
+
+            var builder = bnet.protocol.game_master.JoinGameResponse.CreateBuilder();
+                //.AddConnectInfo(game.GetConnectionInfoForClient(this.Client));
+
+            done(builder.Build());
+            //throw new NotImplementedException();
         }
 
         public override void ListFactories(IRpcController controller, bnet.protocol.game_master.ListFactoriesRequest request, Action<bnet.protocol.game_master.ListFactoriesResponse> done)
@@ -72,33 +80,39 @@ namespace Mooege.Core.MooNet.Services
 
             // find the game.
             var gameFound = GameFactoryManager.FindGame(this.Client, request, ++GameFactoryManager.RequestIdCounter);
+            //TODO: Find out why on rejoin game this is null
+            if (Client.CurrentChannel != null)
+            {
+                //TODO: All these ChannelState updates can be moved to functions someplace else after packet flow is discovered and working -Egris
+                //Send current JoinPermission to client before locking it
+                var channelStatePermission = bnet.protocol.channel.ChannelState.CreateBuilder()
+                    .AddAttribute(bnet.protocol.attribute.Attribute.CreateBuilder()
+                    .SetName("D3.Party.JoinPermissionPreviousToLock")
+                    .SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue(1).Build())
+                    .Build()).Build();
 
-            //TODO: All these ChannelState updates can be moved to functions someplace else after packet flow is discovered and working -Egris
-            //Send current JoinPermission to client before locking it
-            var channelStatePermission = bnet.protocol.channel.ChannelState.CreateBuilder()
-                .AddAttribute(bnet.protocol.attribute.Attribute.CreateBuilder()
-                .SetName("D3.Party.JoinPermissionPreviousToLock")
-                .SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue(1).Build())
-                .Build()).Build();
+                var notificationPermission = bnet.protocol.channel.UpdateChannelStateNotification.CreateBuilder()
+                    .SetAgentId(this.Client.Account.CurrentGameAccount.BnetEntityId)
+                    .SetStateChange(channelStatePermission)
+                    .Build();
 
-            var notificationPermission = bnet.protocol.channel.UpdateChannelStateNotification.CreateBuilder()
-                .SetAgentId(this.Client.CurrentToon.BnetEntityID)
-                .SetStateChange(channelStatePermission)
-                .Build();
-
-            this.Client.MakeTargetedRPC(Client.CurrentChannel, () =>
-                bnet.protocol.channel.ChannelSubscriber.CreateStub(this.Client).NotifyUpdateChannelState(null, notificationPermission, callback => { }));
-
+                this.Client.MakeTargetedRPC(Client.CurrentChannel, () =>
+                    bnet.protocol.channel.ChannelSubscriber.CreateStub(this.Client).NotifyUpdateChannelState(null, notificationPermission, callback => { }));
+            }
             var builder = bnet.protocol.game_master.FindGameResponse.CreateBuilder().SetRequestId(gameFound.RequestId);
             done(builder.Build());
 
             var clients = new List<MooNetClient>();
             foreach (var player in request.PlayerList)
             {
-                var toon = ToonManager.GetToonByLowID(player.ToonId.Low);
-                if (toon.Owner.LoggedInClient == null) continue;
-                clients.Add(toon.Owner.LoggedInClient);
-            }           
+                foreach (var gameAccount in GameAccountManager.GameAccountsList)
+                {
+                    if (player.Identity.GameAccountId.Low == gameAccount.BnetEntityId.Low)
+                    {
+                        clients.Add(gameAccount.LoggedInClient);
+                    }
+                }
+            }
 
             // send game found notification.
             var notificationBuilder = bnet.protocol.game_master.GameFoundNotification.CreateBuilder()
@@ -110,12 +124,12 @@ namespace Mooege.Core.MooNet.Services
             
             if(gameFound.Started)
             {
-                Logger.Warn("Client {0} joining game with FactoryID:{1}", this.Client.CurrentToon.Name, gameFound.FactoryID);
+                Logger.Warn("Client {0} joining game with FactoryID:{1}", this.Client.Account.CurrentGameAccount.CurrentToon.HeroNameField.Value, gameFound.FactoryID);
                 gameFound.JoinGame(clients, request.ObjectId);
             }
             else
             {
-                Logger.Warn("Client {0} creating new game", this.Client.CurrentToon.Name);
+                Logger.Warn("Client {0} creating new game", this.Client.Account.CurrentGameAccount.CurrentToon.HeroNameField.Value);
                 gameFound.StartGame(clients, request.ObjectId);
             }
         }

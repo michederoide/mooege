@@ -40,9 +40,10 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            bool hitAnything = false;
             var ShockWavePos = PowerMath.TranslateDirection2D(User.Position, TargetPosition,
                                                              User.Position,
-                                                             ScriptFormula(23));
+                                                            ScriptFormula(23));
             var maxHits = ScriptFormula(1);
             for (int i = 0; i < maxHits; ++i)
             {
@@ -51,11 +52,12 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                 if (i == 0)
                 { attack.AddWeaponDamage(ScriptFormula(3), DamageType.Physical); }
-                else 
+                else
                 { attack.AddWeaponDamage(ScriptFormula(12), DamageType.Physical); }
 
                 attack.OnHit = hitPayload =>
                 {
+                    hitAnything = true;
                     if (Rune_D > 0)
                     {
                         GeneratePrimaryResource(ScriptFormula(10));
@@ -75,12 +77,15 @@ namespace Mooege.Core.GS.Powers.Implementations
                     }
                     else
                     {
-                    if (Rand.NextDouble() < ScriptFormula(0))
-                        Knockback(hitPayload.Target, ScriptFormula(5), ScriptFormula(6), ScriptFormula(7));
+                        if (Rand.NextDouble() < ScriptFormula(0))
+                            Knockback(hitPayload.Target, ScriptFormula(5), ScriptFormula(6), ScriptFormula(7));
                     }
                 };
                 attack.Apply();
                 yield return WaitSeconds(ScriptFormula(13));
+
+                if(hitAnything)
+                    GeneratePrimaryResource(EvalTag(PowerKeys.ResourceGainedOnFirstHit));
             }
             //Shockwave -> capsule distance, at the moment using beamdirection
             if (Rune_E > 0)
@@ -91,7 +96,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
             yield break;
         }
-        [ImplementsPowerBuff(0)]
+        [ImplementsPowerBuff(0, true)]
         public class AddDamageBuff : PowerBuff
         {
             public override void Init()
@@ -104,7 +109,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (!base.Apply())
                     return false;
-                        _AddDamage();
+                _AddDamage();
                 return true;
             }
 
@@ -135,22 +140,21 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: Rune_B, fix up Rune_A
     #region LeapAttack
     //Rune_A(Partially done): Shockwaves burst forth from the ground at the destination and knock enemies toward you from 33.8 yards away.
     //Rune_B(Needs Collission): Send enemies hurtling 6 yards into other nearby enemies who suffer 30% weapon damage and are pushed back in a chain up to 2 times.
-    //Rune_C(DONE): Jump into the air with such great force that enemies within 7.5 yards of the origin of the jump take 182% weapon damage.
-    //Rune_D(DONE): Gain 400% additional armor for 4 seconds after landing.
-    //Rune_E(DONE): Land with such force that enemies suffer a 70% chance to become stunned for 3 seconds.
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.LeapAttack)]
     public class BarbarianLeap : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            //there is a changed walking speed multiplier from 8101 patch.
             bool hitAnything = false;
-            //StartCooldown(WaitSeconds(10f));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+
             if (Rune_C > 0)
             {
                 AttackPayload launch = new AttackPayload(this);
@@ -192,21 +196,21 @@ namespace Mooege.Core.GS.Powers.Implementations
             attack.Targets = GetEnemiesInRadius(TargetPosition, ScriptFormula(0));
             //ScriptFormula(1) states "% of willpower Damage", perhaps the damage should be calculated that way instead.
             attack.AddWeaponDamage(0.70f, DamageType.Physical);
-            attack.OnHit = hitPayload => 
-                { 
-                    hitAnything = true;
-                    if (Rune_E > 0)
+            attack.OnHit = hitPayload =>
+            {
+                hitAnything = true;
+                if (Rune_E > 0)
+                {
+                    if (Rand.NextDouble() < ScriptFormula(37))
                     {
-                        if (Rand.NextDouble() < ScriptFormula(37))
-                        {
-                            AddBuff(hitPayload.Target, new DebuffStunned(WaitSeconds(ScriptFormula(38))));
-                        }
+                        AddBuff(hitPayload.Target, new DebuffStunned(WaitSeconds(ScriptFormula(38))));
                     }
-                };
+                }
+            };
             attack.Apply();
 
             if (hitAnything)
-                GeneratePrimaryResource(15f);
+                GeneratePrimaryResource(EvalTag(PowerKeys.ResourceGainedOnFirstHit));
 
             //TODO: Eventually att visuals, and check if the current uber-drag is really intended :P
             if (Rune_A > 0)
@@ -264,7 +268,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: Runes_C,D,E
     #region WhirlWind
@@ -287,6 +291,26 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 Timeout = WaitSeconds(ScriptFormula(0));
             }
+            
+            //This needs to be added into whirlwind, because your walking speed does become slower once whirlwind is active.
+            /*public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+            //unsure if whirlwind still uses running_rate or walking_rate?
+                float speed = User.Attributes[GameAttribute.Running_Rate_Total] * EvalTag(PowerKeys.WalkingSpeedMultiplier);
+
+
+                User.Attributes.BroadcastChangedIfRevealed();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                User.Attributes.BroadcastChangedIfRevealed();
+
+            }*/
 
             public override bool Update()
             {
@@ -296,7 +320,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (_damageTimer == null || _damageTimer.TimedOut)
                 {
                     _damageTimer = WaitSeconds(ScriptFormula(0));
-                    //UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+                    UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
                     WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(2)),
                                  ScriptFormula(1), Rune_A > 0 ? DamageType.Fire : DamageType.Physical);
@@ -328,29 +352,31 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
-    //TODO:sometimes receives exception of CheckCollisions().
-    //TODO: Rune_A,B(maybe just infront?, not full circle), C, E
+    //Rune_C
     #region AncientSpear
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.AncientSpear)]
     public class BarbarianAncientSpear : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //StartCooldown(WaitSeconds(10f));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            bool hitAnything = false;
+
             if (Rune_B > 0)
             {
-                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(9), (int)ScriptFormula(11));
+                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(9) / 5f, (int)ScriptFormula(11));
 
                 for (int i = 0; i < projDestinations.Length; i++)
                 {
-                    var proj = new Projectile(this, 74636, User.Position);
+                    var proj = new Projectile(this, 161891, User.Position);
+                    proj.Scale = 3f;
                     proj.Timeout = WaitSeconds(0.5f);
                     proj.OnCollision = (hit) =>
                     {
-                        GeneratePrimaryResource(15f);
-
+                        //should happen on first hit, dunno if thats for all (up to 8) spears.
+                        hitAnything = true;
                         _setupReturnProjectile(hit.Position);
 
                         AttackPayload attack = new AttackPayload(this);
@@ -358,6 +384,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                         attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
                         attack.OnHit = (hitPayload) =>
                         {
+
                             hitPayload.Target.PlayEffectGroup(79420);
                             Knockback(hitPayload.Target, -25f, ScriptFormula(3), ScriptFormula(4));
                         };
@@ -374,17 +401,83 @@ namespace Mooege.Core.GS.Powers.Implementations
                     User.AddRopeEffect(79402, proj);
                 }
             }
+            else if (Rune_E > 0)
+            {
+                Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, ScriptFormula(9) / 5f, (int)ScriptFormula(11));
+
+                for (int i = 0; i < projDestinations.Length; i++)
+                {
+                    var proj = new Projectile(this, 161894, User.Position);
+                    proj.Scale = 3f;
+                    proj.Timeout = WaitSeconds(0.5f);
+                    proj.OnCollision = (hit) =>
+                    {
+                        hitAnything = true;
+
+                        _setupReturnProjectile(hit.Position);
+
+                        AttackPayload attack = new AttackPayload(this);
+                        attack.SetSingleTarget(hit);
+                        attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                        attack.OnHit = (hitPayload) =>
+                        {
+                            hitPayload.Target.PlayEffectGroup(79420);
+                            Knockback(hitPayload.Target, 25f, ScriptFormula(3), ScriptFormula(4));
+                        };
+                        attack.Apply();
+
+                        proj.Destroy();
+                    };
+                    proj.OnTimeout = () =>
+                    {
+                        _setupReturnProjectile(proj.Position);
+                    };
+
+                    proj.Launch(projDestinations[i], ScriptFormula(8));
+                    User.AddRopeEffect(79402, proj);
+                }
+            }
             else if (Rune_A > 0)
             {
-                //Straight line but brings all the zombies in that line back to you.
-            }
-            else
-            {
-                var projectile = new Projectile(this, 74636, User.Position);
+                var projectile = new Projectile(this, 161890, User.Position);
+                projectile.Scale = 3f;
                 projectile.Timeout = WaitSeconds(0.5f);
                 projectile.OnCollision = (hit) =>
                 {
-                    GeneratePrimaryResource(ScriptFormula(12) + ScriptFormula(13));
+                    hitAnything = true;
+
+                    _setupReturnProjectile(hit.Position);
+
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.SetSingleTarget(hit);
+                    attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                    attack.OnHit = (hitPayload) =>
+                    {
+                        for (int i = 0; i < ScriptFormula(17); ++i)
+                        {
+                            hitPayload.Target.PlayEffectGroup(79420);
+                            Knockback(hitPayload.Target, -25f, ScriptFormula(3), ScriptFormula(4));
+                        }
+                    };
+                    attack.Apply();
+
+                };
+                projectile.OnTimeout = () =>
+                {
+                    _setupReturnProjectile(projectile.Position);
+                };
+
+                projectile.Launch(TargetPosition, ScriptFormula(8));
+                User.AddRopeEffect(79402, projectile);
+            }
+            else
+            {
+                var projectile = new Projectile(this, RuneSelect(74636, -1, -1, 161892, 161893, -1), User.Position);
+                projectile.Scale = 3f;
+                projectile.Timeout = WaitSeconds(0.5f);
+                projectile.OnCollision = (hit) =>
+                {
+                    hitAnything = true;
 
                     _setupReturnProjectile(hit.Position);
 
@@ -410,6 +503,10 @@ namespace Mooege.Core.GS.Powers.Implementations
                 projectile.Launch(TargetPosition, ScriptFormula(8));
                 User.AddRopeEffect(79402, projectile);
             }
+
+            if (hitAnything)
+                GeneratePrimaryResource(EvalTag(PowerKeys.ResourceGainedOnFirstHit));
+
             yield break;
         }
 
@@ -418,12 +515,13 @@ namespace Mooege.Core.GS.Powers.Implementations
             Vector3D inFrontOfUser = PowerMath.TranslateDirection2D(User.Position, spawnPosition, User.Position, 5f);
 
             var return_proj = new Projectile(this, 79400, new Vector3D(spawnPosition.X, spawnPosition.Y, User.Position.Z));
+            return_proj.Scale = 3f;
             return_proj.DestroyOnArrival = true;
             return_proj.LaunchArc(inFrontOfUser, 1f, -0.03f);
             User.AddRopeEffect(79402, return_proj);
         }
     }
-#endregion
+    #endregion
 
     //TODO: A,C
     #region ThreateningShout
@@ -432,9 +530,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(20f);
-            //User.PlayEffectGroup(RuneSelect(18705, 99810, 216339, 99798, 201534, 99821));
-            //User.PlayEffectGroup(202891); //Yell Sound
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(9)).Actors)
             {
                 AddBuff(enemy, new ShoutDeBuff());
@@ -505,13 +603,13 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             public override void Init()
             {
-                    Timeout = WaitSeconds(ScriptFormula(17));
+                Timeout = WaitSeconds(ScriptFormula(17));
             }
             public override bool Apply()
             {
                 if (!base.Apply())
                     return false;
-                    Target.Attributes[GameAttribute.Attacks_Per_Second_Percent] += ScriptFormula(4);
+                Target.Attributes[GameAttribute.Attacks_Per_Second_Percent] += ScriptFormula(4);
                 Target.Attributes.BroadcastChangedIfRevealed();
                 return true;
             }
@@ -524,7 +622,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         }
 
     }
-#endregion
+    #endregion
 
     //TODO: D,E
     #region HammerOfTheAncients
@@ -533,6 +631,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_B > 0)
             {
 
@@ -567,53 +667,53 @@ namespace Mooege.Core.GS.Powers.Implementations
                     }
                 };
                 attack.OnDeath = DeathPayload =>
+                {
+                    if (Rune_E > 0)
                     {
-                        if (Rune_E > 0)
+                        //if (DeathPayload.Target)?
                         {
-                            //if (DeathPayload.Target)?
+                            if (Rand.NextDouble() < ScriptFormula(16))
                             {
-                                if (Rand.NextDouble() < ScriptFormula(16))
+                                AttackPayload Stunattack = new AttackPayload(this);
+                                Stunattack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(18));
+                                Stunattack.OnHit = stun =>
                                 {
-                                    AttackPayload Stunattack = new AttackPayload(this);
-                                    Stunattack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(18));
-                                    Stunattack.OnHit = stun =>
-                                        {
-                                            AddBuff(stun.Target, new DebuffStunned(WaitSeconds(ScriptFormula(17))));
-                                        };
-                                    Stunattack.Apply();
-                                }
+                                    AddBuff(stun.Target, new DebuffStunned(WaitSeconds(ScriptFormula(17))));
+                                };
+                                Stunattack.Apply();
                             }
                         }
-                    };
+                    }
+                };
                 attack.Apply();
 
                 if (Rune_C > 0)
                 {
-                    var QuakeHammer = SpawnEffect(159030, User.Position, 0 , WaitSeconds(ScriptFormula(10)));
+                    var QuakeHammer = SpawnEffect(159030, User.Position, 0, WaitSeconds(ScriptFormula(10)));
                     QuakeHammer.UpdateDelay = 1f;
                     QuakeHammer.OnUpdate = () =>
-                        {
-                            AttackPayload TremorAttack = new AttackPayload(this);
-                            TremorAttack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
-                            TremorAttack.AddWeaponDamage(ScriptFormula(9), DamageType.Physical);
-                            TremorAttack.Apply();
-                        };
+                    {
+                        AttackPayload TremorAttack = new AttackPayload(this);
+                        TremorAttack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
+                        TremorAttack.AddWeaponDamage(ScriptFormula(9), DamageType.Physical);
+                        TremorAttack.Apply();
+                    };
                 }
             }
             yield break;
         }
     }
-#endregion
+    #endregion
 
-    //TODO: A,B,C
-    //Receive CallBack Exception when Used...
+    //TODO: just needs attribute check/crit/timer
     #region BattleRage
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FurySpenders.BattleRage)]
     public class BattleRage : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(5f);
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new BattleRageEffect());
 
@@ -635,17 +735,20 @@ namespace Mooege.Core.GS.Powers.Implementations
                     return false;
                 //Rune_A
                 //Total Damage Bonus
+                User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] += ScriptFormula(1);
 
                 //Crit Chance Bonus
+                User.Attributes[GameAttribute.Crit_Damage_Percent] += (int)ScriptFormula(2);
+                User.Attributes.BroadcastChangedIfRevealed();
 
                 return true;
             }
 
             public override void OnPayload(Payload payload)
             {
-            if (payload is HitPayload && Target.Equals(payload.Context.User))
+                if (payload is HitPayload && Target.Equals(payload.Context.User))
                 {
-                //if (payload.IsCriticalHit)
+                    //if (payload.IsCriticalHit)
                     {
                         if (Rune_B > 0)
                         {
@@ -656,6 +759,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                         }
                         if (Rune_C > 0)
                         {
+                            //or ScriptFormula(15)
                             if (Rand.NextDouble() < ScriptFormula(6))
                             {
                                 //drop additional health globes.
@@ -676,37 +780,38 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Remove()
             {
                 base.Remove();
+                //Total Damage Bonus
+                User.Attributes[GameAttribute.Damage_Weapon_Percent_Bonus] -= ScriptFormula(1);
+
+                //Crit Chance Bonus
+                User.Attributes[GameAttribute.Crit_Damage_Percent] -= (int)ScriptFormula(2);
+                User.Attributes.BroadcastChangedIfRevealed();
             }
         }
     }
     #endregion
 
-    //Check through Skill..
+    //Complete, check it.
     #region Cleave
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.Cleave)]
     public class Cleave : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //Primary Target
-            //WeaponDamage(Target, ScriptFormula(16), DamageType.Physical);
+            bool hitAnything = false;
             WeaponDamage(GetBestMeleeEnemy(), ScriptFormula(16), DamageType.Physical);
-            //Secondary Targets
             AttackPayload attack = new AttackPayload(this);
-            //SF(27) is 120 degrees, SF(26) is range.
             attack.Targets = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(27), ScriptFormula(26));
-            attack.AddWeaponDamage(ScriptFormula(18), DamageType.Physical);
+            attack.AddWeaponDamage(ScriptFormula(16), DamageType.Physical);
             attack.OnHit = hitPayload =>
             {
+                hitAnything = true;
                 if (Rune_B > 0)
                 {
-                    foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(14)).Actors)
+                    foreach (Actor enemy in GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(27), ScriptFormula(26)).Actors)
                     {
-                        Knockback(enemy, ScriptFormula(13));
-                    } 
-                    foreach (Actor enemy in GetEnemiesInRadius(User.Position, ScriptFormula(21)).Actors)
-                    {
-                        Knockback(enemy, ScriptFormula(20));
+                        //Snare Duration = SF(14)
+                        //Snare Magnitude = SF(20)
                     }
                 }
                 if (Rune_C > 0)
@@ -733,24 +838,27 @@ namespace Mooege.Core.GS.Powers.Implementations
                         StackCount++;
                     }
 
-                    GeneratePrimaryResource(ScriptFormula(22)* StackCount);
+                    GeneratePrimaryResource(ScriptFormula(22) * StackCount);
                 }
                 if (Rune_E > 0)
                 {
                     //this doesnt work either.
                     attack.OnDeath = DeathPayload =>
+                    {
+                        if (Rand.NextDouble() < ScriptFormula(12))
                         {
-                            if (Rand.NextDouble() < ScriptFormula(12))
-                            {
-                                AttackPayload explode = new AttackPayload(this);
-                                explode.Targets = GetEnemiesInRadius(DeathPayload.Target.Position, ScriptFormula(6));
-                                explode.AddWeaponDamage(ScriptFormula(4), DamageType.Physical);
-                                explode.Apply();
-                            }
-                        };
+                            AttackPayload explode = new AttackPayload(this);
+                            explode.Targets = GetEnemiesInRadius(DeathPayload.Target.Position, ScriptFormula(6));
+                            explode.AddWeaponDamage(ScriptFormula(4), DamageType.Physical);
+                            explode.Apply();
+                        }
+                    };
                 }
             };
             attack.Apply();
+            
+            if(hitAnything)
+                    GeneratePrimaryResource(EvalTag(PowerKeys.ResourceGainedOnFirstHit));
 
             yield break;
         }
@@ -765,8 +873,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //Rune_D and C and B
-            StartCooldown(WaitSeconds(ScriptFormula(22)));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             AddBuff(User, new IgnorePainBuff());
             if (Rune_C > 0)
             {
@@ -844,49 +953,21 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
-    //TODO: Rune_E -> Figure Out TeamID
+    //TODO: Rune_B and Rune_E -> Figure Out TeamID
     #region WeaponThrow
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FurySpenders.WeaponThrow)]
     public class WeaponThrow : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_B > 0)
             {
-                IList<Actor> targets = new List<Actor>() { Target };
-                Actor ropeSource = User;
-                Actor curTarget = Target;
-                float damage = ScriptFormula(15);
-                while (targets.Count < ScriptFormula(5) + 1)
-                {
-                    if (ropeSource.World == null)
-                        ropeSource = SpawnProxy(ropeSource.Position);
-
-                    if (curTarget.World != null)
-                    {
-                        ropeSource.AddRopeEffect(166450, curTarget);
-                        ropeSource = curTarget;
-
-                        WeaponDamage(curTarget, damage, DamageType.Physical);
-                    }
-                    else
-                    {
-                        break;
-                    }
-
-                    curTarget = GetEnemiesInRadius(curTarget.Position, ScriptFormula(12), (int)ScriptFormula(5)).Actors.FirstOrDefault(t => !targets.Contains(t));
-                    if (curTarget != null)
-                    {
-                        targets.Add(curTarget);
-                        yield return WaitSeconds(0.150f);
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+                //throw projectile -> once collision with target, RopeEffect up to ScriptFromula(5) times.
             }
             else
             {
@@ -936,7 +1017,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override bool Apply()
             {
                 if (!base.Apply())
-                    return false; 
+                    return false;
                 Target.Attributes[GameAttribute.TeamID] = 0;
                 Target.Attributes.BroadcastChangedIfRevealed();
                 return true;
@@ -950,7 +1031,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //Complete, check it.
     #region GroundStomp
@@ -959,7 +1040,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            GeneratePrimaryResource(15f + ScriptFormula(19));
+            bool hitAnything = false;
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+
             User.PlayEffectGroup(RuneSelect(18685, 99685, 159415, 159416, 159397, 18685));
             //Rune_E -> when stun wears off, use slow.efg
 
@@ -968,6 +1051,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             attack.AddWeaponDamage(ScriptFormula(6), DamageType.Physical);
             attack.OnHit = hitPayload =>
             {
+                hitAnything = true;
                 if (Rune_B > 0)
                 {
                     //push em away!
@@ -981,6 +1065,8 @@ namespace Mooege.Core.GS.Powers.Implementations
                 AddBuff(hitPayload.Target, new GroundStompStun());
             };
             attack.Apply();
+            if (hitAnything)
+                GeneratePrimaryResource(EvalTag(PowerKeys.ResourceGainedOnFirstHit) + ScriptFormula(19));
 
             yield break;
         }
@@ -1040,16 +1126,16 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: Rune_D SF(8)
-    //max fury chance to stack SF(9) and striking max stacks SF(10)
     #region Rend
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FurySpenders.Rend)]
     public class Rend : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AttackPayload attack = new AttackPayload(this);
             attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(4));
@@ -1059,22 +1145,22 @@ namespace Mooege.Core.GS.Powers.Implementations
             };
             //this work? if it dies with rend debuff, infect others.
             attack.OnDeath = DeathPayload =>
+            {
+                if (AddBuff(Target, new RendDebuff()))
                 {
-                    if (AddBuff(Target, new RendDebuff()))
+                    AttackPayload BleedAgain = new AttackPayload(this);
+                    BleedAgain.Targets = GetEnemiesInRadius(Target.Position, ScriptFormula(19));
+                    BleedAgain.OnHit = hitPayload2 =>
                     {
-                        AttackPayload BleedAgain = new AttackPayload(this);
-                        BleedAgain.Targets = GetEnemiesInRadius(Target.Position, ScriptFormula(19));
-                        BleedAgain.OnHit = hitPayload2 =>
-                        {
-                            AddBuff(hitPayload2.Target, new RendDebuff());
-                        };
-                        BleedAgain.Apply();
-                    }
-                };
+                        AddBuff(hitPayload2.Target, new RendDebuff());
+                    };
+                    BleedAgain.Apply();
+                }
+            };
             attack.Apply();
             yield break;
         }
-        [ImplementsPowerBuff(0)]
+        [ImplementsPowerBuff(0, true)]
         public class RendDebuff : PowerBuff
         {
             const float _damageRate = 1f;
@@ -1083,12 +1169,18 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Init()
             {
                 Timeout = WaitSeconds(ScriptFormula(5));
+                MaxStackCount = (int)ScriptFormula(10);
             }
 
             public override bool Apply()
             {
                 if (!base.Apply())
                     return false;
+                if (Rand.NextDouble() < ScriptFormula(9))
+                {
+                    //for rend, would we just stack updates?
+                    Update();
+                }
                 return true;
             }
             public override bool Update()
@@ -1108,33 +1200,45 @@ namespace Mooege.Core.GS.Powers.Implementations
                 return false;
             }
 
+            public override bool Stack(Buff buff)
+            {
+                bool stacked = StackCount < MaxStackCount;
+
+                base.Stack(buff);
+
+                if (stacked)
+                    Update();
+
+                return true;
+            }
+
             public override void Remove()
             {
                 base.Remove();
-                User.Attributes[GameAttribute.Damage_Bonus_Min] -= StackCount * ScriptFormula(2);
-                User.Attributes.BroadcastChangedIfRevealed();
 
             }
         }
     }
-#endregion
+    #endregion
 
-    //TODO: Rune_E
+    //Complete, check it.
     #region Frenzy
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.Frenzy)]
     public class Frenzy : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            bool hitAnything = false;
             AttackPayload attack = new AttackPayload(this);
             attack.Targets = GetBestMeleeEnemy();
             attack.AddWeaponDamage(2f, DamageType.Physical);
             attack.OnHit = hitPayload =>
             {
+                hitAnything = true;
                 AddBuff(User, new FrenzyBuff());
                 if (Rune_C > 0)
                 {
-                        AddBuff(User, new ObsidianSpeedEffect());
+                    AddBuff(User, new ObsidianSpeedEffect());
                 }
                 if (Rune_B > 0)
                 {
@@ -1161,14 +1265,20 @@ namespace Mooege.Core.GS.Powers.Implementations
                 }
             };
             attack.OnDeath = DeathPayload =>
+            {
+                if (Rune_E > 0)
                 {
-                    //Rune_E -> heals.
-                };
+                    User.Attributes[GameAttribute.Hitpoints_Granted_Duration] += (int)ScriptFormula(12);
+                    User.Attributes[GameAttribute.Hitpoints_Granted] += ScriptFormula(10) * User.Attributes[GameAttribute.Hitpoints_Max_Total];
+                    User.Attributes.BroadcastChangedIfRevealed();
+                }
+            };
             attack.Apply();
-
+            if (hitAnything)
+                GeneratePrimaryResource(EvalTag(PowerKeys.ResourceGainedOnFirstHit) + ScriptFormula(19));
             yield break;
         }
-        [ImplementsPowerBuff(0)]
+        [ImplementsPowerBuff(0, true)]
         class FrenzyBuff : PowerBuff
         {
             public override void Init()
@@ -1181,7 +1291,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (!base.Apply())
                     return false;
-                        _AddFrenzy();
+                _AddFrenzy();
                 return true;
             }
 
@@ -1246,7 +1356,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //Incomplete, very confusing how to active this with using everthing else and how to end it when pressed.
     //Possibly wait to finish this when we get Passives activated.
@@ -1269,131 +1379,130 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield break;
         }
     }
-#endregion
+    #endregion
 
-
-    //why do you give an exception?
+    //Complete, stupid error I made, check it.
     #region WarCry
     [ImplementsPowerSNO(Skills.Skills.Barbarian.FuryGenerators.WarCry)]
     public class WarCry : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             GeneratePrimaryResource(ScriptFormula(3));
-            StartDefaultCooldown();
 
-            AddBuff(User, new RevengeBuff());
+            AddBuff(User, new WarCryBuff());
 
             foreach (Actor ally in GetAlliesInRadius(User.Position, ScriptFormula(11)).Actors)
             {
-                AddBuff(User, new RevengeAllyBuff());
+                AddBuff(User, new WarCryAllyBuff());
             }
             yield return WaitSeconds(0.5f);
         }
+        //4 different powerbuffs, figure out which one is which.
+        [ImplementsPowerBuff(0)]
+        class WarCryBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(2));
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                if (Rune_B > 0)
+                {
+                    User.Attributes[GameAttribute.Dodge_Chance_Bonus] += ScriptFormula(14);
+                }
+                if (Rune_C > 0)
+                {
+                    User.Attributes[GameAttribute.Resistance_Percent] += ScriptFormula(4);
+                }
+                if (Rune_E > 0)
+                {
+                    User.Attributes[GameAttribute.Hitpoints_Max_Percent_Bonus] += ScriptFormula(5);
+                    User.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] += ScriptFormula(6);
+                }
+                User.Attributes[GameAttribute.Defense_Bonus_Percent] += ScriptFormula(0);
+                User.Attributes.BroadcastChangedIfRevealed();
+
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                if (Rune_B > 0)
+                {
+                    User.Attributes[GameAttribute.Dodge_Chance_Bonus] -= ScriptFormula(14);
+                }
+                if (Rune_C > 0)
+                {
+                    User.Attributes[GameAttribute.Resistance_Percent] -= ScriptFormula(4);
+                }
+                if (Rune_E > 0)
+                {
+                    User.Attributes[GameAttribute.Hitpoints_Max_Percent_Bonus] -= ScriptFormula(5);
+                    User.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] -= ScriptFormula(6);
+                }
+                User.Attributes[GameAttribute.Defense_Bonus_Percent] -= ScriptFormula(0);
+                User.Attributes.BroadcastChangedIfRevealed();
+            }
+        }
+        [ImplementsPowerBuff(2)]
+        class WarCryAllyBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(2));
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                if (Rune_B > 0)
+                {
+                    Target.Attributes[GameAttribute.Dodge_Chance_Bonus] += ScriptFormula(14);
+                }
+                if (Rune_C > 0)
+                {
+                    Target.Attributes[GameAttribute.Resistance_Percent] += ScriptFormula(4);
+                }
+                if (Rune_E > 0)
+                {
+                    Target.Attributes[GameAttribute.Hitpoints_Max_Percent_Bonus] += ScriptFormula(5);
+                    Target.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] += ScriptFormula(6);
+                }
+                Target.Attributes[GameAttribute.Defense_Bonus_Percent] += ScriptFormula(0);
+                Target.Attributes.BroadcastChangedIfRevealed();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                if (Rune_B > 0)
+                {
+                    Target.Attributes[GameAttribute.Dodge_Chance_Bonus] -= ScriptFormula(14);
+                }
+                if (Rune_C > 0)
+                {
+                    Target.Attributes[GameAttribute.Resistance_Percent] -= ScriptFormula(4);
+                }
+                if (Rune_E > 0)
+                {
+                    Target.Attributes[GameAttribute.Hitpoints_Max_Percent_Bonus] -= ScriptFormula(5);
+                    Target.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] -= ScriptFormula(6);
+                }
+                Target.Attributes[GameAttribute.Defense_Bonus_Percent] -= ScriptFormula(0);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
+        }
     }
-    //4 different powerbuffs, figure out which one is which.
-    [ImplementsPowerBuff(0)]
-    class RevengeBuff : PowerBuff
-    {
-        public override void Init()
-        {
-            Timeout = WaitSeconds(ScriptFormula(13));
-        }
-
-        public override bool Apply()
-        {
-            if (!base.Apply())
-                return false;
-            if (Rune_B > 0)
-            {
-                User.Attributes[GameAttribute.Dodge_Chance_Bonus] += ScriptFormula(14);
-            }
-            if (Rune_C > 0)
-            {
-                User.Attributes[GameAttribute.Resistance_Percent] += ScriptFormula(4);
-            }
-            if (Rune_E > 0)
-            {
-                User.Attributes[GameAttribute.Hitpoints_Max_Percent_Bonus] += ScriptFormula(5);
-                User.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] += ScriptFormula(6);
-            }
-            User.Attributes[GameAttribute.Defense_Bonus_Percent] += ScriptFormula(0);
-            User.Attributes.BroadcastChangedIfRevealed();
-
-            return true;
-        }
-
-        public override void Remove()
-        {
-            base.Remove();
-            if (Rune_B > 0)
-            {
-                User.Attributes[GameAttribute.Dodge_Chance_Bonus] -= ScriptFormula(14);
-            }
-            if (Rune_C > 0)
-            {
-                User.Attributes[GameAttribute.Resistance_Percent] -= ScriptFormula(4);
-            }
-            if (Rune_E > 0)
-            {
-                User.Attributes[GameAttribute.Hitpoints_Max_Percent_Bonus] -= ScriptFormula(5);
-                User.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] -= ScriptFormula(6);
-            }
-            User.Attributes[GameAttribute.Defense_Bonus_Percent] -= ScriptFormula(0);
-            User.Attributes.BroadcastChangedIfRevealed();
-        }
-    }
-    [ImplementsPowerBuff(2)]
-    class RevengeAllyBuff : PowerBuff
-    {
-        public override void Init()
-        {
-            Timeout = WaitSeconds(ScriptFormula(13));
-        }
-
-        public override bool Apply()
-        {
-            if (!base.Apply())
-                return false;
-            if (Rune_B > 0)
-            {
-                Target.Attributes[GameAttribute.Dodge_Chance_Bonus] += ScriptFormula(14);
-            }
-            if (Rune_C > 0)
-            {
-                Target.Attributes[GameAttribute.Resistance_Percent] += ScriptFormula(4);
-            }
-            if (Rune_E > 0)
-            {
-                Target.Attributes[GameAttribute.Hitpoints_Max_Percent_Bonus] += ScriptFormula(5);
-                Target.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] += ScriptFormula(6);
-            }
-            Target.Attributes[GameAttribute.Defense_Bonus_Percent] += ScriptFormula(0);
-            Target.Attributes.BroadcastChangedIfRevealed();
-            return true;
-        }
-
-        public override void Remove()
-        {
-            base.Remove();
-            if (Rune_B > 0)
-            {
-                Target.Attributes[GameAttribute.Dodge_Chance_Bonus] -= ScriptFormula(14);
-            }
-            if (Rune_C > 0)
-            {
-                Target.Attributes[GameAttribute.Resistance_Percent] -= ScriptFormula(4);
-            }
-            if (Rune_E > 0)
-            {
-                Target.Attributes[GameAttribute.Hitpoints_Max_Percent_Bonus] -= ScriptFormula(5);
-                Target.Attributes[GameAttribute.Hitpoints_Regen_Per_Second] -= ScriptFormula(6);
-            }
-            Target.Attributes[GameAttribute.Defense_Bonus_Percent] -= ScriptFormula(0);
-            Target.Attributes.BroadcastChangedIfRevealed();
-        }
-    }
-#endregion
+    #endregion
 
     //still terrible. needs to be redone.
     #region FuriousCharge
@@ -1413,6 +1522,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             AddBuff(User, dashBuff);
             yield return dashBuff.Timeout;
 
+            GeneratePrimaryResource(EvalTag(PowerKeys.ResourceGainedOnFirstHit)); //since its furygenerator -> this should be fine without being the first hit.
             if (Target != null && Target.World != null) // target could've died or left world
             {
                 User.TranslateFacing(Target.Position, true);
@@ -1436,6 +1546,8 @@ namespace Mooege.Core.GS.Powers.Implementations
             private Vector3D _destination;
             private ActorMover _mover;
 
+            bool hitAnything = false;
+
             public DashMoverBuff(Vector3D destination)
             {
                 _destination = destination;
@@ -1446,11 +1558,11 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
 
-                float speed = User.Attributes[GameAttribute.Running_Rate_Total] * 10f;
+                float speed = User.Attributes[GameAttribute.Running_Rate_Total] * EvalTag(PowerKeys.WalkingSpeedMultiplier);
 
                 User.TranslateFacing(_destination, true);
                 _mover = new ActorMover(User);
-                _mover.Move(_destination, speed, new NotifyActorMovementMessage
+                _mover.Move(_destination, speed, new ACDTranslateNormalMessage
                 {
                     TurnImmediately = true,
                     AnimationTag = 69808,
@@ -1469,6 +1581,9 @@ namespace Mooege.Core.GS.Powers.Implementations
                 base.Remove();
                 User.Attributes.BroadcastChangedIfRevealed();
 
+                //this might not doing it for just the first hit. 
+                if (hitAnything)
+                    GeneratePrimaryResource(EvalTag(PowerKeys.ResourceGainedOnFirstHit));
             }
 
             public override bool Update()
@@ -1484,13 +1599,14 @@ namespace Mooege.Core.GS.Powers.Implementations
                     attack.AddWeaponDamage(ScriptFormula(16), DamageType.Physical);
                     attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(6));
                     attack.OnHit = hit =>
-                        {
+                    {
+                        hitAnything = true;
                         Knockback(hit.Target, ScriptFormula(2));
                         if (Rune_B > 0)
                         {
                             User.Attributes[GameAttribute.Hitpoints_Granted] += ScriptFormula(21);
                             User.Attributes.BroadcastChangedIfRevealed();
-                        } 
+                        }
                         if (Rune_D > 0)
                         {
                             GeneratePrimaryResource(ScriptFormula(11));
@@ -1510,14 +1626,14 @@ namespace Mooege.Core.GS.Powers.Implementations
                                 //maybe this cannot go here?
                             }
                         }
-                        };
+                    };
                     attack.Apply();
                 }
                 return false;
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: E, B (check/fix A and C)
     #region Overpower
@@ -1526,6 +1642,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+
             TickTimer Cooldown = WaitSeconds(ScriptFormula(5));
 
             if (Rune_A > 0)
@@ -1540,26 +1658,26 @@ namespace Mooege.Core.GS.Powers.Implementations
             attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(7));
             attack.AddWeaponDamage(ScriptFormula(7), DamageType.Physical);
             attack.OnHit = HitPayload =>
+            {
+                if (Rune_C > 0)
                 {
-                    if (Rune_C > 0)
-                    {
-                        //TODO: is this the intended way to heal?
-                        User.Attributes[GameAttribute.Hitpoints_Cur] =
-                            Math.Min(User.Attributes[GameAttribute.Hitpoints_Cur] + 
-                            ScriptFormula(23) * User.Attributes[GameAttribute.Hitpoints_Max],
-                            User.Attributes[GameAttribute.Hitpoints_Max]);
+                    //TODO: is this the intended way to heal?
+                    User.Attributes[GameAttribute.Hitpoints_Cur] =
+                        Math.Min(User.Attributes[GameAttribute.Hitpoints_Cur] +
+                        ScriptFormula(23) * User.Attributes[GameAttribute.Hitpoints_Max],
+                        User.Attributes[GameAttribute.Hitpoints_Max]);
 
-                        User.Attributes.BroadcastChangedIfRevealed();
-                    } 
-                    if (Rune_D > 0)
-                    {
-                        GeneratePrimaryResource(ScriptFormula(28));
-                    }
-                    if (HitPayload.IsCriticalHit)
-                    {
-                        Cooldown = WaitSeconds(0f);
-                    }
-                };
+                    User.Attributes.BroadcastChangedIfRevealed();
+                }
+                if (Rune_D > 0)
+                {
+                    GeneratePrimaryResource(ScriptFormula(28));
+                }
+                if (HitPayload.IsCriticalHit)
+                {
+                    Cooldown = WaitSeconds(0f);
+                }
+            };
             attack.Apply();
 
             if (Rune_B > 0)
@@ -1625,7 +1743,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
     //TODO: Rune_E -> this is going to be hard..
     //Something wrong with using knockback.
@@ -1635,8 +1753,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UsePrimaryResource(ScriptFormula(15));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             yield return WaitSeconds(0.5f);
             var proj1 = new Projectile(this, 164708, User.Position);
             proj1.Launch(TargetPosition, 1f);
@@ -1670,7 +1788,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield break;
         }
     }
-#endregion
+    #endregion
 
     //SuperEarthquake.ani.
     //this is a dumpster fire.. (terrible, rewrite it)
@@ -1680,23 +1798,25 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartCooldown(WaitSeconds(ScriptFormula(20)));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             User.PlayEffectGroup(55689);
             WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(0)), ScriptFormula(19), DamageType.Physical);
             var Quake = SpawnEffect(168440, User.Position, 0, WaitSeconds(ScriptFormula(1)));
             Quake.UpdateDelay = 0.5f;
             Quake.OnUpdate = () =>
-                {
-                    AttackPayload attack = new AttackPayload(this);
-                    attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(0));
-                    attack.AddWeaponDamage(ScriptFormula(17), DamageType.Physical);
-                    attack.Apply();
-                };
+            {
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(0));
+                attack.AddWeaponDamage(ScriptFormula(17), DamageType.Physical);
+                attack.Apply();
+            };
             //Secondary Tremor stuff..
             yield break;
         }
     }
-#endregion    
+    #endregion
 
     //TODO: Rune_C and _E
     #region Sprint
@@ -1705,7 +1825,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(20f);
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new MovementBuff());
 
@@ -1729,7 +1850,9 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
                 new DodgeBuff();
-                User.Attributes[GameAttribute.Movement_Bonus_Run_Speed] += ScriptFormula(1);
+                //nothing seems to be working here for attributes
+                User.Attributes[GameAttribute.Movement_Scalar_Uncapped_Bonus] += ScriptFormula(1);
+                User.Attributes[GameAttribute.Movement_Bonus_Total] += ScriptFormula(1);
                 User.Attributes.BroadcastChangedIfRevealed();
                 return true;
             }
@@ -1794,15 +1917,18 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
-    //TODO: Rune_C
+    //TODO: Rune_C/D
     #region WrathOfTheBerserker
     [ImplementsPowerSNO(Skills.Skills.Barbarian.Situational.WrathOfTheBerserker)]
     public class WrathOfTheBerserker : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             AddBuff(User, new BerserkerBuff());
             if (Rune_B > 0)
             {
@@ -1810,9 +1936,9 @@ namespace Mooege.Core.GS.Powers.Implementations
                 attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(20));
                 attack.AddWeaponDamage(ScriptFormula(17), DamageType.Physical);
                 attack.OnHit = HitPayload =>
-                    {
-                        Knockback(User.Position, HitPayload.Target, ScriptFormula(18), ScriptFormula(19));
-                    };
+                {
+                    Knockback(User.Position, HitPayload.Target, ScriptFormula(18), ScriptFormula(19));
+                };
             }
             if (Rune_E > 0)
             {
@@ -1868,8 +1994,24 @@ namespace Mooege.Core.GS.Powers.Implementations
             }
         }
     }
-#endregion
+    #endregion
 
-            //hard mode = Call of the Ancients
-            //12 Passive Skills
+    //Incomplete
+    #region CallOfTheAncients
+    [ImplementsPowerSNO(Skills.Skills.Barbarian.Situational.CallOfTheAncients)]
+    public class CallOfTheAncients : Skill
+    {
+
+        public override IEnumerable<TickTimer> Main()
+        {
+            /*Vector3D[] spawnPoints = PowerMath.GenerateSpreadPositions(TargetPosition, new Vector3D(TargetPosition.X, TargetPosition.Y + 5f, TargetPosition.Z), 120, 3);
+            User.PlayEffectGroup(215458);
+            SpawnEffect(90443, spawnPoints[0], 0, WaitSeconds(15f));
+            SpawnEffect(90535, spawnPoints[1], 0, WaitSeconds(15f));
+            SpawnEffect(90536, spawnPoints[2], 0, WaitSeconds(15f));*/
+            yield break;
+        }
+    }
+    #endregion
+    //12 Passive Skills
 }

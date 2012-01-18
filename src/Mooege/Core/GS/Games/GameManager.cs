@@ -57,18 +57,24 @@ namespace Mooege.Core.GS.Games
             Player p = null;
             if (!game.Players.TryRemove(gameClient, out p))
             {
-                Logger.Error("Can't remove player ({0}) from game with id: {1}", gameClient.Player.Toon.Name, gameId);
+                Logger.Error("Can't remove player ({0}) from game with id: {1}", gameClient.Player.Toon.HeroNameField.Value, gameId);
             }
 
             if (p != null)
             {
+                //TODO: Move this inside player OnLeave event
                 var toon = p.Toon;
-                toon.TimePlayed += DateTimeExtensions.ToUnixTime(DateTime.UtcNow) - toon.LoginTime;
-                toon.SaveToDB();
+                toon.TimePlayed += DateTimeExtensions.ToUnixTime(DateTime.UtcNow) - toon.LoginTime;                
+                toon.GoldAmount = p.Inventory.GetGoldAmount();
 
                 // Remove Player From World
                 if (p.InGameClient != null)
                     p.World.Leave(p);
+
+                // Generate Update for Client
+                gameClient.BnetClient.Account.CurrentGameAccount.NotifyUpdate();
+                //save hero to db after player data was updated in toon
+                toon.SaveToDB();
             }
 
             if (game.Players.Count == 0)
