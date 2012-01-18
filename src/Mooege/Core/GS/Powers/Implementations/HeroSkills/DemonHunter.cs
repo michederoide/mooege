@@ -631,7 +631,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             foreach (Vector3D position in targetDirs)
             {
                 //using BoneArrow Projectile for now, unknown where SafetyShot Projectile went.
-                var proj = new Projectile(this, 129932, User.Position);
+                var proj = new Projectile(this, 203006, User.Position);
                 proj.Position.Z += 6f;  // fix height
                 proj.OnCollision = (hit) =>
                 {
@@ -1595,7 +1595,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             else
             {
                 var proj = new Projectile(this, RuneSelect(129228, 129228, 148845, 148846, 148847, -1), User.Position);
-                proj.Position.Z += 5f;  // fix height
+                proj.Position.Z += 3f;  // fix height //might be a better height at 3?
                 proj.Launch(TargetPosition, 0.2f);
                 proj.OnCollision = (hit) =>
                 {
@@ -1664,7 +1664,98 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: Add Fan of knives and Vault -> Need Velocityx or ill do it later.
+    //TODO - Fix vault
+    #region Vault
+    [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.Vault)]
+    public class DemonHunterVault : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            //StartCooldown(WaitSeconds(10f));
+
+            Vector3D delta = new Vector3D(TargetPosition - User.Position);
+            float delta_length = (float)Math.Sqrt(delta.X * delta.X + delta.Y * delta.Y);
+            Vector3D delta_normal = new Vector3D(delta.X / delta_length, delta.Y / delta_length, delta.Z / delta_length);
+            float unitsMovedPerTick = 60f;
+            Vector3D ramp = new Vector3D(delta_normal.X * (delta_length / unitsMovedPerTick),
+                                         delta_normal.Y * (delta_length / unitsMovedPerTick),
+                                         0.1f); // usual leap height, possibly different when jumping up/down?
+
+            // TODO: Generalize this and put it in 
+            
+            User.World.BroadcastIfRevealed(new ACDTranslateArcMessage()
+            {
+                ActorId = (int)User.DynamicID,
+                Start = User.Position,
+                Velocity = ramp,
+                //Field3 = 69793, // used for male barb leap
+                FlyingAnimationTagID = 69792, // used for female dh backflip
+                LandingAnimationTagID = 69794,
+                Field6 = -0.1f, // gravity
+                Field7 = Skills.Skills.DemonHunter.Discipline.Vault,
+                Field8 = 0,
+                Field9 = TargetPosition.Z,
+            }, User);
+
+            User.Position = TargetPosition;
+
+            // wait for leap to hit
+            yield return WaitSeconds(0.6f);
+
+            yield break;
+        }
+    }
+#endregion
+
+    //Base complete, needs runes.
+    #region FanOfKnives
+    [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.FanOfKnives)]
+    public class DemonHunterFanOfKnives : PowerScript
+    {
+        public override IEnumerable<TickTimer> Run()
+        {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+
+            User.PlayEffectGroup(77547);
+
+            yield return WaitSeconds(0.5f); //wait before all damage from scriptformulas
+
+            AttackPayload attack = new AttackPayload(this);
+            attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
+            attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+            attack.OnHit = (hit) =>
+            {
+                AddBuff(hit.Target, new DebuffSlowed(ScriptFormula(6), WaitSeconds(ScriptFormula(5))));
+            };
+            attack.Apply();
+            yield break;
+        }
+
+        [ImplementsPowerBuff(0)]
+        class AlabasterBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(15));
+            }
+
+            public override void OnPayload(Payload payload)
+            {
+                if (payload.Target == Target && payload is DeathPayload)
+                {
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
+                    attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                    attack.Apply();
+                    base.Remove();
+                }
+            }
+        }
+    }
+    #endregion
+
     //spirit walk: 0xF2F224EA  (used on pet proxy)
     //vault: 0x04E733FD 
     //diamondskin: 0x061F7489

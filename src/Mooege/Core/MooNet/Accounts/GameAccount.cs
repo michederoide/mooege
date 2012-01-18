@@ -216,7 +216,7 @@ namespace Mooege.Core.MooNet.Accounts
 
         private void SetField(Account owner)
         {
-            this.fieldList = GetPresenceFields();
+            //this.fieldList = GetPresenceFields();
             this.Owner = owner;
             var bnetGameAccountHigh = ((ulong)EntityIdHelper.HighIdType.GameAccountId) + (0x6200004433);
             this.BnetEntityId = bnet.protocol.EntityId.CreateBuilder().SetHigh(bnetGameAccountHigh).SetLow(this.PersistentID).Build();
