@@ -33,7 +33,7 @@ using Mooege.Net.GS.Message.Definitions.ACD;
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
-    //TODO: Check through these first 10 skills. "I haven't checked for runes" /wet
+    //TODO Runes
     #region DeadlyReach
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.DeadlyReach)]
     public class MonkDeadlyReach : ComboSkill
@@ -69,13 +69,14 @@ namespace Mooege.Core.GS.Powers.Implementations
             attack.Apply();
 
             if (hitAnything)
-                GeneratePrimaryResource(6f);
+                GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
 
             yield break;
         }
     }
     #endregion
 
+    //TODO Runes
     #region FistsOfThunder
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.FistsOfThunder)]
     public class MonkFistsOfThunder : ComboSkill
@@ -106,7 +107,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     attack.Apply();
 
                     if (hitAnything)
-                        GeneratePrimaryResource(6f);
+                        GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
 
                     break;
             }
@@ -137,6 +138,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO Runes
     #region SevenSidedStrike
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.SevenSidedStrike)]
     public class MonkSevenSidedStrike : Skill
@@ -144,8 +146,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         //Max Teleport Distance added in last patch 8101.
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(50f);
-            //StartCooldown(WaitSeconds(30f));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             
             var groundEffect = SpawnProxy(TargetPosition, WaitInfinite());
             groundEffect.PlayEffectGroup(145041);
@@ -181,6 +183,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO Runes
     #region CripplingWave
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.CripplingWave)]
     public class MonkCripplingWave : ComboSkill
@@ -217,13 +220,14 @@ namespace Mooege.Core.GS.Powers.Implementations
             attack.Apply();
 
             if (hitAnything)
-                GeneratePrimaryResource(6f);
+                GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
 
             yield break;
         }
     }
     #endregion
 
+    //TODO Runes
     #region ExplodingPalm
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.ExplodingPalm)]
     public class MonkExplodingPalm : ComboSkill
@@ -266,7 +270,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             attack.Apply();
 
             if (hitAnything)
-                GeneratePrimaryResource(6f);
+                GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
             yield break;
         }
 
@@ -386,12 +390,16 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO Runes
     #region SweepingWind
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.SweepingWind)]
     public class MonkSweepingWind : ComboSkill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             AttackPayload attack = new AttackPayload(this);
             attack.Targets = GetBestMeleeEnemy();
             attack.AddWeaponDamage(1.00f, DamageType.Physical);
@@ -402,6 +410,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO Basic Skill
     #region WayOfTheHundredFists
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.WayOfTheHundredFists)]
     public class MonkWayOfTheHundredFists : ComboSkill
@@ -419,13 +428,15 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO:Runes
     #region DashingStrike
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.DashingStrike)]
     public class MonkDashingStrike : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(15f);
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             // dashing strike never specifies the target's id so we just search for the closest target
             Target = GetEnemiesInRadius(TargetPosition, ScriptFormula(0)).GetClosestTo(TargetPosition);
@@ -508,6 +519,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO Runes
     #region MantraOfEvasion
     [ImplementsPowerSNO(Skills.Skills.Monk.Mantras.MantraOfEvasion)]
     public class MonkMantraOfEvasion : Skill
@@ -613,13 +625,14 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO RUnes
     #region BlindingFlash
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.BlindingFlash)]
     public class MonkBlindingFlash : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AttackPayload attack = new AttackPayload(this);
@@ -666,8 +679,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Below are just the classes and are being worked on. 
-
     //Complete
     #region LashingTailKick
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.LashingTailKick)]
@@ -675,7 +686,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(30f); //disabled for testing
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             if (Rune_A > 0 || Rune_D > 0)
             {
@@ -738,7 +750,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Close to complete for base skill.
+    //Close to complete for base skill. TODO:Runes
     #region TempestRush
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.TempestRush)]
     public class TempestRush : ChanneledSkill
@@ -811,7 +823,9 @@ namespace Mooege.Core.GS.Powers.Implementations
         //TODO: Change actor animations to be Proxy first, then Bell, (then shattered then destroyed?)
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(ScriptFormula(33));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             //projectile distance (50)
             if (Rune_B > 0)
             {
@@ -1462,8 +1476,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UsePrimaryResource(ScriptFormula(6));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new SerenityBuff(WaitSeconds(ScriptFormula(0))));
 
@@ -1552,6 +1566,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             var GroundSpot = SpawnProxy(User.Position);
             var Sanctuary = SpawnEffect(RuneSelect(98557, 98823, 149848, 142312, 98559, 142305), GroundSpot.Position, 0, WaitSeconds(ScriptFormula(0)));
             AttackPayload attack = new AttackPayload(this);
@@ -1686,6 +1703,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             yield break;
         }
     }
@@ -1698,6 +1717,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             //rune-D -> spirit
             //crits -> Rune_E
             //debuff -> Rune_C

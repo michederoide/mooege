@@ -39,6 +39,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             int numProjectiles = Rune_B > 0 ? (int)ScriptFormula(4) : 1;
             for (int n = 0; n < numProjectiles; ++n)
             {
@@ -78,6 +80,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Run()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_C > 0)
             {
                 // NOTE: not normal plague of toads right now but Obsidian runed "Toad of Hugeness"
@@ -171,8 +176,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(ScriptFormula(5));
+
             StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             if (Rune_B > 0)
             {
@@ -264,6 +270,8 @@ namespace Mooege.Core.GS.Powers.Implementations
             //Need to check for all Haunt Buffs in this radius.
             //Max simultaneous haunts = 3 ScriptFormula(8)
             //Max Haunt Check Radius(ScriptFormula(9)) -> 90f
+
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             if (Rune_B > 0)
             {
@@ -412,6 +420,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_A > 0)
             {
                 Vector3D inFrontOfUser = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, -20f);
@@ -764,7 +775,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         //Rune_E -> Instead of firebomb doing AoE, each does direct damage to enemy then bounces to up to nearby enemies, reduce damage by 20%
         public override IEnumerable<TickTimer> Main()
         {
-            //GeneratePrimaryResource(ScriptFormula(25));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             Projectile[] grenades = new Projectile[1];
             for (int i = 0; i < grenades.Length; ++i)
             {
@@ -853,7 +865,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //Total Cooldown = SF(2)
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             //Newest Patch adds Run Speed Increase = SF(16) "0.50"
             Vector3D DecoySpot = new Vector3D(User.Position);
             Actor blast = SpawnProxy(DecoySpot);
@@ -994,8 +1008,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //StartCooldown(WaitSeconds(ScriptFormula(2)));
-            //UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             User.PlayEffectGroup(19275);
 
@@ -1088,6 +1102,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         //Summon a plague of locusts to assault enemies, dealing [25 * {Script Formula 18} * 100]% weapon damage per second as Poison for 3 seconds. The locusts will jump to additional nearby targets.
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             //cast, spread to those in radius, from there jump to other mobs in area within (__?__)
             //does not always focus the correct way.
             User.PlayEffectGroup(106765);
@@ -1187,6 +1203,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_E > 0)
             {
                 AddBuff(User, new BarrageSpirit());
@@ -1275,6 +1293,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         //Rune_B Splash Delay?
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_E > 0)
             {
                 SpawnEffect(121908, TargetPosition);
@@ -1349,7 +1369,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartCooldown(WaitSeconds(ScriptFormula(13)));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             //Target.PlayEffectGroup(184540);
             TargetList Half = GetEnemiesInRadius(TargetPosition, ScriptFormula(1));
             foreach (Actor enemy in GetEnemiesInRadius(TargetPosition, ScriptFormula(1), ((int)Half.Actors.Count / 2)).Actors)
@@ -1439,7 +1461,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //new cooldown added in latest script formulas = "CoolDown Time" SF_12 * SF_11
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             var ShamSpot = SpawnProxy(TargetPosition, WaitSeconds(ScriptFormula(0) + 1f));
             SpawnEffect(RuneSelect(117574, 182271, 182276, 182278, 182283, 117574), TargetPosition, 0, WaitSeconds(ScriptFormula(0))).PlayEffectGroup(181291);
             AddBuff(ShamSpot, new AuraBuff());
@@ -1593,6 +1617,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         //TODO:Unknown how to do the width of the Wall of Zombies..
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_C > 0)
             {
                 Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, 52f, (int)ScriptFormula(5));
