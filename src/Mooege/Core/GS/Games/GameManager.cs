@@ -64,6 +64,7 @@ namespace Mooege.Core.GS.Games
             {
                 var toon = p.Toon;
                 toon.TimePlayed += DateTimeExtensions.ToUnixTime(DateTime.UtcNow) - toon.LoginTime;
+                toon.GoldAmount = p.Inventory.GetGoldAmount();
                 toon.SaveToDB();
 
                 // Remove Player From World

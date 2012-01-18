@@ -605,5 +605,10 @@ namespace Mooege.Core.GS.Players
         {
             _equipment.AddGoldAmount(amount);
         }
+
+        public int GetGoldAmount()
+        {
+            return _equipment.Gold();
+        }
     }
 }
