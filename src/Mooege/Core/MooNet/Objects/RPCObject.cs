@@ -117,6 +117,11 @@ namespace Mooege.Core.MooNet.Objects
         public Mooege.Core.MooNet.Helpers.FieldKeyHelper ChangedFields = new Mooege.Core.MooNet.Helpers.FieldKeyHelper();
 
         /// <summary>
+        /// Holds a list of all presence fields for this object
+        /// </summary>
+        public List<PresenceFieldBase> fieldList = new List<PresenceFieldBase>();
+
+        /// <summary>
         /// Notifies a specific subscriber about the object's present state.
         /// This methods should be actually implemented by deriving object classes.
         /// </summary>

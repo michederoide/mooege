@@ -37,12 +37,17 @@ namespace Mooege.Core.MooNet.Accounts
         public Account Owner { get; set; }
 
         public D3.OnlineService.EntityId D3GameAccountId { get; private set; }
+
+        #region PresenceFields
+
         public ByteStringPresenceField<D3.Account.BannerConfiguration> BannerConfigurationField
             = new ByteStringPresenceField<D3.Account.BannerConfiguration>(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.GameAccount, 1, 0);
 
         public ByteStringPresenceField<D3.OnlineService.EntityId> CurrentHeroIdField
             = new ByteStringPresenceField<D3.OnlineService.EntityId>(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.GameAccount, 2, 0);
 
+
+        //TODO: Move this to the Channel class
         public IntPresenceField ScreenStatusField
             = new IntPresenceField(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Channel, 2, 0);
 
@@ -60,6 +65,8 @@ namespace Mooege.Core.MooNet.Accounts
 
         public IntPresenceField GameAccountStatusIdField
             = new IntPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 5, 0);
+
+#endregion
 
         public FieldKeyHelper.Program Program;
 
@@ -209,6 +216,7 @@ namespace Mooege.Core.MooNet.Accounts
 
         private void SetField(Account owner)
         {
+            this.fieldList = GetPresenceFields();
             this.Owner = owner;
             var bnetGameAccountHigh = ((ulong)EntityIdHelper.HighIdType.GameAccountId) + (0x6200004433);
             this.BnetEntityId = bnet.protocol.EntityId.CreateBuilder().SetHigh(bnetGameAccountHigh).SetLow(this.PersistentID).Build();
@@ -226,6 +234,7 @@ namespace Mooege.Core.MooNet.Accounts
 
         public bool IsOnline { get { return this.LoggedInClient != null; } }
 
+        //TODO: Why do we need a logged in client in this class. Each logged in client should have a game account associated.
         private MooNetClient _loggedInClient;
 
         public MooNetClient LoggedInClient
@@ -273,6 +282,29 @@ namespace Mooege.Core.MooNet.Accounts
             ChangedFields.ClearChanged();
             base.UpdateSubscribers(this.Subscribers, operations);
         }
+
+        public List<PresenceFieldBase> GetPresenceFields()
+        {
+            List<PresenceFieldBase> _fieldList = new List<PresenceFieldBase>();
+
+            _fieldList.Add(this.BannerConfigurationField);
+            //Not sure we need to add current hero from start need to be added here
+            //TODO: Fix thelogin with current toon
+            if (this.lastPlayedHeroId != AccountHasNoToons)
+            {
+                _fieldList.Add(this.CurrentHeroIdField);
+                _fieldList.AddRange(this.CurrentToon.GetPresenceFields());
+            }
+
+            _fieldList.Add(this.GameAccountStatusField);
+            _fieldList.Add(this.ProgramField);
+            _fieldList.Add(this.GameAccountStatusIdField);
+            _fieldList.Add(this.BattleTagField);
+            _fieldList.Add(this.AccountField);
+
+            return _fieldList;
+        }
+
 
         public override List<bnet.protocol.presence.FieldOperation> GetSubscriptionNotifications()
         {

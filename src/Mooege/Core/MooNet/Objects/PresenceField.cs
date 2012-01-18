@@ -25,6 +25,22 @@ using System.Text;
 
 namespace Mooege.Core.MooNet.Objects
 {
+    /// <summary>
+    /// Holds a list of persistence fields. Used for updates in RPC Derived objects
+    /// </summary>
+    public class PersistenceFieldList : List<object>
+    {
+        new public void Add(object field)
+        {
+            if (field is PresenceFieldBase)
+            {
+                base.Add(field);
+            }
+
+            //((PresenceField<object>)item).isSynced = true;
+        }
+    }
+
     public class EntityIdPresenceFieldList
     {
         public List<bnet.protocol.EntityId> Value = new List<bnet.protocol.EntityId>();
@@ -192,15 +208,23 @@ namespace Mooege.Core.MooNet.Objects
         }
     }
 
-    public abstract class PresenceField<T>
+    public abstract class PresenceField<T> : PresenceFieldBase
     {
-        public T Value;
 
-        public FieldKeyHelper.Program Program { get; private set; }
-        public FieldKeyHelper.OriginatingClass OriginatingClass { get; private set; }
-        public uint FieldNumber { get; private set; }
-        public uint Index { get; private set; }
-
+        private T _value;
+        public T Value
+        {
+            get
+            {
+                return _value;
+            }
+            set
+            {
+                _value = value;
+                //switch flag so on next update call this field will be sent to clients
+                isSynced = false;
+            }
+        }
 
         public bnet.protocol.presence.Field GetField(bnet.protocol.attribute.Variant variantValue)
         {
@@ -217,6 +241,19 @@ namespace Mooege.Core.MooNet.Objects
             Program = program;
             OriginatingClass = originatingClass;
         }
+
+    }
+
+
+    public abstract class PresenceFieldBase
+    {
+        //Keeps a record if Value was modified since last update
+        public bool isSynced = false;
+
+        public FieldKeyHelper.Program Program { get; set; }
+        public FieldKeyHelper.OriginatingClass OriginatingClass { get; set; }
+        public uint FieldNumber { get; set; }
+        public uint Index { get; set; }
 
         public bnet.protocol.presence.FieldKey GetFieldKey()
         {

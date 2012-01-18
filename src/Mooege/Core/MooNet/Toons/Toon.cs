@@ -59,7 +59,7 @@ namespace Mooege.Core.MooNet.Toons
     public class Toon : PersistentRPCObject
     {
         //Fields that notify clients on change
-        #region PersistentFields
+        #region PresenceFields
         public IntPresenceField HeroClassField
             = new IntPresenceField(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Hero, 1, 0);
 
@@ -115,10 +115,12 @@ namespace Mooege.Core.MooNet.Toons
         /// </summary>
         public D3.OnlineService.EntityId D3EntityID { get; private set; }
 
-        /// <summary>
-        /// Toon handle struct.
-        /// </summary>
-        public ToonHandleHelper ToonHandle { get; private set; }
+        //OBSOLETE: NEVER USED
+        //TODO: Remove this in next commit
+        ///// <summary>
+        ///// Toon handle struct.
+        ///// </summary>
+        //public ToonHandleHelper ToonHandle { get; private set; }
 
         /// <summary>
         /// Toon's owner account.
@@ -277,6 +279,18 @@ namespace Mooege.Core.MooNet.Toons
         }
 
         #region Notifications
+
+        public List<PresenceFieldBase> GetPresenceFields()
+        {
+            List<PresenceFieldBase> _listFields = new List<PresenceFieldBase>();
+            _listFields.Add(this.HeroClassField);
+            _listFields.Add(this.HeroLevelField);
+            _listFields.Add(this.HeroVisualEquipmentField);
+            _listFields.Add(this.HeroFlagsField);
+            _listFields.Add(this.HeroNameField);
+
+            return _listFields;
+        }
 
         //hero class generated
         //D3,Hero,1,0 -> D3.Hero.GbidClass: Hero Class
