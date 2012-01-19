@@ -37,11 +37,11 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
             this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
             this.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
 
-
-
-            //this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
-            //this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
-            //this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
+            this.Attributes[GameAttribute.Skill_Total, 76961] = 1;  //Spider_Web_Slow.pow
+            this.Attributes[GameAttribute.Skill, 76961] = 1;
+            this.Attributes[GameAttribute.Trait, 76961] = 1;
+            this.Attributes[GameAttribute.Buff_Active, 76961] = true;
+            this.Attributes[GameAttribute.Buff_Icon_Count0, 76961] = 1;
         }
     }
 }
