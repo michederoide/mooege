@@ -286,7 +286,7 @@ namespace Mooege.Core.MooNet.Toons
 
         #region Notifications
 
-        public List<PresenceFieldBase> InitPresenceFields()
+        public List<PresenceFieldBase> GetPresenceFields()
         {
             List<PresenceFieldBase> _fieldList = new List<PresenceFieldBase>();
 

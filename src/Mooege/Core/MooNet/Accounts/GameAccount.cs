@@ -54,6 +54,9 @@ namespace Mooege.Core.MooNet.Accounts
         public FourCCPresenceField ProgramField
             = new FourCCPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 4, 0);
 
+        public IntPresenceField GameAccountStatusIdField
+            = new IntPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 5, 0);
+
         public StringPresenceField BattleTagField
             = new StringPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 6, 0);
 
@@ -63,8 +66,6 @@ namespace Mooege.Core.MooNet.Accounts
         public BoolPresenceField GameAccountStatusField
             = new BoolPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 1, 0, false);
 
-        public IntPresenceField GameAccountStatusIdField
-            = new IntPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 5, 0);
 
 #endregion
 
@@ -113,10 +114,16 @@ namespace Mooege.Core.MooNet.Accounts
             {
                 this._currentToon = value;
                 this.CurrentHeroIdField.Value = value.D3EntityID;
-
                 this.Owner.LastSelectedHeroField.Value = value.D3EntityID;
                 //TODO: Move this out
                 this.Owner.SaveToDB();
+
+                //Add new hero to "presence notification service"
+                //Remove old hero
+                RemovePresenceFieldsForSpecificClass(FieldKeyHelper.OriginatingClass.Hero);
+                presenceFieldList.AddRange(this.CurrentToon.GetPresenceFields());
+
+
                 this.ChangedFields.SetPresenceFieldValue(this.Owner.LastSelectedHeroField);
                 this.ChangedFields.SetPresenceFieldValue(this.CurrentHeroIdField);
                 this.ChangedFields.SetPresenceFieldValue(value.HeroClassField);
@@ -171,7 +178,9 @@ namespace Mooege.Core.MooNet.Accounts
         public GameAccount(ulong persistentId, ulong accountId)
             : base(persistentId)
         {
-            this.SetField(AccountManager.GetAccountByPersistentID(accountId));
+            //
+            this.Owner = AccountManager.GetAccountByPersistentID(accountId);
+            this.SetField();
         }
 
         /// <summary>
@@ -181,7 +190,8 @@ namespace Mooege.Core.MooNet.Accounts
         public GameAccount(Account account)
             : base(account.BnetEntityId.Low)
         {
-            this.SetField(account);
+            this.Owner = account;
+            this.SetField();
 
             this.BannerConfiguration =
                 D3.Account.BannerConfiguration.CreateBuilder()
@@ -198,10 +208,10 @@ namespace Mooege.Core.MooNet.Accounts
                 .Build();
         }
 
-        private void SetField(Account owner)
+        private void SetField()
         {
-            //InitPresenceFields();
-            this.Owner = owner;
+            InitPresenceFields();
+
             var bnetGameAccountHigh = ((ulong)EntityIdHelper.HighIdType.GameAccountId) + (0x6200004433);
             this.BnetEntityId = bnet.protocol.EntityId.CreateBuilder().SetHigh(bnetGameAccountHigh).SetLow(this.PersistentID).Build();
             this.D3GameAccountId = D3.OnlineService.EntityId.CreateBuilder().SetIdHigh(bnetGameAccountHigh).SetIdLow(this.PersistentID).Build();
@@ -259,34 +269,24 @@ namespace Mooege.Core.MooNet.Accounts
 
         #region Notifications
 
-        public override void NotifyUpdate()
+        public void InitPresenceFields()
         {
-            var operations = ChangedFields.GetChangedFieldList();
-            ChangedFields.ClearChanged();
-            base.UpdateSubscribers(this.Subscribers, operations);
-        }
+            this.presenceFieldList = new List<PresenceFieldBase>();
 
-        public List<PresenceFieldBase> InitPresenceFields()
-        {
-            List<PresenceFieldBase> _fieldList = new List<PresenceFieldBase>();
-            
-            _fieldList.Add(this.BannerConfigurationField);
+            presenceFieldList.Add(this.BannerConfigurationField);
             //Not sure we need to add current hero from start need to be added here
-            //TODO: Fix thelogin with current toon
-            if (this.Owner.LastSelectedHeroField.Value != Account.AccountHasNoToons)
+            //TODO: This should not be here as a toon is not even selected yet.
+            if (this.Owner.LastSelectedHeroField.Value != Account.AccountHasNoToons && this._currentToon != null)
             {
-                _fieldList.Add(this.CurrentHeroIdField);
-                _fieldList.AddRange(this.CurrentToon.InitPresenceFields());
+                presenceFieldList.Add(this.CurrentHeroIdField);
+                presenceFieldList.AddRange(this.CurrentToon.GetPresenceFields());
             }
 
-            _fieldList.Add(this.GameAccountStatusField);
-            _fieldList.Add(this.ProgramField);
-            _fieldList.Add(this.GameAccountStatusIdField);
-            _fieldList.Add(this.BattleTagField);
-            _fieldList.Add(this.AccountField);
-
-            return _fieldList;
-
+            presenceFieldList.Add(this.GameAccountStatusField);
+            presenceFieldList.Add(this.ProgramField);
+            presenceFieldList.Add(this.GameAccountStatusIdField);
+            presenceFieldList.Add(this.BattleTagField);
+            presenceFieldList.Add(this.AccountField);
         }
 
 

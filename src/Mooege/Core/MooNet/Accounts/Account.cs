@@ -43,6 +43,7 @@ namespace Mooege.Core.MooNet.Accounts
         public StringPresenceField RealIDTagField
             = new StringPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.Account, 1, 0);
 
+        //Probably blizzard will move this to gameaccount soon
         public ByteStringPresenceField<D3.OnlineService.EntityId> LastSelectedHeroField
             = new ByteStringPresenceField<D3.OnlineService.EntityId>(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Account, 1, 0);
 
@@ -53,7 +54,7 @@ namespace Mooege.Core.MooNet.Accounts
             = new StringPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.Account, 5, 0);
 
         public EntityIdPresenceFieldList GameAccountListField
-            = new EntityIdPresenceFieldList(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.Account, 4, 0);
+            = new EntityIdPresenceFieldList(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.Account, 4);
         #endregion
 
         public bool IsOnline
@@ -110,6 +111,8 @@ namespace Mooege.Core.MooNet.Accounts
 
         public UserLevels UserLevel { get; private set; } // user level for account.
 
+        //TODO: Move this out as Accounts need to be loaded before GameAccounts are and then the Owner inside GameAccount can't be properly set if
+        //this is not fully loaded.
         public Dictionary<ulong, GameAccount> GameAccounts
         {
             get { return GameAccountManager.GetGameAccountsForAccount(this); }
@@ -155,6 +158,7 @@ namespace Mooege.Core.MooNet.Accounts
             : base(persistentId)
         {
             this.LastSelectedHeroField.Value = Account.AccountHasNoToons;
+            LoadGameAccountIds();
             this.SetFields(email, salt, passwordVerifier, battleTagName, hashCode, userLevel);
         }
 
@@ -162,6 +166,8 @@ namespace Mooege.Core.MooNet.Accounts
             : base(StringHashHelper.HashIdentity(battleTagName + "#" + hashCode.ToString("D4")))
         {
             this.LastSelectedHeroField.Value = Account.AccountHasNoToons;
+            LoadGameAccountIds();
+
             if (password.Length > 16) password = password.Substring(0, 16); // make sure the password does not exceed 16 chars.
 
             var salt = SRP6a.GetRandomBytes(32);
@@ -181,6 +187,8 @@ namespace Mooege.Core.MooNet.Accounts
 
         private void SetFields(string email, byte[] salt, byte[] passwordVerifier, string battleTagName, int hashCode, UserLevels userLevel)
         {
+            InitPresenceFields();
+
             this.Email = email;
             this.Salt = salt;
             this.PasswordVerifier = passwordVerifier;
@@ -191,6 +199,7 @@ namespace Mooege.Core.MooNet.Accounts
             this.Name = battleTagName;
             this.HashCode = hashCode;
             this.AccountBattleTagField.Value = Name + "#" + HashCode.ToString("D4");
+
         }
 
         public bnet.protocol.presence.Field QueryField(bnet.protocol.presence.FieldKey queryKey)
@@ -221,11 +230,20 @@ namespace Mooege.Core.MooNet.Accounts
 
         #region Notifications
 
-        public override void NotifyUpdate()
+        public void InitPresenceFields()
         {
-            var operations = ChangedFields.GetChangedFieldList();
-            ChangedFields.ClearChanged();
-            base.UpdateSubscribers(this.Subscribers, operations);
+            this.presenceFieldList = new List<PresenceFieldBase>();
+
+            
+            //TODO: Create delegate inside Persistence field so IsOnline can be removed
+            //this.AccountOnlineField.Value = this.IsOnline;
+
+            presenceFieldList.Add(this.LastSelectedHeroField);
+            presenceFieldList.Add(this.SelectedGameAccountField);
+            presenceFieldList.Add(this.RealIDTagField);
+            presenceFieldList.Add(this.AccountOnlineField);
+            presenceFieldList.Add(this.GameAccountListField);
+            presenceFieldList.Add(this.AccountBattleTagField);
         }
 
         //account class generated
@@ -316,6 +334,24 @@ namespace Mooege.Core.MooNet.Accounts
             {
                 Logger.ErrorException(e, "SaveToDB()");
             }
+        }
+
+        public void LoadGameAccountIds()
+        {
+            var query = string.Format("SELECT id from gameaccounts WHERE accountid={0}", this.PersistentID);
+            var cmd = new SQLiteCommand(query, DBManager.Connection);
+            var reader = cmd.ExecuteReader();
+
+            if (!reader.HasRows) return;
+
+            while (reader.Read())
+            {
+                var id = reader.GetInt64(0);
+                var bnetGameAccountHigh = ((ulong)EntityIdHelper.HighIdType.GameAccountId) + (0x6200004433);
+                var bnetGameAccountEntityId = bnet.protocol.EntityId.CreateBuilder().SetHigh(bnetGameAccountHigh).SetLow((ulong)id).Build();
+                this.GameAccountListField.Value.Add(bnetGameAccountEntityId);
+            }
+
         }
 
         public void UpdatePassword(string newPassword)

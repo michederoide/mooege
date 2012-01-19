@@ -417,13 +417,65 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            switch (TargetMessage.Field5)
+            {
+                case 0:
+                    if (Rune_A > 0)
+                    {
+                        //Dash
+                    }
+                    else
+                    {
+                        MeleeStageHit();
+                    }
+                    break;
+                case 1:
+                    MultiHit();
+                    break;
+                case 2:
+
+                    bool hitAnything = false;
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(30), ScriptFormula(31));
+                    attack.AddWeaponDamage(ScriptFormula(2), DamageType.Holy);
+                    attack.OnHit = hitPayload =>
+                    {
+                        hitAnything = true;
+                        Knockback(hitPayload.Target, ScriptFormula(5), ScriptFormula(6));
+                    };
+                    attack.Apply();
+
+                    if (hitAnything)
+                        GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+
+                    break;
+            }
+
             yield break;
         }
 
-        public override float GetContactDelay()
+        private void MeleeStageHit()
         {
-            // no contact delay for hundred fists
-            return 0f;
+            AttackPayload attack = new AttackPayload(this);
+            attack.Targets = GetBestMeleeEnemy();
+            attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+            attack.OnHit = hitPayload =>
+            {
+                GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+            };
+            attack.Apply();
+        }
+        private void MultiHit()
+        {
+            //TODO: this needs to be redone when I figure out how to do multiple hits to certain MAX targets..
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetEnemiesInArcDirection(User.Position,TargetPosition, ScriptFormula(28), ScriptFormula(29));
+                attack.AddWeaponDamage(ScriptFormula(1), DamageType.Physical);
+                attack.OnHit = hitPayload =>
+                {
+                    GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+                };
+                attack.Apply();
         }
     }
     #endregion

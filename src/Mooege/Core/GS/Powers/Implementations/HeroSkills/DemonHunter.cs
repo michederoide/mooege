@@ -1707,7 +1707,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
 #endregion
 
-    //Base complete, needs runes.
+    //TODO:Fix Rune B projectile on User, Check Rune_E
     #region FanOfKnives
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.FanOfKnives)]
     public class DemonHunterFanOfKnives : Skill
@@ -1757,13 +1757,20 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 User.PlayEffectGroup(77547);
 
-                yield return WaitSeconds(0.5f); //wait before all damage from scriptformulas
-                //Rune_A done, 
+                yield return WaitSeconds(0.5f);
                 AttackPayload attack = new AttackPayload(this);
                 attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
                 attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
                 attack.OnHit = (hit) =>
                 {
+                    if (Rune_C > 0)
+                    {
+                        if (Rand.NextDouble() < ScriptFormula(10))
+                        {
+                            AddBuff(hit.Target, new DebuffStunned(WaitSeconds(ScriptFormula(11))));
+                        }
+                    }
+                    else
                     AddBuff(hit.Target, new DebuffSlowed(ScriptFormula(6), WaitSeconds(ScriptFormula(5))));
                 };
                 attack.Apply();

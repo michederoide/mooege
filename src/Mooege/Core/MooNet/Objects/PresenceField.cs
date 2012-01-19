@@ -25,21 +25,36 @@ using System.Text;
 
 namespace Mooege.Core.MooNet.Objects
 {
-    public class EntityIdPresenceFieldList
+    public class EntityIdPresenceFieldList : PresenceFieldBase
     {
-        public List<bnet.protocol.EntityId> Value = new List<bnet.protocol.EntityId>();
 
-        protected FieldKeyHelper.Program _program;
-        protected FieldKeyHelper.OriginatingClass _originatingClass;
-        protected uint _fieldNumber;
-        protected uint _index;
-
-        public EntityIdPresenceFieldList(FieldKeyHelper.Program Program, FieldKeyHelper.OriginatingClass OriginatingClass, uint FieldNumber, uint Index)
+        private List<bnet.protocol.EntityId> _value = new List<bnet.protocol.EntityId>();
+        public List<bnet.protocol.EntityId> Value
         {
-            _fieldNumber = FieldNumber;
-            _index = Index;
-            _program = Program;
-            _originatingClass = OriginatingClass;
+            get
+            {
+                return _value;
+            }
+            set
+            {
+                this._value = value;
+                this.isSynced = false;
+            }
+        }
+
+        /// <summary>
+        /// C-tor Index is not needed as in enums the index is set to 4 it seems
+        /// </summary>
+        /// <param name="program"></param>
+        /// <param name="originatingClass"></param>
+        /// <param name="fieldNumber"></param>
+        /// <param name="index"></param>
+        public EntityIdPresenceFieldList(FieldKeyHelper.Program program, FieldKeyHelper.OriginatingClass originatingClass, uint fieldNumber)
+        {
+            FieldNumber = fieldNumber;
+            //Index = ?????; //for enums this is a kind of id, maybe presence service id for this enum
+            Program = program;
+            OriginatingClass = originatingClass;
         }
 
         public List<bnet.protocol.presence.FieldOperation> GetFieldOperationList()
@@ -48,12 +63,30 @@ namespace Mooege.Core.MooNet.Objects
 
             foreach (var id in Value)
             {
-                var Key = FieldKeyHelper.Create(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.Account, 4, id.High);
+                var Key = FieldKeyHelper.Create(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.Account, FieldNumber, id.High);
                 var Field = bnet.protocol.presence.Field.CreateBuilder().SetKey(Key).SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetEntityidValue(id).Build()).Build();
                 operationList.Add(bnet.protocol.presence.FieldOperation.CreateBuilder().SetField(Field).Build());
             }
             return operationList;
         }
+        /// <summary>
+        /// Only here to satisfy the base class requirements.
+        /// </summary>
+        /// <returns></returns>
+        public override bnet.protocol.presence.Field GetField()
+        {            
+            return bnet.protocol.presence.Field.CreateBuilder().Build();
+        }
+
+        /// <summary>
+        /// Only here to satisfy the baseclass requirements
+        /// </summary>
+        /// <returns></returns>
+        public override bnet.protocol.presence.FieldOperation GetFieldOperation()
+        {
+            return bnet.protocol.presence.FieldOperation.CreateBuilder().Build();
+        }
+        
     }
 
     public class BoolPresenceField : PresenceField<bool>, IPresenceField
@@ -70,7 +103,7 @@ namespace Mooege.Core.MooNet.Objects
         public delegate bool TransformValueDel(bool a);
         public TransformValueDel transformDelegate = null;
 
-        public bnet.protocol.presence.Field GetField()
+        public override bnet.protocol.presence.Field GetField()
         {
             var _valueToSend = Value;
             // Prepare Value for sending
@@ -83,7 +116,7 @@ namespace Mooege.Core.MooNet.Objects
             return base.GetField(variantValue);
         }
 
-        public bnet.protocol.presence.FieldOperation GetFieldOperation()
+        public override bnet.protocol.presence.FieldOperation GetFieldOperation()
         {
             var field = GetField();
             return bnet.protocol.presence.FieldOperation.CreateBuilder().SetField(field).Build();
@@ -97,13 +130,13 @@ namespace Mooege.Core.MooNet.Objects
         {
         }
 
-        public bnet.protocol.presence.Field GetField()
+        public override bnet.protocol.presence.Field GetField()
         {
             var variantValue = bnet.protocol.attribute.Variant.CreateBuilder().SetUintValue(Value).Build();
             return base.GetField(variantValue);
         }
 
-        public bnet.protocol.presence.FieldOperation GetFieldOperation()
+        public override bnet.protocol.presence.FieldOperation GetFieldOperation()
         {
             var field = GetField();
             return bnet.protocol.presence.FieldOperation.CreateBuilder().SetField(field).Build();
@@ -125,7 +158,7 @@ namespace Mooege.Core.MooNet.Objects
         public delegate int TransformValueDel(int a);
         public TransformValueDel transformDelegate = null;
 
-        public bnet.protocol.presence.Field GetField()
+        public override bnet.protocol.presence.Field GetField()
         {
             var _valueToSend = Value;
             // Prepare Value for sending
@@ -138,7 +171,7 @@ namespace Mooege.Core.MooNet.Objects
             return base.GetField(variantValue);
         }
 
-        public bnet.protocol.presence.FieldOperation GetFieldOperation()
+        public override bnet.protocol.presence.FieldOperation GetFieldOperation()
         {
             var field = GetField();
             return bnet.protocol.presence.FieldOperation.CreateBuilder().SetField(field).Build();
@@ -152,13 +185,13 @@ namespace Mooege.Core.MooNet.Objects
         {
         }
 
-        public bnet.protocol.presence.Field GetField()
+        public override bnet.protocol.presence.Field GetField()
         {
             var variantValue = bnet.protocol.attribute.Variant.CreateBuilder().SetFourccValue(Value).Build();
             return base.GetField(variantValue);
         }
 
-        public bnet.protocol.presence.FieldOperation GetFieldOperation()
+        public override bnet.protocol.presence.FieldOperation GetFieldOperation()
         {
             var field = GetField();
             return bnet.protocol.presence.FieldOperation.CreateBuilder().SetField(field).Build();
@@ -172,13 +205,13 @@ namespace Mooege.Core.MooNet.Objects
         {
         }
 
-        public bnet.protocol.presence.Field GetField()
+        public override bnet.protocol.presence.Field GetField()
         {
             var variantValue = bnet.protocol.attribute.Variant.CreateBuilder().SetStringValue(Value).Build();
             return base.GetField(variantValue);
         }
 
-        public bnet.protocol.presence.FieldOperation GetFieldOperation()
+        public override bnet.protocol.presence.FieldOperation GetFieldOperation()
         {
             var field = GetField();
             return bnet.protocol.presence.FieldOperation.CreateBuilder().SetField(field).Build();
@@ -192,13 +225,13 @@ namespace Mooege.Core.MooNet.Objects
         {
         }
 
-        public bnet.protocol.presence.Field GetField()
+        public override bnet.protocol.presence.Field GetField()
         {   
             var variantValue = bnet.protocol.attribute.Variant.CreateBuilder().SetMessageValue(Value.ToByteString()).Build();
             return base.GetField(variantValue);
         }
 
-        public bnet.protocol.presence.FieldOperation GetFieldOperation()
+        public override bnet.protocol.presence.FieldOperation GetFieldOperation()
         {
 
             var field = GetField();
@@ -240,10 +273,11 @@ namespace Mooege.Core.MooNet.Objects
             OriginatingClass = originatingClass;
         }
 
+
     }
 
 
-    public abstract class PresenceFieldBase
+    public abstract class PresenceFieldBase: IPresenceField
     {
         //Keeps a record if Value was modified since last update
         public bool isSynced = false;
@@ -257,6 +291,10 @@ namespace Mooege.Core.MooNet.Objects
         {
             return FieldKeyHelper.Create(Program, OriginatingClass, FieldNumber, Index);
         }
+
+        public abstract bnet.protocol.presence.FieldOperation GetFieldOperation();
+
+        public abstract bnet.protocol.presence.Field GetField();
     }
 
     public interface IPresenceField
