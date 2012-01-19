@@ -286,16 +286,18 @@ namespace Mooege.Core.MooNet.Toons
 
         #region Notifications
 
-        public List<PresenceFieldBase> GetPresenceFields()
+        public List<PresenceFieldBase> InitPresenceFields()
         {
-            List<PresenceFieldBase> _listFields = new List<PresenceFieldBase>();
-            _listFields.Add(this.HeroClassField);
-            _listFields.Add(this.HeroLevelField);
-            _listFields.Add(this.HeroVisualEquipmentField);
-            _listFields.Add(this.HeroFlagsField);
-            _listFields.Add(this.HeroNameField);
+            List<PresenceFieldBase> _fieldList = new List<PresenceFieldBase>();
 
-            return _listFields;
+            _fieldList.Add(this.HeroClassField);
+            _fieldList.Add(this.HeroLevelField);
+            _fieldList.Add(this.HeroVisualEquipmentField);
+            _fieldList.Add(this.HeroFlagsField);
+            _fieldList.Add(this.HeroNameField);
+
+            return _fieldList;
+
         }
 
         //hero class generated

@@ -119,7 +119,7 @@ namespace Mooege.Core.MooNet.Objects
         /// <summary>
         /// Holds a list of all presence fields for this object
         /// </summary>
-        public List<PresenceFieldBase> fieldList = new List<PresenceFieldBase>();
+        public List<object> fieldList = new List<object>();
 
         /// <summary>
         /// Notifies a specific subscriber about the object's present state.

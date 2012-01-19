@@ -36,6 +36,7 @@ namespace Mooege.Core.MooNet.Accounts
         //public D3.PartyMessage.ScreenStatus ScreenStatus { get; set; }
 
 
+        #region PresenceFields
         public ByteStringPresenceField<D3.OnlineService.EntityId> SelectedGameAccountField
             = new ByteStringPresenceField<D3.OnlineService.EntityId>(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Account, 2, 0);
 
@@ -53,6 +54,7 @@ namespace Mooege.Core.MooNet.Accounts
 
         public EntityIdPresenceFieldList GameAccountListField
             = new EntityIdPresenceFieldList(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.Account, 4, 0);
+        #endregion
 
         public bool IsOnline
         {
@@ -132,28 +134,6 @@ namespace Mooege.Core.MooNet.Accounts
         public static readonly D3.OnlineService.EntityId AccountHasNoToons =
             D3.OnlineService.EntityId.CreateBuilder().SetIdHigh(0).SetIdLow(0).Build();
 
-        //TODO: Eliminate this variable as it is stored already in the persistence field;
-        private D3.OnlineService.EntityId _lastSelectedHero = AccountHasNoToons;
-        public D3.OnlineService.EntityId LastSelectedHero
-        {
-            get
-            {
-                if (_lastSelectedHero == AccountHasNoToons)
-                {
-                    var gameAccount = GameAccountManager.GetAccountByPersistentID(this.LastSelectedGameAccount.IdLow);
-                    if (gameAccount.Toons.Count > 0)
-                        _lastSelectedHero = gameAccount.Toons.First().Value.D3EntityID;
-                    this.LastSelectedHeroField.Value = _lastSelectedHero;
-                }
-                return _lastSelectedHero;
-            }
-            set
-            {
-                _lastSelectedHero = value;
-                this.LastSelectedHeroField.Value = value;
-            }
-        }
-
         private D3.OnlineService.EntityId _lastSelectedGameAccount = AccountHasNoToons;
         public D3.OnlineService.EntityId LastSelectedGameAccount
         {
@@ -174,12 +154,14 @@ namespace Mooege.Core.MooNet.Accounts
         public Account(ulong persistentId, string email, byte[] salt, byte[] passwordVerifier, string battleTagName, int hashCode, UserLevels userLevel) // Account with given persistent ID
             : base(persistentId)
         {
+            this.LastSelectedHeroField.Value = Account.AccountHasNoToons;
             this.SetFields(email, salt, passwordVerifier, battleTagName, hashCode, userLevel);
         }
 
         public Account(string email, string password, string battleTagName, int hashCode, UserLevels userLevel) // Account with **newly generated** persistent ID
             : base(StringHashHelper.HashIdentity(battleTagName + "#" + hashCode.ToString("D4")))
         {
+            this.LastSelectedHeroField.Value = Account.AccountHasNoToons;
             if (password.Length > 16) password = password.Substring(0, 16); // make sure the password does not exceed 16 chars.
 
             var salt = SRP6a.GetRandomBytes(32);
@@ -268,7 +250,7 @@ namespace Mooege.Core.MooNet.Accounts
 
             var operationList = new List<bnet.protocol.presence.FieldOperation>();
 
-            if (this.LastSelectedHero != AccountHasNoToons)
+            if (this.LastSelectedHeroField.Value != AccountHasNoToons)
                 operationList.Add(this.LastSelectedHeroField.GetFieldOperation());
             if (this.LastSelectedGameAccount != AccountHasNoToons)
                 operationList.Add(this.SelectedGameAccountField.GetFieldOperation());
@@ -296,18 +278,38 @@ namespace Mooege.Core.MooNet.Accounts
             return calculatedVerifier.SequenceEqual(this.PasswordVerifier);
         }
 
+        #region DB
         public void SaveToDB()
         {
             try
             {
-                var query = string.Format("INSERT INTO accounts (id, email, salt, passwordVerifier, battletagname, hashcode, userLevel) VALUES({0}, '{1}', @salt, @passwordVerifier, '{2}', {3}, {4})",
-                        this.PersistentID, this.Email, this.Name, this.HashCode, (byte)this.UserLevel);
 
-                using (var cmd = new SQLiteCommand(query, DBManager.Connection))
+                if (ExistsInDB())
                 {
-                    cmd.Parameters.Add("@salt", System.Data.DbType.Binary, 32).Value = this.Salt;
-                    cmd.Parameters.Add("@passwordVerifier", System.Data.DbType.Binary, 128).Value = this.PasswordVerifier;
-                    cmd.ExecuteNonQuery();
+                    var query =
+                        string.Format(
+                            "UPDATE accounts SET email='{0}', salt=@salt, passwordVerifier=@passwordVerifier, battletagname='{1}', hashcode={2}, userLevel={3}, LastSelectedHeroId={4} WHERE id={5}",
+                            this.Email, this.Name, this.HashCode, (byte)this.UserLevel, this.LastSelectedHeroField.Value.IdLow, this.PersistentID);
+
+                    using (var cmd = new SQLiteCommand(query, DBManager.Connection))
+                    {
+                        cmd.Parameters.Add("@salt", System.Data.DbType.Binary, 32).Value = this.Salt;
+                        cmd.Parameters.Add("@passwordVerifier", System.Data.DbType.Binary, 128).Value = this.PasswordVerifier;
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                else
+                {
+
+                    var query = string.Format("INSERT INTO accounts (id, email, salt, passwordVerifier, battletagname, hashcode, userLevel, LastSelectedHeroId) VALUES({0}, '{1}', @salt, @passwordVerifier, '{2}', {3}, {4}, {5})",
+                            this.PersistentID, this.Email, this.Name, this.HashCode, (byte)this.UserLevel, this.LastSelectedHeroField.Value.IdLow);
+
+                    using (var cmd = new SQLiteCommand(query, DBManager.Connection))
+                    {
+                        cmd.Parameters.Add("@salt", System.Data.DbType.Binary, 32).Value = this.Salt;
+                        cmd.Parameters.Add("@passwordVerifier", System.Data.DbType.Binary, 128).Value = this.PasswordVerifier;
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
             catch (Exception e)
@@ -349,6 +351,20 @@ namespace Mooege.Core.MooNet.Accounts
                 Logger.ErrorException(e, "UpdateUserLevel()");
             }
         }
+
+        private bool ExistsInDB()
+        {
+            var query =
+                string.Format(
+                    "SELECT id from accounts where id={0}",
+                    this.PersistentID);
+
+            var cmd = new SQLiteCommand(query, DBManager.Connection);
+            var reader = cmd.ExecuteReader();
+            return reader.HasRows;
+        }
+
+#endregion
 
         public override string ToString()
         {

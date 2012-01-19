@@ -84,14 +84,14 @@ namespace Mooege.Core.MooNet.Accounts
 
             while (reader.Read())
             {
+
                 var gameAccountId = (ulong)reader.GetInt64(0);
                 var accountId = (ulong)reader.GetInt64(1);
                 var gameAccount = new GameAccount(gameAccountId, accountId);
-
                 #region Populate GameAccount Data
-
                 var banner = (byte[])reader.GetValue(2);
                 gameAccount.BannerConfiguration = D3.Account.BannerConfiguration.ParseFrom(banner);
+
                 GameAccounts.Add(gameAccountId, gameAccount);
 
                 #endregion
