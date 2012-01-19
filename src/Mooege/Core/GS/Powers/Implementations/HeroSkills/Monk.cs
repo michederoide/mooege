@@ -410,7 +410,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO Basic Skill
+    //TODO:Rune_A(Dash), Rune_E(Stage3), and Stage 2
     #region WayOfTheHundredFists
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.WayOfTheHundredFists)]
     public class MonkWayOfTheHundredFists : ComboSkill
@@ -430,10 +430,17 @@ namespace Mooege.Core.GS.Powers.Implementations
                     }
                     break;
                 case 1:
+                    //stage 2 get hit chance bonus
                     MultiHit();
                     break;
                 case 2:
-
+                    if (Rune_D > 0)
+                    {
+                        if(Rand.NextDouble() < ScriptFormula(25))
+                        {
+                            GeneratePrimaryResource(ScriptFormula(24));
+                        }
+                    }
                     bool hitAnything = false;
                     AttackPayload attack = new AttackPayload(this);
                     attack.Targets = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(30), ScriptFormula(31));
@@ -441,41 +448,170 @@ namespace Mooege.Core.GS.Powers.Implementations
                     attack.OnHit = hitPayload =>
                     {
                         hitAnything = true;
+                        AddBuff(hitPayload.Target, new RuneA_DOT_100Fists());
                         Knockback(hitPayload.Target, ScriptFormula(5), ScriptFormula(6));
                     };
                     attack.Apply();
 
                     if (hitAnything)
+                    {
                         GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+                        if (Rune_C > 0)
+                        {
+                            AddBuff(User, new RuneCbuff());
+                        }
+                    }
+                    //TODO: Range should be only 40f ahead.
+                    if (Rune_E > 0)
+                    {
+                        var proj = new Projectile(this, 136022, User.Position);
+                        proj.Launch(TargetPosition, ScriptFormula(23));
+                        proj.OnCollision = (hit) =>
+                        {
+                            //proj.Destroy();
+                            WeaponDamage(hit, ScriptFormula(11), DamageType.Physical);
+                        };
+                    }
 
                     break;
             }
 
             yield break;
         }
-
+        public override float GetContactDelay()
+        {
+            return 0f;
+        }
         private void MeleeStageHit()
         {
+            if (Rune_D > 0)
+            {
+                if (Rand.NextDouble() < ScriptFormula(25))
+                {
+                    GeneratePrimaryResource(ScriptFormula(24));
+                }
+            }
+            bool hitAnything = false;
             AttackPayload attack = new AttackPayload(this);
             attack.Targets = GetBestMeleeEnemy();
             attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
             attack.OnHit = hitPayload =>
             {
-                GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+                hitAnything = true;
             };
             attack.Apply();
+
+            if (hitAnything)
+            {
+                GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+                if (Rune_C > 0)
+                {
+                    AddBuff(User, new RuneCbuff());
+                }
+            }
         }
         private void MultiHit()
         {
+            if (Rune_D > 0)
+            {
+                if (Rand.NextDouble() < ScriptFormula(25))
+                {
+                    GeneratePrimaryResource(ScriptFormula(24));
+                }
+            }
             //TODO: this needs to be redone when I figure out how to do multiple hits to certain MAX targets..
+                bool hitAnything = false;
                 AttackPayload attack = new AttackPayload(this);
                 attack.Targets = GetEnemiesInArcDirection(User.Position,TargetPosition, ScriptFormula(28), ScriptFormula(29));
                 attack.AddWeaponDamage(ScriptFormula(1), DamageType.Physical);
                 attack.OnHit = hitPayload =>
                 {
-                    GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+                    hitAnything = true;
+                    AddBuff(hitPayload.Target, new RuneA_DOT_100Fists());
                 };
                 attack.Apply();
+
+                if (hitAnything)
+                {
+                    GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+                    if (Rune_C > 0)
+                    {
+                        AddBuff(User, new RuneCbuff());
+                    }
+                }
+        }
+        [ImplementsPowerBuff(3)]
+        class RuneA_DOT_100Fists : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(15));
+            }
+
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    WeaponDamage(Target, ScriptFormula(16), DamageType.Holy);
+                }
+
+                return false;
+            }
+        }
+        [ImplementsPowerBuff(1, true)]
+        class RuneCbuff : PowerBuff
+        {
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(10));
+                MaxStackCount = (int)ScriptFormula(9);
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+
+                _AddAmp();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Attacks_Per_Second_Bonus] -= StackCount * ScriptFormula(7);
+                Target.Attributes[GameAttribute.Movement_Bonus_Run_Speed] -= StackCount * ScriptFormula(8);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
+
+            public override bool Stack(Buff buff)
+            {
+                bool stacked = StackCount < MaxStackCount;
+
+                base.Stack(buff);
+
+                if (stacked)
+                    _AddAmp();
+
+                return true;
+            }
+
+            private void _AddAmp()
+            {
+                Target.Attributes[GameAttribute.Attacks_Per_Second_Bonus] += ScriptFormula(7);
+                Target.Attributes[GameAttribute.Movement_Bonus_Run_Speed] += ScriptFormula(8);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
         }
     }
     #endregion
@@ -812,7 +948,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelOpen()
         {
             EffectsPerSecond = 0.25f;
-            UsePrimaryResource(ScriptFormula(16));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             //User.Attributes[GameAttribute.Movement_Bonus_Run_Speed] += ScriptFormula(14);
             if (Rune_C > 0)
             {
@@ -1762,7 +1898,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: Runes.
+    //Complete
     #region CycloneStrike
     [ImplementsPowerSNO(223473)]
     public class CycloneStrike : Skill
@@ -1771,12 +1907,13 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             StartCooldown(EvalTag(PowerKeys.CooldownTime));
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
-
-            //rune-D -> spirit
-            //crits -> Rune_E
-            //debuff -> Rune_C
-            //multi -> Rune_B
-            //randomAOE -> Rune_A
+            if (Rune_C > 0)
+            {
+                foreach (Actor Ally in GetAlliesInRadius(User.Position, ScriptFormula(19)).Actors)
+                {
+                    Ally.Attributes[GameAttribute.Hitpoints_Granted] += ScriptFormula(20);
+                }
+            }
             AttackPayload attack = new AttackPayload(this);
             attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2), (int)ScriptFormula(5));
             attack.OnHit = hit =>
@@ -1787,8 +1924,42 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield return WaitSeconds(0.5f);
             User.PlayEffectGroup(224247);
             WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(16) + ScriptFormula(17)), ScriptFormula(10), Rune_A > 0 ? DamageType.Fire : DamageType.Holy);
-
+            if (Rune_E > 0)
+            {
+                AddBuff(User, new CycloneDodgeBuff(WaitSeconds(ScriptFormula(27))));
+            }
+            if (Rune_A > 0)
+            {
+                foreach (Actor Enemy in GetEnemiesInRadius(User.Position, ScriptFormula(2), (int)ScriptFormula(5)).Actors)
+                {
+                    AddBuff(Enemy, new DebuffFeared(WaitSeconds(ScriptFormula(13))));
+                }
+            }
             yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class CycloneDodgeBuff : PowerBuff
+        {
+            public CycloneDodgeBuff(TickTimer timeout)
+            {
+                Timeout = timeout;
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                Target.Attributes[GameAttribute.Dodge_Chance_Bonus] += ScriptFormula(28);
+                Target.Attributes.BroadcastChangedIfRevealed();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Dodge_Chance_Bonus] -= ScriptFormula(28);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
         }
     }
     #endregion
