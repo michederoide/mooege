@@ -244,6 +244,7 @@ namespace Mooege.Core.GS.Powers.Payloads
             playerWarpedMessage.Field1 = 0;
 
             this.Target.Attributes[GameAttribute.Buff_Visual_Effect, 0x000FFFFF] = true;
+            // No need to reset our max hp that i can think of - DarkLotus
             //this.Target.Attributes[GameAttribute.Hitpoints_Max_Total] = 80; //Orig = 1;
             //this.Target.Attributes[GameAttribute.Hitpoints_Max] = 80;  //Orig = 0.0009994507F;
             this.Target.Attributes[GameAttribute.Hitpoints_Healed_Target] = this.Target.Attributes[GameAttribute.Hitpoints_Max_Total]; //heal up -should be w/e needs to be
@@ -267,7 +268,8 @@ namespace Mooege.Core.GS.Powers.Payloads
             this.Target.Attributes[GameAttribute.Power_Buff_0_Visual_Effect_None, 0x00036D7F] = false;
             this.Target.Attributes[GameAttribute.CantStartDisplayedPowers] = false;
             this.Target.Attributes.BroadcastChangedIfRevealed();
-
+            // Update player.Position otherwise server treats you as your at old loc till you take a step - DarkLotus
+            this.Target.Position = lastWaypoint;
             return;
         }
 
