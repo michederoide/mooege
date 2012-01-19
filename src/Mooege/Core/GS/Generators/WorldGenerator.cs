@@ -39,6 +39,8 @@ namespace Mooege.Core.GS.Generators
     {
         static readonly Logger Logger = LogManager.CreateLogger();
 
+        
+
         public static World Generate(Game game, int worldSNO)
         {
             if (!MPQStorage.Data.Assets[SNOGroup.Worlds].ContainsKey(worldSNO))
@@ -286,6 +288,15 @@ namespace Mooege.Core.GS.Generators
             /// It could for example define, that for a level area X, out of the four spawning options
             /// two are randomly picked and have barrels placed there
 
+            // Create an array of mobs, used with the loadActor in the load monster area loop
+            // Each monster are created in Mooege.Core.GS.Actors.Implementations.Monsters
+            // By Poluxxx
+            int[] aSNO = new int[] { 
+                    6443        // MommySpider
+                    , 6652      // Zombie
+                    , 6646      // Ravenous
+            };
+
             foreach (int la in levelAreas.Keys)
             {
                 SNOHandle levelAreaHandle = new SNOHandle(SNOGroup.LevelArea, la);
@@ -412,6 +423,7 @@ namespace Mooege.Core.GS.Generators
                     // HACK: don't spawn monsters in tristram town scenes /mdz
                     if (MPQStorage.Data.Assets[SNOGroup.Scene][scene.SceneSNO.Id].Name.StartsWith("trOut_Tristram_"))
                         continue;
+                    
 
                     for (int i = 0; i < 100; i++)
                     {
@@ -425,7 +437,7 @@ namespace Mooege.Core.GS.Generators
                             if ((scene.NavMesh.Squares[y * scene.NavMesh.SquaresCountX + x].Flags & Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.NoSpawn) == 0)
                             {
                                 loadActor(
-                                    new SNOHandle(6652), 
+                                    new SNOHandle(aSNO[RandomHelper.Next(aSNO.Length)]), // Poluxxx
                                     new PRTransform
                                     {
                                         Vector3D = new Vector3D
