@@ -295,6 +295,7 @@ namespace Mooege.Core.GS.Generators
                     6443        // MommySpider
                     , 6652      // Zombie
                     , 6646      // Ravenous
+                    , 136943    // Ghost
             };
 
             foreach (int la in levelAreas.Keys)
