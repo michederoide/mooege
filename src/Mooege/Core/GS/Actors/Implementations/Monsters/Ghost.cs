@@ -32,24 +32,19 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
             : base(world, snoId, tags)
         {
             this.Brain = new MonsterBrain(this);
-            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 308.25f;
-            this.Attributes[GameAttribute.Hitpoints_Max] = 216.25f;
-            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 3.051758E-05f;
-            this.Attributes[GameAttribute.Hitpoints_Total_From_Vitality] = 92;
-            this.Attributes[GameAttribute.Hitpoints_Factor_Vitality] = 4;
-            this.Attributes[GameAttribute.Hitpoints_Cur] = 308.25f;
-            this.Attributes[GameAttribute.Experience_Next] = 0x003C19;
-            this.Attributes[GameAttribute.Experience_Granted] = 0x28;
-            this.Attributes[GameAttribute.Armor_Total] = 20;
-            this.Attributes[GameAttribute.Armor_Item_Total] = 20;
-            this.Attributes[GameAttribute.Armor_Item_SubTotal] = 20;
-            this.Attributes[GameAttribute.Armor_Item] = 20;
-            this.Attributes[GameAttribute.Defense] = 23;
-            this.Attributes[GameAttribute.Vitality] = 23;
-            this.Attributes[GameAttribute.Precision] = 23;
-            this.Attributes[GameAttribute.Attack] = 23;
-            this.Attributes[GameAttribute.General_Cooldown] = 0;
-            this.Attributes[GameAttribute.Level_Cap] = 60;
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 15f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 15f;
+            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 15f;
+            this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 15f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
+
+            this.Attributes[GameAttribute.Skill_Total, 30525] = 1;  //SporeCloud.pow
+            this.Attributes[GameAttribute.Skill, 30525] = 1;
+            this.Attributes[GameAttribute.Trait, 30525] = 1;
+            this.Attributes[GameAttribute.Buff_Active, 30525] = true;
+            this.Attributes[GameAttribute.Buff_Icon_Count0, 30525] = 1;
         }
     }
 }
