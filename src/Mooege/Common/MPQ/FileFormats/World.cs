@@ -158,15 +158,34 @@ namespace Mooege.Common.MPQ.FileFormats
             this.TagMap = stream.ReadSerializedItem<TagMap>();
             stream.Position += (2 * 4);
         }
+    }     
+
+    public enum Directions
+    {
+        North = 1,
+        South = 2,
+        East = 4,
+        West = 8,
+    }
+
+    public enum TileTypes
+    {
+        Normal = 100,
+        EventTile1 = 101, // Jar of souls? more?
+        EventTile2 = 102, // 1000 dead
+        Entrance = 200,
+        UEntrance1 = 201, // Defiled crypt what there?
+        Exit = 300,
+        Filler = 401
     }
 
     public class TileInfo : ISerializableData
     {
         [PersistentProperty("Int0")]
-        public int Int0 { get; private set; }
+        public int ExitDirectionBits { get; private set; }
 
         [PersistentProperty("Int1")]
-        public int Int1 { get; private set; }
+        public int TileType { get; private set; }
 
         [PersistentProperty("SNOScene")]
         public int SNOScene { get; private set; }
@@ -182,8 +201,8 @@ namespace Mooege.Common.MPQ.FileFormats
 
         public void Read(MpqFileStream stream)
         {
-            Int0 = stream.ReadValueS32();
-            Int1 = stream.ReadValueS32();
+            ExitDirectionBits = stream.ReadValueS32();
+            TileType = stream.ReadValueS32();
             SNOScene = stream.ReadValueS32();
             Int2 = stream.ReadValueS32();
             this.TagMap = stream.ReadSerializedItem<TagMap>();

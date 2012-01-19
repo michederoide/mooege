@@ -1710,25 +1710,64 @@ namespace Mooege.Core.GS.Powers.Implementations
     //Base complete, needs runes.
     #region FanOfKnives
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.FanOfKnives)]
-    public class DemonHunterFanOfKnives : PowerScript
+    public class DemonHunterFanOfKnives : Skill
     {
-        public override IEnumerable<TickTimer> Run()
+        public override IEnumerable<TickTimer> Main()
         {
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             StartCooldown(EvalTag(PowerKeys.CooldownTime));
 
-            User.PlayEffectGroup(77547);
-
-            yield return WaitSeconds(0.5f); //wait before all damage from scriptformulas
-
-            AttackPayload attack = new AttackPayload(this);
-            attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
-            attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
-            attack.OnHit = (hit) =>
+            if (Rune_E > 0)
             {
-                AddBuff(hit.Target, new DebuffSlowed(ScriptFormula(6), WaitSeconds(ScriptFormula(5))));
-            };
-            attack.Apply();
+                AddBuff(User, new AlabasterBuff());
+            }
+            else if (Rune_B > 0)
+            {
+                Vector3D[] targetDirs;
+                targetDirs = new Vector3D[(int)ScriptFormula(13)];
+
+                int takenPos = 0;
+                foreach (Actor actor in GetEnemiesInRadius(User.Position, ScriptFormula(17)).Actors)
+                {
+                    targetDirs[takenPos] = actor.Position;
+                    ++takenPos;
+                    if (takenPos >= targetDirs.Length)
+                        break;
+                }
+                if (takenPos < targetDirs.Length)
+                {
+                    //this seems to generate a projectile on User..?
+                    PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, 10f, targetDirs.Length - takenPos)
+                             .CopyTo(targetDirs, takenPos);
+                }
+
+                foreach (Vector3D position in targetDirs)
+                {
+                    var proj = new Projectile(this, 147809, User.Position);
+                    proj.Position.Z += 5f;  // fix height
+                    proj.OnCollision = (hit) =>
+                    {
+                        WeaponDamage(hit, ScriptFormula(16), DamageType.Physical);
+                        proj.Destroy();
+                    };
+                    proj.Launch(position, ScriptFormula(7));
+                }
+            }
+            else
+            {
+                User.PlayEffectGroup(77547);
+
+                yield return WaitSeconds(0.5f); //wait before all damage from scriptformulas
+                //Rune_A done, 
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
+                attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                attack.OnHit = (hit) =>
+                {
+                    AddBuff(hit.Target, new DebuffSlowed(ScriptFormula(6), WaitSeconds(ScriptFormula(5))));
+                };
+                attack.Apply();
+            }
             yield break;
         }
 
@@ -1740,7 +1779,16 @@ namespace Mooege.Core.GS.Powers.Implementations
                 base.Init();
                 Timeout = WaitSeconds(ScriptFormula(15));
             }
-
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+            }
             public override void OnPayload(Payload payload)
             {
                 if (payload.Target == Target && payload is DeathPayload)
