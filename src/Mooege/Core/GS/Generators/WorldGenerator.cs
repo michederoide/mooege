@@ -192,82 +192,96 @@ namespace Mooege.Core.GS.Generators
         private static World GenerateRandomDungeon(Game game, int worldSNO, Mooege.Common.MPQ.FileFormats.World worldData)
         {
             var world = new World(game, worldSNO);
-            var levelAreas = new Dictionary<int, List<Scene>>();
-            List<TileInfo> tiles = new List<TileInfo>();
+
+            Dictionary<int, TileInfo> tiles = new Dictionary<int, TileInfo>();
 
             foreach (var drlgparam in worldData.DRLGParams)
             {
-                tiles.AddRange(drlgparam.Tiles);
+                foreach (var tile in drlgparam.Tiles)
+                {
+                    tiles.Add(tile.SNOScene, tile);
+                }
             }
-            var tilesByType = new Dictionary<Mooege.Common.MPQ.FileFormats.TileTypes, List<Mooege.Common.MPQ.FileFormats.TileInfo>>();
 
-            foreach (var tile in tiles)
+            var tilesByType = new Dictionary<Mooege.Common.MPQ.FileFormats.TileTypes, List<Mooege.Common.MPQ.FileFormats.TileInfo>>();
+            //HACK For defiler's crypt.
+            //TODO: FIX THIS.
+            foreach (var tile in tiles.Values)
             {
+                Logger.Debug("RandomGeneration: TileType: {0}", (TileTypes)tile.TileType);
                 if (!tilesByType.ContainsKey((TileTypes)tile.TileType))
                     tilesByType[(TileTypes)tile.TileType] = new List<Mooege.Common.MPQ.FileFormats.TileInfo>();
                 tilesByType[(TileTypes)tile.TileType].Add(tile);
-            }
-
-            {
+            }            
                 var entrance = RandomHelper.RandomItem(tilesByType[Mooege.Common.MPQ.FileFormats.TileTypes.Entrance], entry => 1);
-                var scene = new Scene(world, new Vector3D(0,0,0), entrance.SNOScene, null);
-                scene.MiniMapVisibility = true; // SceneMiniMapVisibility.Visited;
-                //scene.Position = new Vector3D(0, 0, 0);
-                scene.RotationW = 1.0f; //scene.RotationAmount = 1.0f;
-                scene.RotationAxis = new Vector3D(0, 0, 0);
-                scene.SceneGroupSNO = -1;
+                AddTile(world, entrance, new Vector3D(0, 0, 0));
+                var filler = RandomHelper.RandomItem(tilesByType[Mooege.Common.MPQ.FileFormats.TileTypes.Normal], entry => 1);
+                Logger.Debug("RandomGeneration: Normal SNO TILE (32960): {0}", filler.SNOScene);
+                
+                AddTile(world, tiles[32960], new Vector3D(240,0,0));
+                var exit = RandomHelper.RandomItem(tilesByType[Mooege.Common.MPQ.FileFormats.TileTypes.Exit], entry => 1);
 
-                var spec = new SceneSpecification();
-                scene.Specification = spec;
-                spec.Cell = new Vector2D() { X = 0, Y = 0 };
-                spec.CellZ = 0;
-                spec.SNOLevelAreas = new int[] { 154588, -1, -1, -1 };
-                spec.SNOMusic = -1;
-                spec.SNONextLevelArea = -1;
-                spec.SNONextWorld = -1;
-                spec.SNOPresetWorld = -1;
-                spec.SNOPrevLevelArea = -1;
-                spec.SNOPrevWorld = -1;
-                spec.SNOReverb = -1;
-                spec.SNOWeather = 50542;
-                spec.SNOCombatMusic = -1;
-                spec.SNOAmbient = -1;
-                spec.ClusterID = -1;
-                spec.Unknown1 = 14;
-                spec.Unknown3 = 5;
-                spec.Unknown4 = -1;
-                spec.Unknown5 = 0;
-                spec.SceneCachedValues = new SceneCachedValues();
-                spec.SceneCachedValues.Unknown1 = 63;
-                spec.SceneCachedValues.Unknown2 = 96;
-                spec.SceneCachedValues.Unknown3 = 96;
-                var sceneFile = MPQStorage.Data.Assets[SNOGroup.Scene][entrance.SNOScene];
-                var sceneData = (Mooege.Common.MPQ.FileFormats.Scene)sceneFile.Data;
-                spec.SceneCachedValues.AABB1 = sceneData.AABBBounds;
-                spec.SceneCachedValues.AABB2 = sceneData.AABBMarketSetBounds;
-                spec.SceneCachedValues.Unknown4 = new int[4] { 0, 0, 0, 0 };
+                Logger.Debug("RandomGeneration: Exit SNO TILE: (not 174633, 174643) {0}", exit.SNOScene);
+                AddTile(world, tiles[174663], new Vector3D(240, 240, 0));
+            return world;
+        }
 
-                scene.LoadMarkers();
 
-                // add scene to level area dictionary
-                foreach (var levelArea in scene.Specification.SNOLevelAreas)
+        private static void AddTile(World world, TileInfo tileInfo, Vector3D location)
+        {
+            var levelAreas = new Dictionary<int, List<Scene>>();
+            var scene = new Scene(world, location, tileInfo.SNOScene, null);
+            scene.MiniMapVisibility = true; // SceneMiniMapVisibility.Visited;
+            //scene.Position = new Vector3D(0, 0, 0);
+            scene.RotationW = 1.0f; //scene.RotationAmount = 1.0f;
+            scene.RotationAxis = new Vector3D(0, 0, 0);
+            scene.SceneGroupSNO = -1;
+
+            var spec = new SceneSpecification();
+            scene.Specification = spec;
+            spec.Cell = new Vector2D() { X = 0, Y = 0 };
+            spec.CellZ = 0;
+            spec.SNOLevelAreas = new int[] { 154588, -1, -1, -1 };
+            spec.SNOMusic = -1;
+            spec.SNONextLevelArea = -1;
+            spec.SNONextWorld = -1;
+            spec.SNOPresetWorld = -1;
+            spec.SNOPrevLevelArea = -1;
+            spec.SNOPrevWorld = -1;
+            spec.SNOReverb = -1;
+            spec.SNOWeather = 50542;
+            spec.SNOCombatMusic = -1;
+            spec.SNOAmbient = -1;
+            spec.ClusterID = -1;
+            spec.Unknown1 = 14;
+            spec.Unknown3 = 5;
+            spec.Unknown4 = -1;
+            spec.Unknown5 = 0;
+            spec.SceneCachedValues = new SceneCachedValues();
+            spec.SceneCachedValues.Unknown1 = 63;
+            spec.SceneCachedValues.Unknown2 = 96;
+            spec.SceneCachedValues.Unknown3 = 96;
+            var sceneFile = MPQStorage.Data.Assets[SNOGroup.Scene][tileInfo.SNOScene];
+            var sceneData = (Mooege.Common.MPQ.FileFormats.Scene)sceneFile.Data;
+            spec.SceneCachedValues.AABB1 = sceneData.AABBBounds;
+            spec.SceneCachedValues.AABB2 = sceneData.AABBMarketSetBounds;
+            spec.SceneCachedValues.Unknown4 = new int[4] { 0, 0, 0, 0 };
+
+            scene.LoadMarkers();
+
+            // add scene to level area dictionary
+            foreach (var levelArea in scene.Specification.SNOLevelAreas)
+            {
+                if (levelArea != -1)
                 {
-                    if (levelArea != -1)
-                    {
-                        if (!levelAreas.ContainsKey(levelArea))
-                            levelAreas.Add(levelArea, new List<Scene>());
+                    if (!levelAreas.ContainsKey(levelArea))
+                        levelAreas.Add(levelArea, new List<Scene>());
 
-                        levelAreas[levelArea].Add(scene);
-                    }
+                    levelAreas[levelArea].Add(scene);
                 }
-
-
-                loadLevelAreas(levelAreas, world);
-                //scene.LoadActors();
             }
 
-
-            return world;
+            loadLevelAreas(levelAreas, world);
         }
 
         /// <summary>

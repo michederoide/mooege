@@ -651,7 +651,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             const float _damageRate = 0.25f;
             TickTimer _damageTimer = null;
-
+            float _damagetotal = 0;
             public override void Init()
             {
                 Timeout = WaitSeconds(ScriptFormula(8));
@@ -683,7 +683,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                     AttackPayload attack = new AttackPayload(this);
                     attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(13));
-                    attack.AddWeaponDamage(ScriptFormula(6)/4f, DamageType.Physical); 
+                    attack.AddWeaponDamage(_damagetotal, DamageType.Physical); 
                     //we divide by four because this is by second, and tick-intervals = 0.25
                     attack.AutomaticHitEffects = false;
                     attack.Apply();
@@ -704,6 +704,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             private void _AddAmp()
             {
+                _damagetotal += (ScriptFormula(6) / 4f);
             }
         }
     }
