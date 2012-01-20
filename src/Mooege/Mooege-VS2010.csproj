@@ -108,7 +108,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\GS\Actors\Actions\PowerAction.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Monsters\Ghost.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Monsters\MommySpider.cs" />
     <Compile Include="Core\GS\Actors\Implementations\Monsters\QuillDemon.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Monsters\Ravenous.cs" />
     <Compile Include="Core\GS\Actors\Minion.cs" />
     <Compile Include="Core\GS\Powers\ActionTimedSkill.cs" />
     <Compile Include="Core\GS\Powers\ActorMover.cs" />
