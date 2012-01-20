@@ -831,8 +831,6 @@ namespace Mooege.Core.GS.Players
             //save visual equipment
             this.Toon.HeroVisualEquipmentField.Value = this.Inventory.GetVisualEquipment();
             this.Toon.HeroLevelField.Value = this.Attributes[GameAttribute.Level];
-            this.Toon.GameAccount.ChangedFields.SetPresenceFieldValue(this.Toon.HeroVisualEquipmentField);
-            this.Toon.GameAccount.ChangedFields.SetPresenceFieldValue(this.Toon.HeroLevelField);
         }
 
         public override bool Reveal(Player player)

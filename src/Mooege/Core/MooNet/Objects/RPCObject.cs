@@ -114,11 +114,6 @@ namespace Mooege.Core.MooNet.Objects
         }
 
         /// <summary>
-        /// Stores only changed Fields to send to clients
-        /// </summary>
-        public Mooege.Core.MooNet.Helpers.FieldKeyHelper ChangedFields = new Mooege.Core.MooNet.Helpers.FieldKeyHelper();
-
-        /// <summary>
         /// PresenceServiceSpecific: Holds a list of all presence fields for this object
         /// </summary>
         public List<PresenceFieldBase> presenceFieldList = new List<PresenceFieldBase>();

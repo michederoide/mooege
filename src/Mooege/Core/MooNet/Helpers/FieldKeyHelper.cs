@@ -50,37 +50,5 @@ namespace Mooege.Core.MooNet.Helpers
                     field).SetIndex(index).Build();
         }
 
-
-        private HashSet<FieldKey> _changedFields = new HashSet<FieldKey>();
-        private Dictionary<FieldKey, FieldOperation> _FieldValues = new Dictionary<FieldKey, FieldOperation>();
-
-        public void SetFieldValue(FieldKey key, FieldOperation operation)
-        {
-            if (!_changedFields.Contains(key))
-                _changedFields.Add(key);
-
-            _FieldValues[key] = operation;
-        }
-
-        //TODO: Use covariance and refactor this
-        public void SetPresenceFieldValue(IPresenceField field)
-        {
-            if (field != null)
-            {
-                SetFieldValue(field.GetFieldKey(), field.GetFieldOperation());
-            }
-        }
-
-        public List<FieldOperation> GetChangedFieldList()
-        {
-            return new List<FieldOperation>(_FieldValues.Values);
-        }
-
-        public void ClearChanged()
-        {
-            this._changedFields.Clear();
-            this._FieldValues.Clear();
-        }
-
     } 
 }

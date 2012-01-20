@@ -82,7 +82,6 @@ namespace Mooege.Core.MooNet.Accounts
             {
                 _bannerConfiguration = value;
                 BannerConfigurationField.Value = value;
-                this.ChangedFields.SetPresenceFieldValue(this.BannerConfigurationField);
             }
         }
 
@@ -97,7 +96,6 @@ namespace Mooege.Core.MooNet.Accounts
             {
                 _screenstatus = value;
                 this.ScreenStatusField.Value = value.Status;
-                this.ChangedFields.SetPresenceFieldValue(this.ScreenStatusField);
             }
         }
         /// <summary>
@@ -122,15 +120,6 @@ namespace Mooege.Core.MooNet.Accounts
                 //Remove old hero
                 RemovePresenceFieldsForSpecificClass(FieldKeyHelper.OriginatingClass.Hero);
                 presenceFieldList.AddRange(this.CurrentToon.GetPresenceFields());
-
-
-                this.ChangedFields.SetPresenceFieldValue(this.Owner.LastSelectedHeroField);
-                this.ChangedFields.SetPresenceFieldValue(this.CurrentHeroIdField);
-                this.ChangedFields.SetPresenceFieldValue(value.HeroClassField);
-                this.ChangedFields.SetPresenceFieldValue(value.HeroLevelField);
-                this.ChangedFields.SetPresenceFieldValue(value.HeroVisualEquipmentField);
-                this.ChangedFields.SetPresenceFieldValue(value.HeroFlagsField);
-                this.ChangedFields.SetPresenceFieldValue(value.HeroNameField);
             }
         }
 
@@ -242,9 +231,6 @@ namespace Mooege.Core.MooNet.Accounts
 
                 this.GameAccountStatusField.Value = value != null;
                 this.GameAccountStatusIdField.Value = (int)(this.GameAccountStatusField.Value == true ? 1324923597904795 : 0);
-
-                ChangedFields.SetPresenceFieldValue(this.GameAccountStatusField);
-                ChangedFields.SetPresenceFieldValue(this.GameAccountStatusIdField);
 
                 //TODO: Remove this set once delegate for set is added to presence field
                 this.Owner.AccountOnlineField.Value = this.Owner.IsOnline;
