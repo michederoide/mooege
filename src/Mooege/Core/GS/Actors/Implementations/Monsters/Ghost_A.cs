@@ -25,23 +25,23 @@ using Mooege.Net.GS.Message;
 
 namespace Mooege.Core.GS.Actors.Implementations.Monsters
 {
-    [HandledSNO(6646)]
-    public class Ravenous : Monster
+    //This shows ingame as Enraged Phantom.
+    [HandledSNO(370)]
+    public class Ghost_A : Monster
     {
-        public Ravenous(World world, int snoId, TagMap tags)
+        public Ghost_A(World world, int snoId, TagMap tags)
             : base(world, snoId, tags)
         {
             this.Brain = new MonsterBrain(this);
-            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
-            this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
+            (Brain as MonsterBrain).AddPresetPower(30592);
+            (Brain as MonsterBrain).AddPresetPower(30244);
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 15f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 15f;
             this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
-            this.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
-
-            //this.Attributes[GameAttribute.Skill_Total, 30244] = 1;  //Ghost_SoulSiphon.pow
-            //this.Attributes[GameAttribute.Skill, 30244] = 1;
-            //this.Attributes[GameAttribute.Trait, 30244] = 1;
-            //this.Attributes[GameAttribute.Buff_Active, 30244] = true;
-            //this.Attributes[GameAttribute.Buff_Icon_Count0, 30244] = 1;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 15f;
+            this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 15f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
         }
     }
 }

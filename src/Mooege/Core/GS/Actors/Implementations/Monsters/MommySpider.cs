@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
+/*
 using System.Collections.Generic;
 using Mooege.Common.MPQ.FileFormats.Types;
 using Mooege.Core.GS.AI.Brains;
@@ -25,6 +25,8 @@ using Mooege.Net.GS.Message;
 
 namespace Mooege.Core.GS.Actors.Implementations.Monsters
 {
+    //This is actually a Minion of Witch Doctor. 
+    //6443     WD_CarrionSpider_Spider.acr
     [HandledSNO(6443)]
     public class MommySpider : Monster
     {
@@ -44,4 +46,4 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
             this.Attributes[GameAttribute.Buff_Icon_Count0, 76961] = 1;
         }
     }
-}
+}*/

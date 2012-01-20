@@ -25,13 +25,18 @@ using Mooege.Net.GS.Message;
 
 namespace Mooege.Core.GS.Actors.Implementations.Monsters
 {
-    [HandledSNO(6652)]
+    //No Uniques Added
+    [HandledSNO(6652, 6653, 6654, 204256, //Zombies
+        6644, 6646, 6647, 6651)] //ZombieSkinny
     public class Zombie : Monster
     {
         public Zombie(World world, int snoId, TagMap tags)
             : base(world, snoId, tags)
         {
             this.Brain = new MonsterBrain(this);
+            (Brain as MonsterBrain).AddPresetPower(30550);
+            (Brain as MonsterBrain).AddPresetPower(30592);
+            (Brain as MonsterBrain).AddPresetPower(30005);
             this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
             this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
             this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;

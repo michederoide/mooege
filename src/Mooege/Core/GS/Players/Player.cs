@@ -322,7 +322,7 @@ namespace Mooege.Core.GS.Players
 
             //Basic stats
             this.Attributes[GameAttribute.Level_Cap] = 13;
-            this.Attributes[GameAttribute.Level] = 30; //this has been changed so skills can be used. Originally "this.Toon.Level;"
+            this.Attributes[GameAttribute.Level] = (int)this.Toon.HeroLevelField.Value; //this has been changed so skills can be used. Originally "this.Toon.Level;"
             this.Attributes[GameAttribute.Experience_Next] = LevelBorders[(int)this.Toon.HeroLevelField.Value];
             this.Attributes[GameAttribute.Experience_Granted] = 1000;
             this.Attributes[GameAttribute.Armor_Total] = 0;
