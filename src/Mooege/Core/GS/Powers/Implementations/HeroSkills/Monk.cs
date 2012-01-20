@@ -623,9 +623,11 @@ namespace Mooege.Core.GS.Powers.Implementations
             switch (ComboIndex)
             {
                 case 0:
+                    AddBuff(User, new Stage1Sweep());
                     MeleeStageHit();
                     break;
                 case 1:
+                    AddBuff(User, new Stage2Sweep());
                     MeleeStageHit();
                     break;
                 case 2:
@@ -644,7 +646,42 @@ namespace Mooege.Core.GS.Powers.Implementations
             attack.AddWeaponDamage(ScriptFormula(4), DamageType.Physical);
             attack.Apply();
         }
-
+        [ImplementsPowerBuff(1)]
+        class Stage1Sweep : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(0.5f);
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+            }
+        }
+        [ImplementsPowerBuff(2)]
+        class Stage2Sweep : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(0.5f);
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+            }
+        }
         //Rune_E included
         [ImplementsPowerBuff(3, true)]
         class VortexBuff : PowerBuff
