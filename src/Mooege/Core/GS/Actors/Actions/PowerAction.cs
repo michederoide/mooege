@@ -75,7 +75,8 @@ namespace Mooege.Core.GS.Actors.Actions
             {
                 _target = this.Owner.GetPlayersInRange(MaxTargetRange).OrderBy(
                     (player) => PowerMath.Distance2D(player.Position, this.Owner.Position))
-                    .FirstOrDefault(x => x.Attributes[GameAttribute.Untargetable] == false);
+                    .FirstOrDefault();
+                    //.FirstOrDefault(x => x.Attributes[GameAttribute.Untargetable] == false);
                     // If target is marked untargetable then we shouldnt consider him for targeting - DarkLotus
             }
 
