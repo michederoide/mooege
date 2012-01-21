@@ -25,13 +25,16 @@ using Mooege.Net.GS.Message;
 
 namespace Mooege.Core.GS.Actors.Implementations.Monsters
 {
-    [HandledSNO(136943)]
-    public class Ghost : Monster
+    //This shows ingame as Enraged Phantom.
+    [HandledSNO(370)]
+    public class Ghost_A : Monster
     {
-        public Ghost(World world, int snoId, TagMap tags)
+        public Ghost_A(World world, int snoId, TagMap tags)
             : base(world, snoId, tags)
         {
             this.Brain = new MonsterBrain(this);
+            (Brain as MonsterBrain).AddPresetPower(30592);
+            (Brain as MonsterBrain).AddPresetPower(30244);
             this.Attributes[GameAttribute.Hitpoints_Max_Total] = 15f;
             this.Attributes[GameAttribute.Hitpoints_Max] = 15f;
             this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
@@ -39,12 +42,6 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
             this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
             this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 15f;
             this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
-
-            this.Attributes[GameAttribute.Skill_Total, 30525] = 1;  //SporeCloud.pow
-            this.Attributes[GameAttribute.Skill, 30525] = 1;
-            this.Attributes[GameAttribute.Trait, 30525] = 1;
-            this.Attributes[GameAttribute.Buff_Active, 30525] = true;
-            this.Attributes[GameAttribute.Buff_Icon_Count0, 30525] = 1;
         }
     }
 }

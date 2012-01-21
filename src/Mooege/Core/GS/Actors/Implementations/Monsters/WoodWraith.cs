@@ -16,32 +16,38 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+using System;
 using System.Collections.Generic;
-using Mooege.Common.MPQ.FileFormats.Types;
-using Mooege.Core.GS.AI.Brains;
+using System.Linq;
+using System.Text;
 using Mooege.Core.GS.Map;
 using Mooege.Core.GS.Common.Types.TagMap;
+using Mooege.Core.GS.AI.Brains;
 using Mooege.Net.GS.Message;
 
 namespace Mooege.Core.GS.Actors.Implementations.Monsters
 {
-    [HandledSNO(6646)]
-    public class Ravenous : Monster
+    //Unknown: Doesn't spawn them?
+    [HandledSNO(6572, 139454, 139456, 170324, 170325, 495)]
+    public class WoodWraith : Monster
     {
-        public Ravenous(World world, int snoId, TagMap tags)
+        public WoodWraith(World world, int snoId, TagMap tags)
             : base(world, snoId, tags)
         {
             this.Brain = new MonsterBrain(this);
+            (Brain as MonsterBrain).AddPresetPower(30596); //Static_Pose/Unique
+            (Brain as MonsterBrain).AddPresetPower(29990); //Static_Pose/Unique 
+            (Brain as MonsterBrain).AddPresetPower(30800); //Unique
+            //if WoodWraith uses 30800, release spores. -> this is only for unique woodwraith.
+
             this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
             this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
             this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
             this.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
+            this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
 
-            //this.Attributes[GameAttribute.Skill_Total, 30244] = 1;  //Ghost_SoulSiphon.pow
-            //this.Attributes[GameAttribute.Skill, 30244] = 1;
-            //this.Attributes[GameAttribute.Trait, 30244] = 1;
-            //this.Attributes[GameAttribute.Buff_Active, 30244] = true;
-            //this.Attributes[GameAttribute.Buff_Icon_Count0, 30244] = 1;
         }
     }
 }

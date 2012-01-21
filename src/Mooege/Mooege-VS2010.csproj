@@ -108,6 +108,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\GS\Actors\Actions\PowerAction.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Monsters\Unburied.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Monsters\TreasureGoblin.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Monsters\WoodWraith.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Monsters\Spore.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Monsters\Ghost_A.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Monsters\MommySpider.cs" />
     <Compile Include="Core\GS\Actors\Implementations\Monsters\QuillDemon.cs" />
     <Compile Include="Core\GS\Actors\Minion.cs" />
     <Compile Include="Core\GS\Powers\ActionTimedSkill.cs" />

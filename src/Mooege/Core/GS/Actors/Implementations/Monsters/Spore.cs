@@ -16,27 +16,26 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+using System;
 using System.Collections.Generic;
-using Mooege.Common.MPQ.FileFormats.Types;
-using Mooege.Core.GS.AI.Brains;
+using System.Linq;
+using System.Text;
 using Mooege.Core.GS.Map;
 using Mooege.Core.GS.Common.Types.TagMap;
+using Mooege.Core.GS.AI.Brains;
 using Mooege.Net.GS.Message;
 
 namespace Mooege.Core.GS.Actors.Implementations.Monsters
 {
-    //No Uniques Added
-    [HandledSNO(6652, 6653, 6654, 204256, //Zombies
-        6644, 6646, 6647, 6651)] //ZombieSkinny
-    public class Zombie : Monster
+    //Unknown: These should spawn when Woodwraiths use that spell
+    [HandledSNO(5482)]
+    public class Spore : Monster
     {
-        public Zombie(World world, int snoId, TagMap tags)
+        public Spore(World world, int snoId, TagMap tags)
             : base(world, snoId, tags)
         {
             this.Brain = new MonsterBrain(this);
-            (Brain as MonsterBrain).AddPresetPower(30550);
-            (Brain as MonsterBrain).AddPresetPower(30592);
-            (Brain as MonsterBrain).AddPresetPower(30005);
+            (Brain as MonsterBrain).AddPresetPower(30525);
             this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
             this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
             this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
@@ -44,6 +43,7 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
             this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
             this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
             this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
+
         }
     }
 }
