@@ -33,6 +33,7 @@ using System.Threading;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace Mooege.Core.GS.Powers
 {
@@ -60,11 +61,15 @@ namespace Mooege.Core.GS.Powers
         public PowerManager()
         {
         }
-
+        
         public void Update()
         {
             //Always run update in a new thread for scalability.
             //Should not be run on the same thread as cancel powers as some of scripts result in cancel of all scripts for a target
+            
+            //Using TaskFactory is alot quicker on Windows, Creating brandnew trheads is pretty heavy, need to use a pool or something if not tasks - DarkLotus
+            //Task updateTask = Task.Factory.StartNew(_UpdateExecutingScripts);
+          
             Thread updateThread = new Thread(_UpdateExecutingScripts);
             updateThread.CurrentCulture = CultureInfo.InvariantCulture;
             updateThread.Start();
