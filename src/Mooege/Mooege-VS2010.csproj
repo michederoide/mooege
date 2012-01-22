@@ -119,6 +119,7 @@
     <Compile Include="Core\GS\Powers\ActionTimedSkill.cs" />
     <Compile Include="Core\GS\Powers\ActorMover.cs" />
     <Compile Include="Core\GS\Powers\ComboSkill.cs" />
+    <Compile Include="Core\GS\Powers\Implementations\General\LevelUp.cs" />
     <Compile Include="Core\GS\Powers\Implementations\General\CooldownBuff.cs" />
     <Compile Include="Core\GS\Powers\Implementations\General\KnockbackBuff.cs" />
     <Compile Include="Core\GS\Powers\Implementations\General\Ranged.cs" />
