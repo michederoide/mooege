@@ -152,8 +152,9 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Main()
         {
             //there is a changed walking speed multiplier from 8101 patch.
-            //if (User.CurrentScene.NavMesh.WalkGrid[(int)((TargetPosition.X - this.World.QuadTree.Query<Mooege.Core.GS.Map.Scene>(TargetPosition).FirstOrDefault().Bounds.Left) / 2.5f), (int)((TargetPosition.Y - this.World.QuadTree.Query<Mooege.Core.GS.Map.Scene>(TargetPosition).FirstOrDefault().Bounds.Top) / 2.5f)] == 0)	
-               //yield break;
+            if (!User.World.CheckLocationForFlag(TargetPosition, Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.AllowWalk))
+                yield break;
+           
             bool hitAnything = false;
             StartCooldown(EvalTag(PowerKeys.CooldownTime));
 
