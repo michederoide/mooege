@@ -211,15 +211,38 @@ namespace Mooege.Core.GS.Generators
             //HACK for Defiled Crypt as there is no tile yet with type 200. Maybe changing in DB would make more sense than putting this hack in
             //    [11]: {[161961, Mooege.Common.MPQ.MPQAsset]}Worlds\\a1trDun_Cave_Old_Ruins_Random01.wrl
             if (worldSNO == 161961)
+            {
                 entrance = tiles[131902];
+                tiles.Remove(131902);
+            }
             else
                 entrance = GetTileInfo(tiles, TileTypes.Entrance);
 
-            int startx = 480;
-            int starty = 480;
+            Vector3D initialStartTilePosition = new Vector3D(480, 480, 0);
             Dictionary<Vector3D, TileInfo> worldTiles = new Dictionary<Vector3D, TileInfo>();
-            worldTiles.Add(new Vector3D(startx, starty, 0), entrance);
-            AddAdiacentTiles(worldTiles, entrance, tiles, 0, new Vector3D(480, 480, 0));
+            worldTiles.Add(initialStartTilePosition, entrance);
+            AddAdiacentTiles(worldTiles, entrance, tiles, 0, initialStartTilePosition);
+
+
+
+            //Make sure there are no negative coordinates
+            // Shift all coordinates with required values
+            int shiftX = 0;
+            int shiftY = 0;
+            foreach (var tile in worldTiles)
+            {
+                if (tile.Key.X < 0 && Math.Abs(tile.Key.X) > shiftX) shiftX = (int)Math.Abs(tile.Key.X);
+                if (tile.Key.Y < 0 && Math.Abs(tile.Key.Y) > shiftY) shiftY = (int)Math.Abs(tile.Key.Y);
+            }
+
+            //shift tiles with needed values
+            foreach (var tile in worldTiles)
+            {
+                tile.Key.X += shiftX;
+                tile.Key.Y += shiftY;
+            }
+
+
             foreach (var tile in worldTiles)
             {
                 AddTile(world, tile.Value, tile.Key);
@@ -264,30 +287,34 @@ namespace Mooege.Core.GS.Generators
             Vector3D positionSouth = new Vector3D(position.X, position.Y + 240, 0);
 
             //get a random direction
-            //Dictionary<int, TileExits> exitTypes = new Dictionary<int,TileExits>();
-            //foreach(TileExits exit in Enum.GetValues(typeof(TileExits)))
-            //{
-            //    exitTypes.Add((int)exit, exit);
-            //}
-            //TileExits choosenExit = RandomHelper.RandomValue(exitTypes);
-            //exitTypes.Remove((int)choosenExit);
+            Dictionary<TileExits, Vector3D> exitTypes = new Dictionary<TileExits, Vector3D>();
+            exitTypes.Add(TileExits.East, positionEast);
+            exitTypes.Add(TileExits.West, positionWest);
+            exitTypes.Add(TileExits.North, positionNorth);
+            exitTypes.Add(TileExits.South, positionSouth);
 
+            Dictionary<TileExits, Vector3D> randomizedExitTypes = new Dictionary<TileExits, Vector3D>();
+            var count = exitTypes.Count;
 
-            if ((lookUpExits & (int)TileExits.East) > 0 && !worldTiles.ContainsKey(positionEast))
+            //Randomise exit directions
+            for (int i = 0; i < count; i++)
             {
-                counter = AddAddiacentTileAtExit(worldTiles, tiles, counter, positionEast);
+                //Chose a random exit to test
+                Vector3D chosenExitPosition = RandomHelper.RandomValue(exitTypes);
+                var chosenExitDirection = (from pair in exitTypes
+                                           where pair.Value == chosenExitPosition
+                                           select pair.Key).FirstOrDefault();
+                randomizedExitTypes.Add(chosenExitDirection, chosenExitPosition);
+                exitTypes.Remove(chosenExitDirection);
             }
-            if ((lookUpExits & (int)TileExits.West) > 0 && !worldTiles.ContainsKey(positionWest))
-            {
-                counter = AddAddiacentTileAtExit(worldTiles, tiles, counter, positionWest);
-            }
-            if ((lookUpExits & (int)TileExits.North) > 0 && !worldTiles.ContainsKey(positionNorth))
-            {
-                counter = AddAddiacentTileAtExit(worldTiles, tiles, counter, positionNorth);
-            }
-            if ((lookUpExits & (int)TileExits.South) > 0 && !worldTiles.ContainsKey(positionSouth))
-            {
-                counter = AddAddiacentTileAtExit(worldTiles, tiles, counter, positionSouth);
+
+            //add addiacent tiles for each randomized direction
+            foreach (var exit in randomizedExitTypes)
+            {                
+                if ((lookUpExits & (int)exit.Key) > 0 && !worldTiles.ContainsKey(exit.Value))
+                {
+                    counter = AddAddiacentTileAtExit(worldTiles, tiles, counter, exit.Value);
+                }
             }
 
             return counter;
@@ -401,12 +428,21 @@ namespace Mooege.Core.GS.Generators
         {
             //get all exits that need to be in the new tile
             int mustHaveExits = 0;
+            Dictionary<int, TileInfo> acceptedTiles = new Dictionary<int, TileInfo>();
+            //By default use all tiles
+            acceptedTiles = tiles;
             foreach(TileExits exit in Enum.GetValues(typeof(TileExits)))
             {
                 if (exitStatus[exit] == ExitStatus.Open) mustHaveExits += (int)exit;
+                //delete from the pool of tiles those that do have exits that are blocked
+                if (exitStatus[exit] == ExitStatus.Blocked)
+                {
+                    acceptedTiles = tiles.Where(pair => (pair.Value.ExitDirectionBits & (int)exit) == 0).ToDictionary(pair => pair.Key, pair => pair.Value);
+                }
             }
+
             Logger.Debug("Looking for tile with Exits: {0}", mustHaveExits);
-            return GetTileInfo(tiles.Where(pair => pair.Value.TileType == tileType).ToDictionary(pair => pair.Key, pair => pair.Value), mustHaveExits);
+            return GetTileInfo(acceptedTiles.Where(pair => pair.Value.TileType == tileType).ToDictionary(pair => pair.Key, pair => pair.Value), mustHaveExits);
         }
 
         /// <summary>
