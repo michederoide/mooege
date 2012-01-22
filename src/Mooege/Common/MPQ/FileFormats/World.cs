@@ -160,18 +160,18 @@ namespace Mooege.Common.MPQ.FileFormats
         }
     }     
 
-    public enum Directions
+    public enum TileExits
     {
-        North = 1,
-        South = 2,
-        East = 4,
-        West = 8,
+        West = 1,
+        East = 2,
+        North = 4,
+        South = 8,
     }
 
     public enum TileTypes
     {
         Normal = 100,
-        EventTile1 = 101, // Jar of souls? more?
+        EventTile1 = 101, // Jar of souls? more? Deadend?
         EventTile2 = 102, // 1000 dead
         Entrance = 200,
         UEntrance1 = 201, // Defiled crypt what there?

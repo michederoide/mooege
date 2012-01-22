@@ -30,6 +30,7 @@ using Mooege.Common.MPQ.FileFormats;
 using World = Mooege.Core.GS.Map.World;
 using Scene = Mooege.Core.GS.Map.Scene;
 using Mooege.Core.GS.Common.Types.Scene;
+using System;
 
 
 
@@ -199,33 +200,245 @@ namespace Mooege.Core.GS.Generators
             {
                 foreach (var tile in drlgparam.Tiles)
                 {
+                    Logger.Debug("RandomGeneration: TileType: {0}", (TileTypes)tile.TileType);
                     tiles.Add(tile.SNOScene, tile);
                 }
             }
 
             var tilesByType = new Dictionary<Mooege.Common.MPQ.FileFormats.TileTypes, List<Mooege.Common.MPQ.FileFormats.TileInfo>>();
-            //HACK For defiler's crypt.
-            //TODO: FIX THIS.
-            foreach (var tile in tiles.Values)
-            {
-                Logger.Debug("RandomGeneration: TileType: {0}", (TileTypes)tile.TileType);
-                if (!tilesByType.ContainsKey((TileTypes)tile.TileType))
-                    tilesByType[(TileTypes)tile.TileType] = new List<Mooege.Common.MPQ.FileFormats.TileInfo>();
-                tilesByType[(TileTypes)tile.TileType].Add(tile);
-            }            
-                var entrance = RandomHelper.RandomItem(tilesByType[Mooege.Common.MPQ.FileFormats.TileTypes.Entrance], entry => 1);
-                AddTile(world, entrance, new Vector3D(0, 0, 0));
-                var filler = RandomHelper.RandomItem(tilesByType[Mooege.Common.MPQ.FileFormats.TileTypes.Normal], entry => 1);
-                Logger.Debug("RandomGeneration: Normal SNO TILE (32960): {0}", filler.SNOScene);
-                
-                AddTile(world, tiles[32960], new Vector3D(240,0,0));
-                var exit = RandomHelper.RandomItem(tilesByType[Mooege.Common.MPQ.FileFormats.TileTypes.Exit], entry => 1);
 
-                Logger.Debug("RandomGeneration: Exit SNO TILE: (not 174633, 174643) {0}", exit.SNOScene);
-                AddTile(world, tiles[174663], new Vector3D(240, 240, 0));
+            TileInfo entrance = new TileInfo();
+            //HACK for Defiled Crypt as there is no tile yet with type 200. Maybe changing in DB would make more sense than putting this hack in
+            //    [11]: {[161961, Mooege.Common.MPQ.MPQAsset]}Worlds\\a1trDun_Cave_Old_Ruins_Random01.wrl
+            if (worldSNO == 161961)
+                entrance = tiles[131902];
+            else
+                entrance = GetTileInfo(tiles, TileTypes.Entrance);
+
+            int startx = 480;
+            int starty = 480;
+            Dictionary<Vector3D, TileInfo> worldTiles = new Dictionary<Vector3D, TileInfo>();
+            worldTiles.Add(new Vector3D(startx, starty, 0), entrance);
+            AddAdiacentTiles(worldTiles, entrance, tiles, 0, new Vector3D(480, 480, 0));
+            foreach (var tile in worldTiles)
+            {
+                AddTile(world, tile.Value, tile.Key);
+            }
+
+            //Coordinates are added after selection of tiles and map
+            //Leave it for Defiler Crypt debugging
+            //AddTile(world, tiles[132218], new Vector3D(720, 480, 0));
+            //AddTile(world, tiles[132203], new Vector3D(480, 240, 0));
+            //AddTile(world, tiles[132263], new Vector3D(240, 480, 0));
             return world;
         }
 
+        /// <summary>
+        /// Status of an added exit to world
+        /// Used when a new tile is needed in a specific place
+        /// </summary>
+        public enum ExitStatus
+        {
+            Free, //no tile in that direction
+            Blocked, //"wall" in that direction
+            Open //"path" in that direction
+        }
+
+        /// <summary>
+        /// Adds tiles to all exits of a tile
+        /// </summary>
+        /// <param name="worldTiles">Contains a list of already added tiles.</param>
+        /// <param name="tileInfo">Originating tile</param>
+        /// <param name="tiles">List of tiles to choose from</param>
+        /// <param name="counter">Contains how many tiles were added. When counter reached it will look for an exit. 
+        /// If exit was not found look for deadend(filler?). </param>
+        /// <param name="position">Position of originating tile.</param>
+        /// <param name="x">Originating tile world x position</param>
+        private static int AddAdiacentTiles(Dictionary<Vector3D, TileInfo> worldTiles, TileInfo tileInfo, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
+        {
+            Logger.Debug("Counter: {0}, ExitDirectionbitsOfGivenTile: {1}", counter, tileInfo.ExitDirectionBits);
+            var lookUpExits = GetLookUpExitBits(tileInfo.ExitDirectionBits);
+            Vector3D positionEast = new Vector3D(position.X - 240, position.Y, 0);
+            Vector3D positionWest = new Vector3D(position.X + 240, position.Y, 0);
+            Vector3D positionNorth = new Vector3D(position.X, position.Y - 240, 0);
+            Vector3D positionSouth = new Vector3D(position.X, position.Y + 240, 0);
+
+            //get a random direction
+            //Dictionary<int, TileExits> exitTypes = new Dictionary<int,TileExits>();
+            //foreach(TileExits exit in Enum.GetValues(typeof(TileExits)))
+            //{
+            //    exitTypes.Add((int)exit, exit);
+            //}
+            //TileExits choosenExit = RandomHelper.RandomValue(exitTypes);
+            //exitTypes.Remove((int)choosenExit);
+
+
+            if ((lookUpExits & (int)TileExits.East) > 0 && !worldTiles.ContainsKey(positionEast))
+            {
+                counter = AddAddiacentTileAtExit(worldTiles, tiles, counter, positionEast);
+            }
+            if ((lookUpExits & (int)TileExits.West) > 0 && !worldTiles.ContainsKey(positionWest))
+            {
+                counter = AddAddiacentTileAtExit(worldTiles, tiles, counter, positionWest);
+            }
+            if ((lookUpExits & (int)TileExits.North) > 0 && !worldTiles.ContainsKey(positionNorth))
+            {
+                counter = AddAddiacentTileAtExit(worldTiles, tiles, counter, positionNorth);
+            }
+            if ((lookUpExits & (int)TileExits.South) > 0 && !worldTiles.ContainsKey(positionSouth))
+            {
+                counter = AddAddiacentTileAtExit(worldTiles, tiles, counter, positionSouth);
+            }
+
+            return counter;
+        }
+
+        /// <summary>
+        /// Adds an addiacent tile in the given exit position
+        /// </summary>
+        /// <param name="worldTiles"></param>
+        /// <param name="tiles"></param>
+        /// <param name="counter"></param>
+        /// <returns></returns>
+        private static int AddAddiacentTileAtExit(Dictionary<Vector3D, TileInfo> worldTiles, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
+        {
+            TileTypes tileTypeToFind = TileTypes.Normal;
+            if (counter > 5)
+            {
+                if (!ContainsTileType(worldTiles, TileTypes.Exit)) tileTypeToFind = TileTypes.Exit;
+                else tileTypeToFind = TileTypes.EventTile1;
+            }
+            //Find if other exits are in the area of the new tile to add
+            Dictionary<TileExits, ExitStatus> exitStatus = GetAddiacentExitStatus(worldTiles, position);
+            TileInfo newTile = GetTileInfo(tiles, (int)tileTypeToFind, exitStatus);
+            if (newTile == null) return counter;
+            worldTiles.Add(position, newTile);
+            Logger.Debug("Added tile: Type: {0}, SNOScene: {1}, ExitTypes: {2}", newTile.TileType, newTile.SNOScene, newTile.ExitDirectionBits);
+            counter = AddAdiacentTiles(worldTiles, newTile, tiles, counter + 1, position);
+            return counter;
+        }
+
+        /// <summary>
+        /// Returns the status of all exits for a specified position
+        /// </summary>
+        /// <param name="worldTiles">Tiles already added to world</param>
+        /// <param name="position">Position</param>
+        private static Dictionary<TileExits, ExitStatus> GetAddiacentExitStatus(Dictionary<Vector3D, TileInfo> worldTiles, Vector3D position)
+        {
+            Dictionary<TileExits, ExitStatus> exitStatusDict = new Dictionary<TileExits, ExitStatus>();
+            //Compute East Addiacent Location
+            Vector3D positionEast = new Vector3D(position.X + 240, position.Y, position.Z);
+            ExitStatus exitStatusEast = GetExistStatus(worldTiles, positionEast, TileExits.West);
+            exitStatusDict.Add(TileExits.East, exitStatusEast);
+
+            Vector3D positionWest = new Vector3D(position.X - 240, position.Y, position.Z);
+            ExitStatus exitStatusWest = GetExistStatus(worldTiles, positionWest, TileExits.East);
+            exitStatusDict.Add(TileExits.West, exitStatusWest);
+
+            Vector3D positionNorth = new Vector3D(position.X, position.Y + 240, position.Z);
+            ExitStatus exitStatusNorth = GetExistStatus(worldTiles, positionNorth, TileExits.South);
+            exitStatusDict.Add(TileExits.North, exitStatusNorth);
+
+            Vector3D positionSouth = new Vector3D(position.X, position.Y - 240, position.Z);
+            ExitStatus exitStatusSouth = GetExistStatus(worldTiles, positionSouth, TileExits.North);
+            exitStatusDict.Add(TileExits.South, exitStatusSouth);
+
+            return exitStatusDict;
+        }
+
+        private static bool ContainsTileType(Dictionary<Vector3D, TileInfo> worldTiles, TileTypes tileType)
+        {
+            foreach (var tileInfo in worldTiles)
+            {
+                if (tileInfo.Value.TileType == (int)tileType) return true;
+            }
+            return false;
+        }
+
+
+        /// <summary>
+        /// Provides the exit status given position and exit (NSEW)
+        /// </summary>
+        /// <param name="worldTiles"></param>
+        /// <param name="position"></param>
+        /// <param name="exit"></param>
+        /// <returns></returns>
+        private static ExitStatus GetExistStatus(Dictionary<Vector3D, TileInfo> worldTiles, Vector3D position, TileExits exit)
+        {
+            if (!worldTiles.ContainsKey(position)) return ExitStatus.Free;
+            else
+            {
+                if ((worldTiles[position].ExitDirectionBits & (int)exit) > 0) return ExitStatus.Open;
+                else return ExitStatus.Blocked;
+            }
+        }
+
+        /// <summary>
+        /// Provides what entrances to look-up based on an entrance set of bits
+        /// N means look for S
+        /// S means look for N
+        /// W means look for E
+        /// E means look for W
+        /// basically switch first two bits and last two bits
+        /// </summary>
+        /// <param name="exitDirectionBits"></param>
+        /// <returns></returns>
+        private static int GetLookUpExitBits(int exitDirectionBits)
+        {
+            return (((exitDirectionBits & ~3) & (int)0x4U) << 1 | ((exitDirectionBits & ~3) & (int)0x8U) >> 1) 
+                + (((exitDirectionBits & ~12) & (int)0x1U) << 1 | ((exitDirectionBits & ~12) & (int)0x2U) >> 1);
+        }
+
+        /// <summary>
+        /// Get tileInfo with specific requirements
+        /// </summary>
+        /// <param name="tiles"></param>
+        /// <param name="exitDirectionBits"></param>
+        /// <param name="tileType"></param>
+        /// <param name="exitStatus"></param>
+        /// <returns></returns>
+        private static TileInfo GetTileInfo(Dictionary<int, TileInfo> tiles, int tileType, Dictionary<TileExits, ExitStatus> exitStatus)
+        {
+            //get all exits that need to be in the new tile
+            int mustHaveExits = 0;
+            foreach(TileExits exit in Enum.GetValues(typeof(TileExits)))
+            {
+                if (exitStatus[exit] == ExitStatus.Open) mustHaveExits += (int)exit;
+            }
+            Logger.Debug("Looking for tile with Exits: {0}", mustHaveExits);
+            return GetTileInfo(tiles.Where(pair => pair.Value.TileType == tileType).ToDictionary(pair => pair.Key, pair => pair.Value), mustHaveExits);
+        }
+
+        /// <summary>
+        /// Returns a tileinfo from a list of tiles that has specific exit directions
+        /// </summary>
+        /// <param name="tiles"></param>
+        /// <param name="exitDirectionBits"></param>
+        /// <returns></returns>
+        private static TileInfo GetTileInfo(Dictionary<int, TileInfo> tiles, int exitDirectionBits)
+        {
+            List<TileInfo> tilesWithRightDirection = (from pair in tiles where ((pair.Value.ExitDirectionBits & exitDirectionBits) > 0) select pair.Value).ToList<TileInfo>();
+            if (tilesWithRightDirection.Count == 0)
+            {
+                Logger.Debug("Did not find matching tile");
+                //return filler
+                return null;
+            }
+
+            return RandomHelper.RandomItem(tilesWithRightDirection, x=>1);
+        }
+
+        /// <summary>
+        /// Returns a tileinfo from a list of tiles that has a specific type
+        /// </summary>
+        /// <param name="tiles"></param>
+        /// <param name="exitDirectionBits"></param>
+        /// <returns></returns>
+        private static TileInfo GetTileInfo(Dictionary<int, TileInfo> tiles, TileTypes tileType)
+        {
+            var tilesWithRightDirection = (from pair in tiles where (pair.Value.TileType == (int)tileType) select pair.Value);
+            return RandomHelper.RandomItem(tilesWithRightDirection, x => 1);
+        }
 
         private static void AddTile(World world, TileInfo tileInfo, Vector3D location)
         {
@@ -306,10 +519,10 @@ namespace Mooege.Core.GS.Generators
             // Each monster are created in Mooege.Core.GS.Actors.Implementations.Monsters
             // By Poluxxx
             int[] aSNO = new int[] { 
-                      6652      // Zombie
+                    6443        // MommySpider
+                    , 6652      // Zombie
                     , 6646      // Ravenous
-                    , 370       // Ghost_A - Enraged Phantom 
-                    , 4982      // QuillDemon
+                    , 136943    // Ghost
             };
 
             foreach (int la in levelAreas.Keys)
