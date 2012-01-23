@@ -671,7 +671,7 @@ namespace Mooege.Core.GS.Players
                 Angle = message.Angle,
                 TurnImmediately = false,
                 Speed = message.Speed,
-                Field5 = message.Field5,
+                //Field5 = message.Field5,
                 AnimationTag = message.AnimationTag
             };
 
@@ -1127,7 +1127,7 @@ namespace Mooege.Core.GS.Players
                 snoActiveSkills = this.SkillSet.ActiveSkills,
                 snoTraits = this.SkillSet.PassiveSkills,
                 SavePointData = new SavePointData { snoWorld = -1, SavepointId = -1, },
-                m_SeenTutorials = this.SeenTutorials,
+                //m_SeenTutorials = this.SeenTutorials,
             };
         }
 

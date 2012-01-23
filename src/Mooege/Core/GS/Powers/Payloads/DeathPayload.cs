@@ -43,7 +43,7 @@ namespace Mooege.Core.GS.Powers.Payloads
         public DamageType DeathDamageType;
         public bool LootAndExp; //HACK: As we currently just give out random exp and loot, this is in to prevent giving this out for mobs that shouldn't give it.
 
-        public DeathPayload(PowerContext context, DamageType deathDamageType, Actor target)
+        public DeathPayload(PowerContext context, DamageType deathDamageType, Actor target, bool grantsLootAndExp = true)
             : base(context, target)
         {
             this.LootAndExp = grantsLootAndExp;
