@@ -212,6 +212,16 @@ namespace Mooege.Common.MPQ.FileFormats
         }
     }
 
+    public enum CommandType
+    {
+        Waypoint = 0, 
+        BridleEntrance = 1, 
+        AddExit = 2, 
+        AddHub = 3, 
+        AddSpoke = 4, 
+        Group = 9, //used in DRLG to group tiles together     
+    }
+
     public class DRLGCommand : ISerializableData
     {
         [PersistentProperty("Name")]
