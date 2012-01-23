@@ -390,6 +390,7 @@ namespace Mooege.Core.GS.Map
 
         /// <summary>
         /// Update the flippy animations and remove them once they have timed out
+        /// TODO: This generates an exception, needs to be multithreaded with a lock on the collection
         /// </summary>
         /// <param name="tickCounter"></param>
         private void UpdateFlippy(int tickCounter)
@@ -741,6 +742,37 @@ namespace Mooege.Core.GS.Map
         public override string ToString()
         {
             return string.Format("[World] SNOId: {0} DynamicId: {1} Name: {2}", this.WorldSNO.Id, this.DynamicID, this.WorldSNO.Name);
+        }
+
+
+        public bool CheckLocationForFlag(Vector3D location, Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags flags)
+        {
+            // Currently returns true if you can walk, false if you cant. no matter the flag. my math to use the 2d array of squares seems to be wrong so using the grid. - DarkLotus
+            foreach (Scene s in this._scenes.Values)
+            {
+                if (s.Bounds.IntersectsWith(new Rect(location.X, location.Y, 1f, 1f)))
+                {
+                    // found scene intersecting with location.
+                    int x = (int)((location.X - s.Bounds.Left) / 2.5f);
+                    int y = (int)((location.Y - s.Bounds.Top) / 2.5f);
+                    if (s.NavMesh.WalkGrid[x, y] == 1)
+                    {
+                        return true;
+                    }
+                    /*int total = (int)((x * s.NavMesh.SquaresCountX) + y);
+                    if (total < 0 || total > s.NavMesh.NavMeshSquareCount)
+                    {
+                        Logger.Error("DarkLotus Cant Code:( Navmesh overflow");
+                    }
+                    if(s.NavMesh.Squares[total].Flags.HasFlag(flags))
+                    {
+                        return true;
+                    }*/
+                    return false;
+                   
+                }
+            }
+            return false;
         }
     }
 }

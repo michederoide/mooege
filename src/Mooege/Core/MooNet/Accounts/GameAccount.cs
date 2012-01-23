@@ -37,17 +37,25 @@ namespace Mooege.Core.MooNet.Accounts
         public Account Owner { get; set; }
 
         public D3.OnlineService.EntityId D3GameAccountId { get; private set; }
+
+        #region PresenceFields
+
         public ByteStringPresenceField<D3.Account.BannerConfiguration> BannerConfigurationField
             = new ByteStringPresenceField<D3.Account.BannerConfiguration>(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.GameAccount, 1, 0);
 
         public ByteStringPresenceField<D3.OnlineService.EntityId> CurrentHeroIdField
             = new ByteStringPresenceField<D3.OnlineService.EntityId>(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.GameAccount, 2, 0);
 
+
+        //TODO: Move this to the Channel class
         public IntPresenceField ScreenStatusField
             = new IntPresenceField(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Channel, 2, 0);
 
         public FourCCPresenceField ProgramField
             = new FourCCPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 4, 0);
+
+        public IntPresenceField GameAccountStatusIdField
+            = new IntPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 5, 0);
 
         public StringPresenceField BattleTagField
             = new StringPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 6, 0);
@@ -58,8 +66,8 @@ namespace Mooege.Core.MooNet.Accounts
         public BoolPresenceField GameAccountStatusField
             = new BoolPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 1, 0, false);
 
-        public IntPresenceField GameAccountStatusIdField
-            = new IntPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 5, 0);
+
+#endregion
 
         public FieldKeyHelper.Program Program;
 
@@ -74,11 +82,10 @@ namespace Mooege.Core.MooNet.Accounts
             {
                 _bannerConfiguration = value;
                 BannerConfigurationField.Value = value;
-                this.ChangedFields.SetPresenceFieldValue(this.BannerConfigurationField);
             }
         }
 
-        private D3.PartyMessage.ScreenStatus _screenstatus;
+        private D3.PartyMessage.ScreenStatus _screenstatus = D3.PartyMessage.ScreenStatus.CreateBuilder().SetScreen(0).SetStatus(0).Build();
         public D3.PartyMessage.ScreenStatus ScreenStatus
         {
             get
@@ -89,7 +96,6 @@ namespace Mooege.Core.MooNet.Accounts
             {
                 _screenstatus = value;
                 this.ScreenStatusField.Value = value.Status;
-                this.ChangedFields.SetPresenceFieldValue(this.ScreenStatusField);
             }
         }
         /// <summary>
@@ -106,14 +112,14 @@ namespace Mooege.Core.MooNet.Accounts
             {
                 this._currentToon = value;
                 this.CurrentHeroIdField.Value = value.D3EntityID;
-                this.Owner.LastSelectedHero = value.D3EntityID;
-                this.ChangedFields.SetPresenceFieldValue(this.Owner.LastSelectedHeroField);
-                this.ChangedFields.SetPresenceFieldValue(this.CurrentHeroIdField);
-                this.ChangedFields.SetPresenceFieldValue(value.HeroClassField);
-                this.ChangedFields.SetPresenceFieldValue(value.HeroLevelField);
-                this.ChangedFields.SetPresenceFieldValue(value.HeroVisualEquipmentField);
-                this.ChangedFields.SetPresenceFieldValue(value.HeroFlagsField);
-                this.ChangedFields.SetPresenceFieldValue(value.HeroNameField);
+                this.Owner.LastSelectedHeroField.Value = value.D3EntityID;
+                //TODO: Move this out
+                this.Owner.SaveToDB();
+
+                //Add new hero to "presence notification service"
+                //Remove old hero
+                RemovePresenceFieldsForSpecificClass(FieldKeyHelper.OriginatingClass.Hero);
+                presenceFieldList.AddRange(this.CurrentToon.GetPresenceFields());
             }
         }
 
@@ -123,24 +129,6 @@ namespace Mooege.Core.MooNet.Accounts
         /// Away status
         /// </summary>
         public AwayStatusFlag AwayStatus { get; private set; }
-
-        private D3.OnlineService.EntityId _lastPlayedHeroId = AccountHasNoToons;
-        public D3.OnlineService.EntityId lastPlayedHeroId
-        {
-            get
-            {
-                if (_lastPlayedHeroId == AccountHasNoToons && this.Toons.Count > 0 && !this.IsOnline)
-                {
-                    _lastPlayedHeroId = this.CurrentHeroIdField.Value = this.Toons.First().Value.D3EntityID;
-                    this._currentToon = ToonManager.GetToonByLowID(_lastPlayedHeroId.IdLow);
-                }
-                return _lastPlayedHeroId;
-            }
-            set
-            {
-                _lastPlayedHeroId = value;
-            }
-        }
 
         public List<bnet.protocol.achievements.AchievementUpdateRecord> Achievements { get; set; }
         public List<bnet.protocol.achievements.CriteriaUpdateRecord> AchievementCriteria { get; set; }
@@ -154,8 +142,7 @@ namespace Mooege.Core.MooNet.Accounts
             }
         }
 
-        public static readonly D3.OnlineService.EntityId AccountHasNoToons =
-            D3.OnlineService.EntityId.CreateBuilder().SetIdHigh(0).SetIdLow(0).Build();
+
 
         public Dictionary<ulong, Toon> Toons
         {
@@ -180,7 +167,9 @@ namespace Mooege.Core.MooNet.Accounts
         public GameAccount(ulong persistentId, ulong accountId)
             : base(persistentId)
         {
-            this.SetField(AccountManager.GetAccountByPersistentID(accountId));
+            //
+            this.Owner = AccountManager.GetAccountByPersistentID(accountId);
+            this.SetField();
         }
 
         /// <summary>
@@ -190,7 +179,8 @@ namespace Mooege.Core.MooNet.Accounts
         public GameAccount(Account account)
             : base(account.BnetEntityId.Low)
         {
-            this.SetField(account);
+            this.Owner = account;
+            this.SetField();
 
             this.BannerConfiguration =
                 D3.Account.BannerConfiguration.CreateBuilder()
@@ -207,9 +197,10 @@ namespace Mooege.Core.MooNet.Accounts
                 .Build();
         }
 
-        private void SetField(Account owner)
+        private void SetField()
         {
-            this.Owner = owner;
+            InitPresenceFields();
+
             var bnetGameAccountHigh = ((ulong)EntityIdHelper.HighIdType.GameAccountId) + (0x6200004433);
             this.BnetEntityId = bnet.protocol.EntityId.CreateBuilder().SetHigh(bnetGameAccountHigh).SetLow(this.PersistentID).Build();
             this.D3GameAccountId = D3.OnlineService.EntityId.CreateBuilder().SetIdHigh(bnetGameAccountHigh).SetIdLow(this.PersistentID).Build();
@@ -224,8 +215,8 @@ namespace Mooege.Core.MooNet.Accounts
 
         }
 
-        public bool IsOnline { get { return this.LoggedInClient != null; } }
 
+        //TODO: Why do we need a logged in client in this class. Each logged in client should have a game account associated.
         private MooNetClient _loggedInClient;
 
         public MooNetClient LoggedInClient
@@ -238,11 +229,8 @@ namespace Mooege.Core.MooNet.Accounts
             {
                 this._loggedInClient = value;
 
-                this.GameAccountStatusField.Value = this.IsOnline;
-                this.GameAccountStatusIdField.Value = (int)(this.IsOnline == true ? 1324923597904795 : 0);
-
-                ChangedFields.SetPresenceFieldValue(this.GameAccountStatusField);
-                ChangedFields.SetPresenceFieldValue(this.GameAccountStatusIdField);
+                this.GameAccountStatusField.Value = value != null;
+                this.GameAccountStatusIdField.Value = (int)(this.GameAccountStatusField.Value == true ? 1324923597904795 : 0);
 
                 //TODO: Remove this set once delegate for set is added to presence field
                 this.Owner.AccountOnlineField.Value = this.Owner.IsOnline;
@@ -259,7 +247,7 @@ namespace Mooege.Core.MooNet.Accounts
                 var builder = D3.Account.Digest.CreateBuilder().SetVersion(102) // 7447=>99, 7728=> 100, 8801=>102
                     .SetBannerConfiguration(this.BannerConfigurationField.Value)
                     .SetFlags(0)
-                    .SetLastPlayedHeroId(lastPlayedHeroId);
+                    .SetLastPlayedHeroId(this.Owner.LastSelectedHeroField.Value);
 
                 return builder.Build();
             }
@@ -267,18 +255,32 @@ namespace Mooege.Core.MooNet.Accounts
 
         #region Notifications
 
-        public override void NotifyUpdate()
+        public void InitPresenceFields()
         {
-            var operations = ChangedFields.GetChangedFieldList();
-            ChangedFields.ClearChanged();
-            base.UpdateSubscribers(this.Subscribers, operations);
+            this.presenceFieldList = new List<PresenceFieldBase>();
+
+            presenceFieldList.Add(this.BannerConfigurationField);
+            //Not sure we need to add current hero from start need to be added here
+            //TODO: This should not be here as a toon is not even selected yet.
+            if (this.Owner.LastSelectedHeroField.Value != Account.AccountHasNoToons && this._currentToon != null)
+            {
+                presenceFieldList.Add(this.CurrentHeroIdField);
+                presenceFieldList.AddRange(this.CurrentToon.GetPresenceFields());
+            }
+
+            presenceFieldList.Add(this.GameAccountStatusField);
+            presenceFieldList.Add(this.ProgramField);
+            presenceFieldList.Add(this.GameAccountStatusIdField);
+            presenceFieldList.Add(this.BattleTagField);
+            presenceFieldList.Add(this.AccountField);
         }
+
 
         public override List<bnet.protocol.presence.FieldOperation> GetSubscriptionNotifications()
         {
             //for now set it here
-            this.GameAccountStatusField.Value = this.IsOnline;
-            this.GameAccountStatusIdField.Value = (int)(this.IsOnline == true ? 1324923597904795 : 0);
+            //this.GameAccountStatusField.Value = this.IsOnline;
+            this.GameAccountStatusIdField.Value = (int)(this.GameAccountStatusField.Value == true ? 1324923597904795 : 0);
 
             var operationList = new List<bnet.protocol.presence.FieldOperation>();
 
@@ -297,7 +299,7 @@ namespace Mooege.Core.MooNet.Accounts
             //Bnet,GameAccount,7,0 -> Account.Low + "#1"
 
             operationList.Add(BannerConfigurationField.GetFieldOperation());
-            if (this.lastPlayedHeroId != AccountHasNoToons)
+            if (this.Owner.LastSelectedHeroField.Value != Account.AccountHasNoToons && this.CurrentHeroIdField.Value != null /*no hero has been selected yet*/)
             {
                 operationList.Add(this.CurrentHeroIdField.GetFieldOperation());
                 operationList.AddRange(this.CurrentToon.GetSubscriptionNotifications());
@@ -324,6 +326,9 @@ namespace Mooege.Core.MooNet.Accounts
                 case bnet.protocol.presence.FieldOperation.Types.OperationType.CLEAR:
                     DoClear(operation.Field);
                     break;
+                default:
+                    Logger.Warn("No operation type.");
+                    break;
             }
         }
 
@@ -342,23 +347,36 @@ namespace Mooege.Core.MooNet.Accounts
                         {
                             var entityId = D3.OnlineService.EntityId.ParseFrom(field.Value.MessageValue);
                             var channel = ChannelManager.GetChannelByEntityId(entityId);
-                            this.LoggedInClient.CurrentChannel = channel;
-                            Logger.Trace("{0} set channel to {1}", this, channel);
+                            if (this.LoggedInClient.CurrentChannel != channel)
+                            {
+                                this.LoggedInClient.CurrentChannel = channel;
+                                returnField.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetMessageValue(channel.BnetEntityId.ToByteString()).Build());
+                                Logger.Trace("{0} set channel to {1}", this, channel);
+                            }
                         }
                         else
                         {
-                            Logger.Warn("Emtpy-field: {0}, {1}, {2}", field.Key.Program, field.Key.Group, field.Key.Field);
+                            if (this.LoggedInClient.CurrentChannel != null)
+                            {
+                                returnField.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetMessageValue(Google.ProtocolBuffers.ByteString.Empty).Build());
+                                Logger.Warn("Emtpy-field: {0}, {1}, {2}", field.Key.Program, field.Key.Group, field.Key.Field);
+                            }
                         }
                     }
                     else if (field.Key.Group == 4 && field.Key.Field == 2)
                     {
                         //catch to stop Logger.Warn spam on client start and exit
                         // should D3.4.2 int64 Current screen (0=in-menus, 1=in-menus, 3=in-menus); see ScreenStatus sent to ChannelService.UpdateChannelState call /raist
-                        this.ScreenStatus = D3.PartyMessage.ScreenStatus.CreateBuilder().SetScreen((int)field.Value.IntValue).SetStatus(0).Build();
-                        Logger.Trace("{0} set current screen to {1}.", this, field.Value.IntValue);
+                        if (this.ScreenStatus.Screen != field.Value.IntValue)
+                        {
+                            this.ScreenStatus = D3.PartyMessage.ScreenStatus.CreateBuilder().SetScreen((int)field.Value.IntValue).SetStatus(0).Build();
+                            returnField.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue(field.Value.IntValue).Build());
+                            Logger.Trace("{0} set current screen to {1}.", this, field.Value.IntValue);
+                        }
                     }
                     else if (field.Key.Group == 4 && field.Key.Field == 3)
                     {
+                        returnField.SetValue(field.Value);
                         //Looks to be the ToonFlags of the party leader/inviter when it is an int, OR the message set in an open to friends game when it is a string /dustinconrad
                     }
                     else
@@ -370,7 +388,7 @@ namespace Mooege.Core.MooNet.Accounts
                     if (field.Key.Group == 2 && field.Key.Field == 3) // Away status
                     {
                         this.AwayStatus = (AwayStatusFlag)field.Value.IntValue;
-                        returnField.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue((long)this.AwayStatus).Build()).Build();
+                        returnField.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue((long)this.AwayStatus).Build());
                         Logger.Trace("{0} set AwayStatus to {1}.", this, this.AwayStatus);
                     }
                     else
@@ -379,6 +397,8 @@ namespace Mooege.Core.MooNet.Accounts
                     }
                     break;
             }
+
+            //We only update subscribers on fields that actually change values.
             if (returnField.HasValue)
             {
                 operation.SetField(returnField);
@@ -412,11 +432,12 @@ namespace Mooege.Core.MooNet.Accounts
                     }
                     if (queryKey.Group == 2 && queryKey.Field == 2) //Hero's EntityId
                     {
-                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetMessageValue(this.lastPlayedHeroId.ToByteString()).Build());
+                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetMessageValue(this.Owner.LastSelectedHeroField.Value.ToByteString()).Build());
                     }
                     else if (queryKey.Group == 3 && queryKey.Field == 1) // Hero's class (GbidClass)
                     {
-                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue(this.CurrentToon.ClassID).Build());
+                        //TODO: Set queryfields as normal persistent fields
+                        field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue(this.CurrentToon.HeroClassFieldTransform((int)CurrentToon.HeroClassField.Value)).Build());
                     }
                     else if (queryKey.Group == 3 && queryKey.Field == 2) // Hero's current level
                     {
@@ -472,6 +493,8 @@ namespace Mooege.Core.MooNet.Accounts
             return String.Format("{{ GameAccount: {0} [lowId: {1}] }}", this.Owner.BattleTag, this.BnetEntityId.Low);
         }
 
+
+        #region DB
         public void SaveToDB()
         {
             try
@@ -540,6 +563,8 @@ namespace Mooege.Core.MooNet.Accounts
             return reader.HasRows;
         }
 
+
+        #endregion
         //TODO: figure out what 1 and 3 represent, or if it is a flag since all observed values are powers of 2 so far /dustinconrad
         public enum AwayStatusFlag : uint
         {

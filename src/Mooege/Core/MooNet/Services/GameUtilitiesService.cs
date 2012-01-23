@@ -175,7 +175,8 @@ namespace Mooege.Core.MooNet.Services
 
         private ByteString CreateHero(D3.OnlineService.HeroCreateParams createPrams)
         {
-            var newToon = new Toon(createPrams.Name, createPrams.GbidClass, createPrams.IsFemale ? ToonFlags.Female : ToonFlags.Male, 1, Client.Account.CurrentGameAccount);
+            int hashCode = ToonManager.GetUnusedHashCodeForToonName(createPrams.Name);
+            var newToon = new Toon(createPrams.Name, hashCode, createPrams.GbidClass, createPrams.IsFemale ? ToonFlags.Female : ToonFlags.Male, 1, Client.Account.CurrentGameAccount);
             if (ToonManager.SaveToon(newToon))
             {
                 Logger.Trace("CreateHero() {0}", newToon);
@@ -198,12 +199,9 @@ namespace Mooege.Core.MooNet.Services
             this.Client.Account.CurrentGameAccount.CurrentToon = ToonManager.GetToonByLowID(hero.IdLow);
 
             Logger.Trace("SelectToon() {0}", this.Client.Account.CurrentGameAccount.CurrentToon);
-
-            if (this.Client.Account.CurrentGameAccount.CurrentToon.D3EntityID != this.Client.Account.CurrentGameAccount.lastPlayedHeroId)
-            {
-                this.Client.Account.CurrentGameAccount.NotifyUpdate();
-                this.Client.Account.CurrentGameAccount.lastPlayedHeroId = this.Client.Account.CurrentGameAccount.CurrentToon.D3EntityID;
-            }
+            this.Client.Account.LastSelectedHeroField.Value = this.Client.Account.CurrentGameAccount.CurrentToon.D3EntityID;
+            this.Client.Account.CurrentGameAccount.NotifyUpdate();
+            this.Client.Account.SaveToDB();
             return this.Client.Account.CurrentGameAccount.CurrentToon.D3EntityID.ToByteString();
         }
 

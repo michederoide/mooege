@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 mooege project
  *
  * This program is free software; you can redistribute it and/or modify
@@ -187,7 +187,7 @@ namespace Mooege.Core.GS.Players
             this.PlayerIndex = Interlocked.Increment(ref this.InGameClient.Game.PlayerIndexCounter); // get a new playerId for the player and make it atomic.
             this.Toon = bnetToon;
             this.GBHandle.Type = (int)GBHandleType.Player;
-            this.GBHandle.GBID = this.Toon.ClassID;
+            this.GBHandle.GBID = this.Toon.HeroClassFieldTransform((int)this.Toon.HeroClassField.Value);
 
             this.Field2 = 0x00000009;
             this.Scale = this.ModelScale;
@@ -322,7 +322,7 @@ namespace Mooege.Core.GS.Players
 
             //Basic stats
             this.Attributes[GameAttribute.Level_Cap] = 13;
-            this.Attributes[GameAttribute.Level] = 30; //this has been changed so skills can be used. Originally "this.Toon.Level;"
+            this.Attributes[GameAttribute.Level] = (int)this.Toon.HeroLevelField.Value;
             this.Attributes[GameAttribute.Experience_Next] = LevelBorders[(int)this.Toon.HeroLevelField.Value];
             this.Attributes[GameAttribute.Experience_Granted] = 1000;
             this.Attributes[GameAttribute.Armor_Total] = 0;
@@ -652,7 +652,15 @@ namespace Mooege.Core.GS.Players
             // here we should also be checking the position and see if it's valid. If not we should be resetting player to a good position with ACDWorldPositionMessage
             // so we can have a basic precaution for hacks & exploits /raist.
             if (message.Position != null)
+            {
+                if (!client.Player.World.CheckLocationForFlag(message.Position,Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.AllowWalk))
+                    {
+                        Logger.Info("Account: " + client.BnetClient.Account.Name + " Attempted to move to an unwalkable location");
+                        return;
+                    }
                 this.Position = message.Position;
+            }
+                
 
             this.SetFacingRotation(message.Angle);
 
@@ -663,7 +671,7 @@ namespace Mooege.Core.GS.Players
                 Angle = message.Angle,
                 TurnImmediately = false,
                 Speed = message.Speed,
-                //Field5 = message.Field5,  // TODO: don't even know what this is, might be message.Field6 now?
+                //Field5 = message.Field5,
                 AnimationTag = message.AnimationTag
             };
 
@@ -776,6 +784,39 @@ namespace Mooege.Core.GS.Players
 
             this.RevealScenesToPlayer(); // reveal scenes in players proximity.
             this.RevealActorsToPlayer(); // reveal actors in players proximity.
+
+            //This can't be in the c-tor
+            //TODO: Hack until proper equipment slots are set 
+            Dictionary<int, int> visualToSlotMapping = new Dictionary<int, int>();
+            visualToSlotMapping.Add(0, 1);
+            visualToSlotMapping.Add(1, 2);
+            visualToSlotMapping.Add(2, 7);
+            visualToSlotMapping.Add(3, 5);
+            visualToSlotMapping.Add(4, 4);
+            visualToSlotMapping.Add(5, 3);
+            visualToSlotMapping.Add(6, 8);
+            visualToSlotMapping.Add(7, 9);
+
+            Dictionary<int, Mooege.Common.MPQ.FileFormats.ItemTable> itemsToAdd = new Dictionary<int, Mooege.Common.MPQ.FileFormats.ItemTable>();
+            //get items
+            for (int slot = 0; slot < 8; slot++)
+            {
+                var gbid = this.Toon.HeroVisualEquipmentField.Value.GetVisualItem(slot).Gbid;
+                //if item equiped
+                if (gbid > 0)
+                {
+                    itemsToAdd.Add(slot, ItemGenerator.GetDefinitionFromGBID(gbid));
+                }
+            }
+
+            foreach (var pair in itemsToAdd)
+            {
+                this.Inventory.EquipItem(ItemGenerator.CookFromDefinition(this, pair.Value), visualToSlotMapping[pair.Key]);
+            }
+
+            //generate visual update message
+            this.Inventory.SendVisualInventory(this);
+            
         }
 
         public override void OnTeleport()
@@ -787,6 +828,9 @@ namespace Mooege.Core.GS.Players
         public override void OnLeave(World world)
         {
             this.Conversations.StopAll();
+            //save visual equipment
+            this.Toon.HeroVisualEquipmentField.Value = this.Inventory.GetVisualEquipment();
+            this.Toon.HeroLevelField.Value = this.Attributes[GameAttribute.Level];
         }
 
         public override bool Reveal(Player player)
@@ -1083,6 +1127,7 @@ namespace Mooege.Core.GS.Players
                 snoActiveSkills = this.SkillSet.ActiveSkills,
                 snoTraits = this.SkillSet.PassiveSkills,
                 SavePointData = new SavePointData { snoWorld = -1, SavepointId = -1, },
+                //m_SeenTutorials = this.SeenTutorials,
             };
         }
 

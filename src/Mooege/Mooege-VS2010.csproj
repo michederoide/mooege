@@ -108,11 +108,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\GS\Actors\Actions\PowerAction.cs" />
-    <Compile Include="Core\GS\Actors\Implementations\Monsters\QuillDemon.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Monsters\Monsters.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\ZombieDog.cs" />
     <Compile Include="Core\GS\Actors\Minion.cs" />
+    <Compile Include="Core\GS\AI\Brains\MinionBrain.cs" />
     <Compile Include="Core\GS\Powers\ActionTimedSkill.cs" />
     <Compile Include="Core\GS\Powers\ActorMover.cs" />
     <Compile Include="Core\GS\Powers\ComboSkill.cs" />
+    <Compile Include="Core\GS\Powers\Implementations\General\LevelUp.cs" />
     <Compile Include="Core\GS\Powers\Implementations\General\CooldownBuff.cs" />
     <Compile Include="Core\GS\Powers\Implementations\General\KnockbackBuff.cs" />
     <Compile Include="Core\GS\Powers\Implementations\General\Ranged.cs" />
@@ -253,7 +256,6 @@
     <Compile Include="Core\GS\Actors\Implementations\Waypoint.cs" />
     <Compile Include="Core\GS\Actors\Implementations\Cain.cs" />
     <Compile Include="Core\GS\Actors\Implementations\Vendor.cs" />
-    <Compile Include="Core\GS\Actors\Implementations\Monsters\Zombie.cs" />
     <Compile Include="Core\GS\Actors\Interactions\Interactions.cs" />
     <Compile Include="Core\GS\Actors\Living.cs" />
     <Compile Include="Core\GS\Actors\NPC.cs" />
@@ -304,6 +306,7 @@
     <Compile Include="Core\MooNet\Authentication\Config.cs" />
     <Compile Include="Core\MooNet\Authentication\VersionChecker.cs" />
     <Compile Include="Core\MooNet\Channels\Channel.cs" />
+    <Compile Include="Core\MooNet\Channels\ChannelCommands.cs" />
     <Compile Include="Core\MooNet\Channels\ChannelManager.cs" />
     <Compile Include="Core\MooNet\Channels\Member.cs" />
     <Compile Include="Common\Config\Config.cs" />

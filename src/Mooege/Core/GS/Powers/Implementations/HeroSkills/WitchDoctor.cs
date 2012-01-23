@@ -29,6 +29,8 @@ using Mooege.Core.GS.Actors;
 using Mooege.Core.GS.Actors.Movement;
 using Mooege.Net.GS.Message.Definitions.Actor;
 using Mooege.Net.GS.Message;
+using Mooege.Core.GS.AI.Brains;
+using Mooege.Core.GS.Actors.Implementations.Minions;
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
@@ -39,6 +41,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             int numProjectiles = Rune_B > 0 ? (int)ScriptFormula(4) : 1;
             for (int n = 0; n < numProjectiles; ++n)
             {
@@ -78,6 +82,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Run()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_C > 0)
             {
                 // NOTE: not normal plague of toads right now but Obsidian runed "Toad of Hugeness"
@@ -171,8 +178,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(ScriptFormula(5));
-            StartDefaultCooldown();
+
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             if (Rune_B > 0)
             {
@@ -195,7 +203,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 {
                     foreach (Actor enemy in GetEnemiesInRadius(TargetPosition, ScriptFormula(3)).Actors)
                     {
-                        AddBuff(enemy, new DebuffSlowed(ScriptFormula(19), WaitSeconds(ScriptFormula(8))));
+                        AddBuff(enemy, new DebuffSlowed(ScriptFormula(19), WaitSeconds(ScriptFormula(2))));
                         AddBuff(enemy, new DamageGroundDebuff());
                     }
                 };
@@ -211,7 +219,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Init()
             {
                 base.Init();
-                Timeout = WaitSeconds(ScriptFormula(8));
+                Timeout = WaitSeconds(ScriptFormula(2));
             }
             /*public override void OnPayload(Payload payload)
             {
@@ -229,6 +237,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     _damageTimer = WaitSeconds(_damageRate);
 
                     AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInRadius(Target.Position, 1f); //TODO: hack, it should only be applied to individual targets, not all in 1f.
                     attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
                     attack.Apply();
                     attack.OnDeath = (DeathPayload) =>
@@ -263,6 +272,8 @@ namespace Mooege.Core.GS.Powers.Implementations
             //Need to check for all Haunt Buffs in this radius.
             //Max simultaneous haunts = 3 ScriptFormula(8)
             //Max Haunt Check Radius(ScriptFormula(9)) -> 90f
+
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             if (Rune_B > 0)
             {
@@ -411,6 +422,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_A > 0)
             {
                 Vector3D inFrontOfUser = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, -20f);
@@ -623,7 +637,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(ScriptFormula(0));
+            UsePrimaryResource(ScriptFormula(0));
             if (Rune_A > 0)
             {
                 //Projectile Giant Bat Actors
@@ -763,7 +777,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         //Rune_E -> Instead of firebomb doing AoE, each does direct damage to enemy then bounces to up to nearby enemies, reduce damage by 20%
         public override IEnumerable<TickTimer> Main()
         {
-            //GeneratePrimaryResource(ScriptFormula(25));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             Projectile[] grenades = new Projectile[1];
             for (int i = 0; i < grenades.Length; ++i)
             {
@@ -852,6 +867,10 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
+            //Newest Patch adds Run Speed Increase = SF(16) "0.50"
             Vector3D DecoySpot = new Vector3D(User.Position);
             Actor blast = SpawnProxy(DecoySpot);
 
@@ -991,8 +1010,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //StartCooldown(WaitSeconds(ScriptFormula(2)));
-            //UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             User.PlayEffectGroup(19275);
 
@@ -1085,6 +1104,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         //Summon a plague of locusts to assault enemies, dealing [25 * {Script Formula 18} * 100]% weapon damage per second as Poison for 3 seconds. The locusts will jump to additional nearby targets.
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             //cast, spread to those in radius, from there jump to other mobs in area within (__?__)
             //does not always focus the correct way.
             User.PlayEffectGroup(106765);
@@ -1184,6 +1205,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_E > 0)
             {
                 AddBuff(User, new BarrageSpirit());
@@ -1272,6 +1295,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         //Rune_B Splash Delay?
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_E > 0)
             {
                 SpawnEffect(121908, TargetPosition);
@@ -1346,7 +1371,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartCooldown(WaitSeconds(ScriptFormula(13)));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             //Target.PlayEffectGroup(184540);
             TargetList Half = GetEnemiesInRadius(TargetPosition, ScriptFormula(1));
             foreach (Actor enemy in GetEnemiesInRadius(TargetPosition, ScriptFormula(1), ((int)Half.Actors.Count / 2)).Actors)
@@ -1436,6 +1463,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             var ShamSpot = SpawnProxy(TargetPosition, WaitSeconds(ScriptFormula(0) + 1f));
             SpawnEffect(RuneSelect(117574, 182271, 182276, 182278, 182283, 117574), TargetPosition, 0, WaitSeconds(ScriptFormula(0))).PlayEffectGroup(181291);
             AddBuff(ShamSpot, new AuraBuff());
@@ -1589,6 +1619,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         //TODO:Unknown how to do the width of the Wall of Zombies..
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             if (Rune_C > 0)
             {
                 Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, 52f, (int)ScriptFormula(5));
@@ -1669,7 +1701,16 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-
+            PlayerHasDogsBuff buff = World.BuffManager.GetFirstBuff<PlayerHasDogsBuff>(this.User);
+            if (buff != null)
+            {
+                foreach (ZombieDog dog in buff.dogs)
+                {
+                    dog.Kill();
+                }
+                World.BuffManager.RemoveBuffs(this.User, buff.GetType());
+                StartCooldown(1f);
+            }
             yield break;
         }
     }
@@ -1682,7 +1723,23 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            // HACK: made up garggy spell :)
+            var garg = new Minion(this.World, 122305, this.User, null);
+            garg.Position = User.Position;
+            garg.Scale = 1f;
+            garg.SetBrain(new MonsterBrain(garg));
+            garg.AddPresetPower(30005);
+            garg.AddPresetPower(30001);
+            garg.AddPresetPower(30592);
+            garg.AddPresetPower(30550);
+            garg.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
+            garg.Attributes[GameAttribute.Hitpoints_Max] = 5f;
+            garg.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            garg.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
+            garg.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            garg.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
+            garg.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
+            User.World.Enter(garg);
+            /*// HACK: made up garggy spell :)
 
             Vector3D inFrontOfTarget = PowerMath.TranslateDirection2D(TargetPosition, User.Position, TargetPosition, 11f);
             inFrontOfTarget.Z = User.Position.Z;
@@ -1710,7 +1767,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             garggy.PlayActionAnimation(171024);
             yield return WaitSeconds(2f);
 
-            garggy.Destroy();
+            garggy.Destroy();*/
 
             yield break;
         }
@@ -1724,7 +1781,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             yield break;
         }
     }
@@ -1757,14 +1814,89 @@ namespace Mooege.Core.GS.Powers.Implementations
     #endregion
 
     //Pet Class
+    //TODO: fix up
     #region SummonZombieDogs
+    //TODO: This is mostly hacked together, but there are a few main points:
+    //When using the Zombie Handler passive, it'll spawn 4 dogs. Need to somehow detect that that passive has switched off, and if so, kill one dog.
+    //There might be problems with players using a certain rune when summoning, then switching, to get both effects. 
+    //This could possibly be solved by saving the state of runes when summoning, but perhaps a OnSwitchRune could be a good way instead.
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.SummonZombieDogs)]
     public class SummonZombieDogs : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            //System.Console.Out.WriteLine("lol1");
+            StartCooldown(60f);
+            PlayerHasDogsBuff buff = World.BuffManager.GetFirstBuff<PlayerHasDogsBuff>(this.User);
+            if (buff != null)
+            {
+                //System.Console.Out.WriteLine("lol");
+                foreach (ZombieDog dog in buff.dogs)
+                {
+                    dog.Kill();
+                }
+                World.BuffManager.RemoveBuffs(this.User, buff.GetType());
+            }
+            //System.Console.Out.WriteLine("lol2");
+            int maxDogs = (int)ScriptFormula(0);
+            List<Actor> dogs = new List<Actor>();
+            for (int i = 0; i < maxDogs; i++)
+            {
+                //System.Console.Out.WriteLine("lol3_" + i);
+                var dog = new ZombieDog(this.World, this, i);
+                dog.Brain.DeActivate();
+                dog.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+                dog.Attributes[GameAttribute.Untargetable] = true;
+                dog.EnterWorld(dog.Position);
+                dog.PlayActionAnimation(11437);
+                dogs.Add(dog);
+                yield return WaitSeconds(0.2f);
+            }
+            yield return WaitSeconds(0.8f);
+            //System.Console.Out.WriteLine("lol4");
+            foreach (Actor dog in dogs)
+            {
+                //System.Console.Out.WriteLine("lol5");
+                (dog as Minion).Brain.Activate();
+                dog.Attributes[GameAttribute.Untargetable] = false;
+                dog.Attributes.BroadcastChangedIfRevealed();
+                dog.PlayActionAnimation(11431); //Not sure why this is required, but after the summon is done, it'll just be frozen otherwise.
+            }
+            //System.Console.Out.WriteLine("lol6");
+            AddBuff(this.User, new PlayerHasDogsBuff(dogs));
 
             yield break;
+        }
+    }
+    class PlayerHasDogsBuff : PowerBuff
+    {
+        public List<Actor> dogs;
+
+        public PlayerHasDogsBuff(List<Actor> dogs)
+        {
+            this.dogs = dogs;
+        }
+        public override bool Apply()
+        {
+            if (!base.Apply())
+                return false;
+            //this.User.Attributes[GameAttribute.Skill_Toggled_State, Skills.Skills.WitchDoctor.Support.Sacrifice] = true;
+            //User.Attributes.BroadcastChangedIfRevealed();
+            
+            return true;
+        }
+
+        public override void OnPayload(Payload payload)
+        {
+            if (payload is DeathPayload)
+            {
+
+            }
+        }
+
+        public override void Remove()
+        {
+            base.Remove();
         }
     }
     #endregion

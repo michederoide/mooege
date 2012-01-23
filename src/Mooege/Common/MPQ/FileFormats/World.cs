@@ -158,15 +158,34 @@ namespace Mooege.Common.MPQ.FileFormats
             this.TagMap = stream.ReadSerializedItem<TagMap>();
             stream.Position += (2 * 4);
         }
+    }     
+
+    public enum TileExits
+    {
+        West = 1,
+        East = 2,
+        North = 4,
+        South = 8,
+    }
+
+    public enum TileTypes
+    {
+        Normal = 100,
+        EventTile1 = 101, // Jar of souls? more? Deadend?
+        EventTile2 = 102, // 1000 dead
+        Entrance = 200,
+        UEntrance1 = 201, // Defiled crypt what there?
+        Exit = 300,
+        Filler = 401
     }
 
     public class TileInfo : ISerializableData
     {
         [PersistentProperty("Int0")]
-        public int Int0 { get; private set; }
+        public int ExitDirectionBits { get; private set; }
 
         [PersistentProperty("Int1")]
-        public int Int1 { get; private set; }
+        public int TileType { get; private set; }
 
         [PersistentProperty("SNOScene")]
         public int SNOScene { get; private set; }
@@ -182,8 +201,8 @@ namespace Mooege.Common.MPQ.FileFormats
 
         public void Read(MpqFileStream stream)
         {
-            Int0 = stream.ReadValueS32();
-            Int1 = stream.ReadValueS32();
+            ExitDirectionBits = stream.ReadValueS32();
+            TileType = stream.ReadValueS32();
             SNOScene = stream.ReadValueS32();
             Int2 = stream.ReadValueS32();
             this.TagMap = stream.ReadSerializedItem<TagMap>();
@@ -193,13 +212,23 @@ namespace Mooege.Common.MPQ.FileFormats
         }
     }
 
+    public enum CommandType
+    {
+        Waypoint = 0, 
+        BridleEntrance = 1, 
+        AddExit = 2, 
+        AddHub = 3, 
+        AddSpoke = 4, 
+        Group = 9, //used in DRLG to group tiles together     
+    }
+
     public class DRLGCommand : ISerializableData
     {
         [PersistentProperty("Name")]
         public string Name { get; private set; }
 
         [PersistentProperty("I0")]
-        public int Int0 { get; private set; }
+        public int CommandType { get; private set; }
 
         [PersistentProperty("TagMap")]
         public TagMap TagMap { get; private set; }
@@ -207,7 +236,7 @@ namespace Mooege.Common.MPQ.FileFormats
         public void Read(MpqFileStream stream)
         {
             this.Name = stream.ReadString(128, true);
-            Int0 = stream.ReadValueS32();
+            CommandType = stream.ReadValueS32();
             this.TagMap = stream.ReadSerializedItem<TagMap>();
             stream.Position += (3 * 4);
         }

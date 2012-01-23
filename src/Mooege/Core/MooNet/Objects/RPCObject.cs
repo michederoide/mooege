@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using Mooege.Common;
 using Mooege.Common.Logging;
 using Mooege.Net.MooNet;
+using Mooege.Core.MooNet.Helpers;
+using bnet.protocol.presence;
 
 // FIXME: An RPCObject will never get released at runtime because we don't remove it from
 // RPCObjectManager until the dtor actually gets called. The dtor, of course, never gets
@@ -112,9 +114,30 @@ namespace Mooege.Core.MooNet.Objects
         }
 
         /// <summary>
-        /// Stores only changed Fields to send to clients
+        /// PresenceServiceSpecific: Holds a list of all presence fields for this object
         /// </summary>
-        public Mooege.Core.MooNet.Helpers.FieldKeyHelper ChangedFields = new Mooege.Core.MooNet.Helpers.FieldKeyHelper();
+        public List<PresenceFieldBase> presenceFieldList = new List<PresenceFieldBase>();
+
+
+        /// <summary>
+        /// PresenceServiceSpecific: Removes all fields for a specific class
+        /// See GameAccount Set Toon for an example
+        /// </summary>
+        /// <param name="originatingClass"></param>
+        public void RemovePresenceFieldsForSpecificClass(FieldKeyHelper.OriginatingClass originatingClass)
+        {
+            List<PresenceFieldBase> fieldsToRemove = new List<PresenceFieldBase>();
+            foreach(var field in presenceFieldList)
+            {
+                if (field.OriginatingClass == originatingClass)
+                    fieldsToRemove.Add(field);
+            }
+            foreach (var field in fieldsToRemove)
+            {
+                presenceFieldList.Remove(field);
+            }
+
+        }
 
         /// <summary>
         /// Notifies a specific subscriber about the object's present state.
@@ -127,7 +150,47 @@ namespace Mooege.Core.MooNet.Objects
             MakeRPC(client, operations);
         }
 
-        public virtual void NotifyUpdate() {}
+        public void NotifyUpdate()
+        {
+            var changedFields = GetNotSyncedFields();
+            List<FieldOperation> operations = new List<FieldOperation>();
+            foreach (var field in changedFields)
+            {
+                //if list addrange of operations
+                if (field is EntityIdPresenceFieldList)
+                {
+                    operations.AddRange(((EntityIdPresenceFieldList)field).GetFieldOperationList());
+                }
+                else
+                {
+                    operations.Add(field.GetFieldOperation());
+                }
+                field.isSynced = true;
+            }
+
+            //var operations = ChangedFields.GetChangedFieldList();
+            //ChangedFields.ClearChanged();
+            UpdateSubscribers(this.Subscribers, operations);
+        }
+
+        /// <summary>
+        /// PresenceServiceSpecific: Returns a list of all fields not synced since last update
+        /// </summary>
+        /// <returns></returns>
+        private List<PresenceFieldBase> GetNotSyncedFields()
+        {
+            List<PresenceFieldBase> _notSyncedFields = new List<PresenceFieldBase>();
+
+            foreach (var field in presenceFieldList)
+            {
+                if (field.isSynced == false)
+                {
+                    _notSyncedFields.Add(field);
+                }
+            }
+
+            return _notSyncedFields;
+        }
 
         public void UpdateSubscribers(List<MooNetClient> subscribers, List<bnet.protocol.presence.FieldOperation> operations)
         {
@@ -135,7 +198,7 @@ namespace Mooege.Core.MooNet.Objects
             foreach (var subscriber in this.Subscribers)
             {
                 var gameAccount = subscriber.Account.CurrentGameAccount;
-                if (gameAccount.IsOnline) //This should never be false, subscribers should be unsubscribed if disconnected
+                if (gameAccount.GameAccountStatusField.Value) //This should never be false, subscribers should be unsubscribed if disconnected
                 {
                     var state = bnet.protocol.presence.ChannelState.CreateBuilder().SetEntityId(this.BnetEntityId).AddRangeFieldOperation(operations).Build();
 
@@ -174,26 +237,13 @@ namespace Mooege.Core.MooNet.Objects
             //TODO: Split notifications per game type
             foreach (var gameClient in client.Account.GameAccounts)
             {
-                if (gameClient.Value.IsOnline)
+                if (gameClient.Value.GameAccountStatusField.Value) //true if game online
                 {
                     gameClient.Value.LoggedInClient.MakeTargetedRPC(this, () =>
                         bnet.protocol.channel.ChannelSubscriber.CreateStub(gameClient.Value.LoggedInClient).NotifyAdd(null, builder.Build(), callback => { }));
                 }
             }
         }
-
-        //This is done on a client by client mapping of notifications/variables per object that need to be updated
-        // ** We're yet not sure about this, so commenting out **
-        ///// <summary>
-        ///// Notifies all subscribers with the object's current state.
-        ///// </summary>
-        //public void NotifyAllSubscribers()
-        //{
-        //    foreach (var subscriber in this.Subscribers)
-        //    {
-        //        this.NotifySubscriptionAdded(subscriber);
-        //    }
-        //}
 
         #region de-ctor
 

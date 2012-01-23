@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 mooege project
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,37 +31,41 @@ using Mooege.Net.GS.Message.Definitions.ACD;
 using Mooege.Net.GS.Message.Definitions.Player;
 using Mooege.Net.GS.Message.Definitions.Trade;
 
+using Mooege.Common.Logging;
+
+
 namespace Mooege.Core.GS.Powers.Payloads
 {
     public class DeathPayload : Payload
     {
-        public DamageType DeathDamageType;
+        static readonly Logger Logger = LogManager.CreateLogger();
 
-        public DeathPayload(PowerContext context, DamageType deathDamageType, Actor target)
+        public DamageType DeathDamageType;
+        public bool LootAndExp; //HACK: As we currently just give out random exp and loot, this is in to prevent giving this out for mobs that shouldn't give it.
+
+        public DeathPayload(PowerContext context, DamageType deathDamageType, Actor target, bool grantsLootAndExp = true)
             : base(context, target)
         {
+            this.LootAndExp = grantsLootAndExp;
             this.DeathDamageType = deathDamageType;
         }
 
         public void Apply()
         {
             if (this.Target.World == null) return;
-
+            Logger.Debug("DeathPayload Actor: {0}", this.Target);
             if (this.Target is Player)
             {
                 DoPlayerDeath();
                 return;
             }
 
-            // HACK: add to hackish list thats used to defer deleting actor and filter it from powers targetting
-            this.Target.World.PowerManager.AddDeletingActor(this.Target);
-
-            // kill brain if monster
-            if (this.Target is Monster)
+            // kill brain if living
+            if (this.Target is Living)
             {
-                Monster mon = (Monster)this.Target;
-                if (mon.Brain != null)
-                    mon.Brain.Kill();
+                Living actor = (Living)this.Target;
+                if (actor.Brain != null)
+                    actor.Brain.Kill();
             }
 
             // send this death payload to buffs
@@ -98,13 +102,18 @@ namespace Mooege.Core.GS.Powers.Payloads
             this.Target.Attributes.BroadcastChangedIfRevealed();
 
             // Spawn Random item and give exp for each player in range
+            if (LootAndExp)
+            {
             List<Player> players = this.Target.GetPlayersInRange(26f);
             foreach (Player plr in players)
             {
                 plr.UpdateExp(this.Target.Attributes[GameAttribute.Experience_Granted]);
                 this.Target.World.SpawnRandomItemDrop(this.Target, plr);
+                }
             }
 
+            if (LootAndExp)
+            {
             if (this.Context.User is Player)
             {
                 Player player = (Player)this.Context.User;
@@ -113,20 +122,20 @@ namespace Mooege.Core.GS.Powers.Payloads
                 this.Target.World.SpawnGold(this.Target, player);
                 if (Mooege.Common.Helpers.Math.RandomHelper.Next(1, 100) < 20)
                     this.Target.World.SpawnHealthGlobe(this.Target, player, this.Target.Position);
+                }
             }
 
             if (this.Target is Monster)
                 (this.Target as Monster).PlayLore();
 
-            // HACK: instead of deleting actor right here, its added to a list (near the top of this function)
-            //this.Target.Destroy();
+            this.Target.Destroy();
         }
 
         private void DoPlayerDeath()
         {
             this.Target.PlayEffect(Net.GS.Message.Definitions.Effect.Effect.Unknown38);
             //not sure why count does not appear
-            this.Target.Attributes[GameAttribute.Death_Count] = 1;
+            this.Target.Attributes[GameAttribute.Death_Count] += 1;
 
 
             //TODO: there seems to be a special trade message on death, maybe blocking trades with user...
@@ -169,11 +178,10 @@ namespace Mooege.Core.GS.Powers.Payloads
             this.Target.Attributes[GameAttribute.Banter_Cooldown, 0x000FFFFF] = -1;
             this.Target.Attributes[GameAttribute.Buff_Active, 0x00020C51] = false;
 
-            ////[07.01.2012 09:25:27.103] [ Dump] [PacketReader]: [O] GameMessage(0x0073)
-            ////ANNDataMessage:
-            ////{
-            //// ActorID: 0x78AF004F (2024734799)
-            ////}
+            this.Target.World.BroadcastIfRevealed(new ANNDataMessage(Opcodes.ANNDataMessage13)
+            {
+                ActorID = this.Target.DynamicID
+            }, this.Target);
 
             this.Target.Attributes[GameAttribute.Look_Override] = 0x0782CAC5;
             this.Target.Attributes[GameAttribute.Buff_Icon_Count0, 0x0002F39E] = 1;
@@ -206,8 +214,9 @@ namespace Mooege.Core.GS.Powers.Payloads
             this.Target.Attributes[GameAttribute.CantStartDisplayedPowers] = true;
             this.Target.PlayEffect(Net.GS.Message.Definitions.Effect.Effect.Unknown22);
             this.Target.Attributes.BroadcastChangedIfRevealed();
-
-            //TODO: There should be a 1-2 sec wait timer here so client shows the nice eeffect
+            this.Target.World.BuffManager.RemoveAllBuffs(this.Target);
+            this.Target.World.PowerManager.CancelAllPowers(this.Target);
+            //TODO: There should be a 1-2 sec wait timer here so client shows the nice effect
 
             //move user to new position
             //TODO: Find last waypoint
@@ -243,9 +252,11 @@ namespace Mooege.Core.GS.Powers.Payloads
             playerWarpedMessage.Field1 = 0;
 
             this.Target.Attributes[GameAttribute.Buff_Visual_Effect, 0x000FFFFF] = true;
-            this.Target.Attributes[GameAttribute.Hitpoints_Max_Total] = 1;
-            this.Target.Attributes[GameAttribute.Hitpoints_Max] = 0.0009994507F;
-            this.Target.Attributes[GameAttribute.Hitpoints_Healed_Target] = 80; //heal up -should be w/e needs to be
+            // No need to reset our max hp that i can think of - DarkLotus
+            //this.Target.Attributes[GameAttribute.Hitpoints_Max_Total] = 80; //Orig = 1;
+            //this.Target.Attributes[GameAttribute.Hitpoints_Max] = 80;  //Orig = 0.0009994507F;
+            this.Target.Attributes[GameAttribute.Hitpoints_Healed_Target] = this.Target.Attributes[GameAttribute.Hitpoints_Max_Total]; //heal up -should be w/e needs to be
+            ((Player)this.Target).AddPercentageHP(100);
             //start reverting buffs
             this.Target.Attributes[GameAttribute.Buff_Icon_End_Tick0, 0x00033C40] = 0;
             this.Target.Attributes[GameAttribute.Immobolize] = false;
@@ -265,13 +276,16 @@ namespace Mooege.Core.GS.Powers.Payloads
             this.Target.Attributes[GameAttribute.Power_Buff_0_Visual_Effect_None, 0x00036D7F] = false;
             this.Target.Attributes[GameAttribute.CantStartDisplayedPowers] = false;
             this.Target.Attributes.BroadcastChangedIfRevealed();
-
+            // Update player.Position otherwise server treats you as your at old loc till you take a step - DarkLotus
+            this.Target.Position = lastWaypoint;
             return;
         }
 
         private int _FindBestDeathAnimationSNO()
         {
             // check if power has special death animation, and roll chance to use it
+            if (this.Context != null)
+            {
             TagKeyInt specialDeathTag = _GetTagForSpecialDeath(this.Context.EvalTag(PowerKeys.SpecialDeathType));
             if (specialDeathTag != null)
             {
@@ -283,6 +297,7 @@ namespace Mooege.Core.GS.Powers.Payloads
                         return specialSNO;
                 }
                 // decided not to use special death or actor doesn't have it, just fall back to normal death anis
+                }
             }
 
             int sno = _GetSNOFromTag(this.DeathDamageType.DeathAnimationTag);

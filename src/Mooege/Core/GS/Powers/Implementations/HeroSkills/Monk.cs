@@ -33,6 +33,7 @@ using Mooege.Net.GS.Message.Definitions.ACD;
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
+    //Complete
     #region DeadlyReach
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.DeadlyReach)]
     public class MonkDeadlyReach : ComboSkill
@@ -44,37 +45,142 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             switch(ComboIndex)
             {
+                    //This may be ArcDirection instead of BeamDirection
                 case 0:
-                    reachLength = 13;
-                    reachThickness = 3f;
+                    reachLength = ScriptFormula(5);
+                    reachThickness = ScriptFormula(9);
                     break;
                 case 1:
-                    reachLength = 14;
-                    reachThickness = 4.5f;
+                    reachLength = ScriptFormula(4);
+                    reachThickness = ScriptFormula(3);
                     break;
                 case 2:
-                    reachLength = 18;
-                    reachThickness = 4.5f;
+                    reachLength = ScriptFormula(20);
+                    reachThickness = ScriptFormula(19);
                     break;
                 default:
                     yield break;
             }
+            if (ComboIndex == 2 && Rune_C > 0)
+            {
+                bool hitAnything = false;
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(11), (int)ScriptFormula(8));
+                attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                attack.OnHit = hitPayload =>
+                {
+                    hitAnything = true;
+                    if (Rune_D > 0)
+                    {
+                        if (hitPayload.IsCriticalHit)
+                        {
+                            GeneratePrimaryResource(ScriptFormula(7));
+                        }
+                    }
+                };
+                attack.Apply();
 
-            bool hitAnything = false;
-            AttackPayload attack = new AttackPayload(this);
-            attack.Targets = GetEnemiesInBeamDirection(User.Position, TargetPosition, reachLength, reachThickness);
-            attack.AddWeaponDamage(1.20f, DamageType.Physical);
-            attack.OnHit = hitPayload => { hitAnything = true; };
-            attack.Apply();
+                if (hitAnything)
+                    GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+            }
+            else
+            {
+                bool hitAnything = false;
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetEnemiesInBeamDirection(User.Position, TargetPosition, reachLength, reachThickness);
+                attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                attack.OnHit = hitPayload =>
+                {
+                    hitAnything = true;
+                    if (Rune_D > 0)
+                    {
+                        if (hitPayload.IsCriticalHit)
+                        {
+                            GeneratePrimaryResource(ScriptFormula(7));
+                        }
+                    }
+                };
+                attack.Apply();
 
-            if (hitAnything)
-                GeneratePrimaryResource(6f);
-
+                if (hitAnything)
+                    GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+            }
             yield break;
+        }
+
+        [ImplementsPowerBuff(1, true)]
+        class DeadlyReach_RuneAbuff : PowerBuff
+        {
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(14));
+                MaxStackCount = (int)ScriptFormula(12);
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+
+                _AddAmp();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Attack_Bonus_Percent] -= StackCount * ScriptFormula(13);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
+
+            public override bool Stack(Buff buff)
+            {
+                bool stacked = StackCount < MaxStackCount;
+
+                base.Stack(buff);
+
+                if (stacked)
+                    _AddAmp();
+
+                return true;
+            }
+
+            private void _AddAmp()
+            {
+                Target.Attributes[GameAttribute.Attack_Bonus_Percent] += ScriptFormula(13);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
+        }
+        [ImplementsPowerBuff(0)]
+        class DeadlyReach_Armorbuff : PowerBuff
+        {
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(21));
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                Target.Attributes[GameAttribute.Armor_Bonus_Percent] += ScriptFormula(22);
+                Target.Attributes.BroadcastChangedIfRevealed();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Armor_Bonus_Percent] -= ScriptFormula(22);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
         }
     }
     #endregion
 
+    //TODO Rune_A,B,C
     #region FistsOfThunder
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.FistsOfThunder)]
     public class MonkFistsOfThunder : ComboSkill
@@ -84,6 +190,12 @@ namespace Mooege.Core.GS.Powers.Implementations
             switch (TargetMessage.Field5)
             {
                 case 0:
+                    if (Rune_A > 0)
+                    {
+                        //Teleport if TargetPosition >= Minimum Distance of 27f away && Target != null (SCriptF(3))
+                    }
+                    MeleeStageHit();
+                    break;
                 case 1:
                     MeleeStageHit();
                     break;
@@ -92,20 +204,43 @@ namespace Mooege.Core.GS.Powers.Implementations
 
                     // put target position a little bit in front of the monk. represents the lightning ball
                     TargetPosition = PowerMath.TranslateDirection2D(User.Position, TargetPosition,
-                                        User.Position, 8f);
+                                        User.Position, ScriptFormula(6));
 
                     bool hitAnything = false;
                     AttackPayload attack = new AttackPayload(this);
-                    attack.Targets = GetEnemiesInRadius(TargetPosition, 7f);
-                    attack.AddWeaponDamage(1.20f, DamageType.Lightning);
+                    attack.Targets = GetEnemiesInRadius(TargetPosition, ScriptFormula(20));
+                    attack.AddWeaponDamage(Rune_A > 0 ? ScriptFormula(7) : ScriptFormula(0), DamageType.Lightning);
                     attack.OnHit = hitPayload => {
                         hitAnything = true;
-                        Knockback(hitPayload.Target, 12f);
+                        if (Rune_B > 0)
+                        {
+                            //Chain of Lightning
+                            //SF(10) = Max L Jumps
+                            //SF(11) = L Damage
+                            //SF(12) = L Jump Search Radius
+                        }
+                        else
+                        {
+                            Knockback(hitPayload.Target, ScriptFormula(21));
+                        }
+                        if (Rune_D > 0)
+                        {
+                            if (hitPayload.IsCriticalHit)
+                            {
+                                GeneratePrimaryResource(ScriptFormula(16));
+                            }
+                        }
                     };
                     attack.Apply();
 
                     if (hitAnything)
-                        GeneratePrimaryResource(6f);
+                    {
+                        GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+                        if (Rune_E > 0)
+                        {
+                            AddBuff(User, new TFists_LightningBuff());
+                        }
+                    }
 
                     break;
             }
@@ -117,12 +252,67 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             AttackPayload attack = new AttackPayload(this);
             attack.Targets = GetBestMeleeEnemy();
-            attack.AddWeaponDamage(1.20f, DamageType.Lightning);
+            attack.AddWeaponDamage(Rune_A > 0 ? ScriptFormula(7) : ScriptFormula(0), DamageType.Lightning);
             attack.OnHit = hitPayload =>
             {
-                GeneratePrimaryResource(6f);
+                GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+                if (Rune_D > 0)
+                {
+                    if (hitPayload.IsCriticalHit)
+                    {
+                        GeneratePrimaryResource(ScriptFormula(16));
+                    }
+                }
+                if(Rune_E > 0)
+                {
+                    AddBuff(User, new TFists_LightningBuff());
+                }
             };
             attack.Apply();
+        }
+        [ImplementsPowerBuff(2, true)]
+        class TFists_LightningBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(19));
+                MaxStackCount = (int)ScriptFormula(17);
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+
+                _AddAmp();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Dodge_Chance_Bonus] -= StackCount * ScriptFormula(18);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
+
+            public override bool Stack(Buff buff)
+            {
+                bool stacked = StackCount < MaxStackCount;
+
+                base.Stack(buff);
+
+                if (stacked)
+                    _AddAmp();
+
+                return true;
+            }
+
+            private void _AddAmp()
+            {
+                Target.Attributes[GameAttribute.Dodge_Chance_Bonus] += ScriptFormula(18);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
         }
 
         [ImplementsPowerBuff(7)]
@@ -136,37 +326,44 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO Rune_A,C
     #region SevenSidedStrike
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.SevenSidedStrike)]
     public class MonkSevenSidedStrike : Skill
     {
+        //Max Teleport Distance added in last patch 8101.
+        //attack delay end SF(16)
+        //A: Max Tele Dist SF(19)
+        //Total Time SF(2)
+        //Impact Radius? SF(13)
+        //C: 7,8,9
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(50f);
-            //StartCooldown(WaitSeconds(30f));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             
             var groundEffect = SpawnProxy(TargetPosition, WaitInfinite());
             groundEffect.PlayEffectGroup(145041);
 
-            for (int n = 0; n < 7; ++n)
+            for (int n = 0; n < ScriptFormula(5); ++n)
             {
-                IList<Actor> nearby = GetEnemiesInRadius(TargetPosition, 25f).Actors;
+                IList<Actor> nearby = GetEnemiesInRadius(TargetPosition, ScriptFormula(6)).Actors;
                 if (nearby.Count > 0)
                 {
                     var target = nearby[Rand.Next(0, nearby.Count)];
 
                     SpawnEffect(99063, target.Position, -1);                    
-                    yield return WaitSeconds(0.2f);
+                    yield return WaitSeconds(ScriptFormula(4));
 
                     if (Rune_E > 0)
                     {
                         target.PlayEffectGroup(99098);
-                        var splashTargets = GetEnemiesInRadius(target.Position, 5f);
+                        var splashTargets = GetEnemiesInRadius(target.Position, ScriptFormula(14));
                         splashTargets.Actors.Remove(target); // don't hit target with splash
-                        WeaponDamage(splashTargets, 0.31f, DamageType.Holy);
+                        WeaponDamage(splashTargets, ScriptFormula(12), DamageType.Holy);
                     }
 
-                    WeaponDamage(target, 1.15f, DamageType.Physical);
+                    WeaponDamage(target, ScriptFormula(0), DamageType.Physical);
                 }
                 else
                 {
@@ -179,6 +376,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO Slow, Rune_C,D,E
     #region CripplingWave
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.CripplingWave)]
     public class MonkCripplingWave : ComboSkill
@@ -208,20 +406,47 @@ namespace Mooege.Core.GS.Powers.Implementations
             if (ComboIndex != 2)
                 attack.Targets = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(5), ScriptFormula(6));
             else
-                attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(8));
+                attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(8)); 
+            //dmg all enemies around you, why is there Angle SF(9) - EDIT: oh because it adds them together 180+180=360
 
-            attack.AddWeaponDamage(1.10f, DamageType.Physical);
-            attack.OnHit = hitPayload => { hitAnything = true; };
+            attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+            attack.OnHit = hitPayload => 
+            { 
+                hitAnything = true;
+                if (ComboIndex == 2)
+                {
+                    //Attack Slow Amount SF(20)
+                    AddBuff(hitPayload.Target, new DebuffSlowed(ScriptFormula(4), WaitSeconds(ScriptFormula(3))));
+                }
+                if (Rune_D > 0)
+                {
+                    if (hitPayload.IsCriticalHit)
+                    {
+                        //buff SF(15[Duration]+16[Generate Amount])
+                    }
+                }
+                if (Rune_E > 0)
+                {
+                    //buff[3]
+                    //Debuff to monsters that causes them to take 80% additional damage from all attacks
+                } 
+                if (Rune_C > 0)
+                {
+                    //buff[1]
+                    //Debuff to monsters that caused them to inflict 50% less damage
+                }
+            };
             attack.Apply();
 
             if (hitAnything)
-                GeneratePrimaryResource(6f);
+                GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
 
             yield break;
         }
     }
     #endregion
 
+    //TODO Rune_E
     #region ExplodingPalm
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.ExplodingPalm)]
     public class MonkExplodingPalm : ComboSkill
@@ -264,7 +489,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             attack.Apply();
 
             if (hitAnything)
-                GeneratePrimaryResource(6f);
+                GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
             yield break;
         }
 
@@ -384,59 +609,390 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO Rune_C,D (These happen at Max Stack Count
     #region SweepingWind
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.SweepingWind)]
     public class MonkSweepingWind : ComboSkill
     {
+        //Buff0: Spirit Per second
         public override IEnumerable<TickTimer> Main()
         {
-            AttackPayload attack = new AttackPayload(this);
-            attack.Targets = GetBestMeleeEnemy();
-            attack.AddWeaponDamage(1.00f, DamageType.Physical);
-            attack.Apply();
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
+            switch (ComboIndex)
+            {
+                case 0:
+                    AddBuff(User, new Stage1Sweep());
+                    MeleeStageHit();
+                    break;
+                case 1:
+                    AddBuff(User, new Stage2Sweep());
+                    MeleeStageHit();
+                    break;
+                case 2:
+                    AddBuff(User, new VortexBuff());
+
+                    break;
+            }
 
             yield break;
+        }
+
+        private void MeleeStageHit()
+        {
+            AttackPayload attack = new AttackPayload(this);
+            attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(1));
+            attack.AddWeaponDamage(ScriptFormula(4), DamageType.Physical);
+            attack.Apply();
+        }
+        [ImplementsPowerBuff(1)]
+        class Stage1Sweep : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(0.5f);
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+            }
+        }
+        [ImplementsPowerBuff(2)]
+        class Stage2Sweep : PowerBuff
+        {
+            public override void Init()
+            {
+                Timeout = WaitSeconds(0.5f);
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+            }
+        }
+        //Rune_E included
+        [ImplementsPowerBuff(3, true)]
+        class VortexBuff : PowerBuff
+        {
+            const float _damageRate = 0.25f;
+            TickTimer _damageTimer = null;
+            float _damagetotal = 0;
+            public override void Init()
+            {
+                Timeout = WaitSeconds(ScriptFormula(8));
+                MaxStackCount = (int)ScriptFormula(10);
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+
+                _AddAmp();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+            }
+
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(13));
+                    attack.AddWeaponDamage(_damagetotal, DamageType.Physical); 
+                    //we divide by four because this is by second, and tick-intervals = 0.25
+                    attack.AutomaticHitEffects = false;
+                    attack.Apply();
+                }
+                return false;
+            }
+            public override bool Stack(Buff buff)
+            {
+                bool stacked = StackCount < MaxStackCount;
+
+                base.Stack(buff);
+
+                if (stacked)
+                    _AddAmp();
+
+                return true;
+            }
+
+            private void _AddAmp()
+            {
+                _damagetotal += (ScriptFormula(6) / 4f);
+            }
         }
     }
     #endregion
 
+    //TODO:Rune_A(Dash), Rune_E(Stage3), and Stage 2  //exception on third stage ?
     #region WayOfTheHundredFists
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritGenerator.WayOfTheHundredFists)]
     public class MonkWayOfTheHundredFists : ComboSkill
     {
         public override IEnumerable<TickTimer> Main()
         {
+            switch (TargetMessage.Field5)
+            {
+                case 0:
+                    if (Rune_A > 0)
+                    {
+                        //Dash
+                    }
+                    else
+                    {
+                        MeleeStageHit();
+                    }
+                    break;
+                case 1:
+                    //stage 2 get hit chance bonus
+                    MultiHit();
+                    break;
+                case 2:
+                    if (Rune_D > 0)
+                    {
+                        if(Rand.NextDouble() < ScriptFormula(25))
+                        {
+                            GeneratePrimaryResource(ScriptFormula(24));
+                        }
+                    }
+
+                    bool hitAnything = false;
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(30), ScriptFormula(31));
+                    attack.AddWeaponDamage(ScriptFormula(2), DamageType.Holy);
+                    attack.OnHit = hitPayload =>
+                    {
+                        hitAnything = true;
+                        Knockback(hitPayload.Target, ScriptFormula(5), ScriptFormula(6)); 
+                        if (Rune_A > 0)
+                        {
+                            AddBuff(hitPayload.Target, new RuneA_DOT_100Fists());
+                        }
+                    };
+                    attack.Apply();
+
+                    if (hitAnything)
+                    {
+                        GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+                        if (Rune_C > 0)
+                        {
+                            AddBuff(User, new RuneCbuff());
+                        }
+                    }
+                    //TODO: Range should be only 40f ahead.
+                    if (Rune_E > 0)
+                    {
+                        var proj = new Projectile(this, 136022, User.Position);
+                        proj.Launch(TargetPosition, ScriptFormula(23));
+                        proj.OnCollision = (hit) =>
+                        {
+                            //proj.Destroy();
+                            WeaponDamage(hit, ScriptFormula(11), DamageType.Physical);
+                        };
+                    }
+
+                    break;
+            }
+
             yield break;
         }
-
         public override float GetContactDelay()
         {
-            // no contact delay for hundred fists
             return 0f;
+        }
+        private void MeleeStageHit()
+        {
+            if (Rune_D > 0)
+            {
+                if (Rand.NextDouble() < ScriptFormula(25))
+                {
+                    GeneratePrimaryResource(ScriptFormula(24));
+                }
+            }
+            bool hitAnything = false;
+            AttackPayload attack = new AttackPayload(this);
+            attack.Targets = GetBestMeleeEnemy();
+            attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+            attack.OnHit = hitPayload =>
+            {
+                hitAnything = true;
+            };
+            attack.Apply();
+
+            if (hitAnything)
+            {
+                GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+                if (Rune_C > 0)
+                {
+                    AddBuff(User, new RuneCbuff());
+                }
+            }
+        }
+        private void MultiHit()
+        {
+            if (Rune_D > 0)
+            {
+                if (Rand.NextDouble() < ScriptFormula(25))
+                {
+                    GeneratePrimaryResource(ScriptFormula(24));
+                }
+            }
+            //TODO: this needs to be redone when I figure out how to do multiple hits to certain MAX targets..
+                bool hitAnything = false;
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetEnemiesInArcDirection(User.Position,TargetPosition, ScriptFormula(28), ScriptFormula(29));
+                attack.AddWeaponDamage(ScriptFormula(1), DamageType.Physical);
+                attack.OnHit = hitPayload =>
+                {
+                    hitAnything = true;
+                    if (Rune_A > 0)
+                    {
+                        AddBuff(hitPayload.Target, new RuneA_DOT_100Fists());
+                    }
+                };
+                attack.Apply();
+
+                if (hitAnything)
+                {
+                    GeneratePrimaryResource(EvalTag(PowerKeys.SpiritGained));
+                    if (Rune_C > 0)
+                    {
+                        AddBuff(User, new RuneCbuff());
+                    }
+                }
+        }
+        [ImplementsPowerBuff(3)]
+        class RuneA_DOT_100Fists : PowerBuff
+        {
+            const float _damageRate = 1f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(15));
+            }
+
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    WeaponDamage(Target, ScriptFormula(16), DamageType.Holy);
+                }
+
+                return false;
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+            }
+        }
+        [ImplementsPowerBuff(1, true)]
+        class RuneCbuff : PowerBuff
+        {
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(10));
+                MaxStackCount = (int)ScriptFormula(9);
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+
+                _AddAmp();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Attacks_Per_Second_Bonus] -= StackCount * ScriptFormula(7);
+                Target.Attributes[GameAttribute.Movement_Bonus_Run_Speed] -= StackCount * ScriptFormula(8);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
+
+            public override bool Stack(Buff buff)
+            {
+                bool stacked = StackCount < MaxStackCount;
+
+                base.Stack(buff);
+
+                if (stacked)
+                    _AddAmp();
+
+                return true;
+            }
+
+            private void _AddAmp()
+            {
+                Target.Attributes[GameAttribute.Attacks_Per_Second_Bonus] += ScriptFormula(7);
+                Target.Attributes[GameAttribute.Movement_Bonus_Run_Speed] += ScriptFormula(8);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
         }
     }
     #endregion
 
+    //TODO:Rune_A,B,C
     #region DashingStrike
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.DashingStrike)]
     public class MonkDashingStrike : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(15f);
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             // dashing strike never specifies the target's id so we just search for the closest target
-            Target = GetEnemiesInRadius(TargetPosition, 8f).GetClosestTo(TargetPosition);
+            Target = GetEnemiesInRadius(TargetPosition, ScriptFormula(0)).GetClosestTo(TargetPosition);
 
             if (Target != null)
             {
                 // put dash destination just beyond target
-                TargetPosition = PowerMath.TranslateDirection2D(User.Position, Target.Position, Target.Position, 7f);
+                TargetPosition = PowerMath.TranslateDirection2D(User.Position, Target.Position, Target.Position, ScriptFormula(2));
             }
             else
             {
                 // if no target, always dash fixed amount
-                TargetPosition = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, 13f);
+                TargetPosition = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, ScriptFormula(7));
             }
 
             var dashBuff = new DashMoverBuff(TargetPosition);
@@ -448,7 +1004,22 @@ namespace Mooege.Core.GS.Powers.Implementations
                 User.TranslateFacing(Target.Position, true);
                 yield return WaitSeconds(0.1f);
                 User.PlayEffectGroup(113720);
-                WeaponDamage(Target, 1.60f, DamageType.Physical);
+                WeaponDamage(Target, ScriptFormula(1), DamageType.Physical);
+                if (Rune_E > 0)
+                {
+                    if (Rand.NextDouble() < ScriptFormula(32))
+                    {
+                        AddBuff(Target, new DebuffStunned(WaitSeconds(ScriptFormula(33))));
+                    }
+                }
+            }
+            if (Rune_C > 0)
+            {
+                //Dodge Chance Buff
+            }
+            if (Rune_B > 0)
+            {
+                //Movement Speed Buff
             }
         }
 
@@ -469,7 +1040,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                     return false;
 
                 // dash speed seems to always be actor speed * 10
-                float speed = Target.Attributes[GameAttribute.Running_Rate_Total] * 10f;
+                float speed = Target.Attributes[GameAttribute.Running_Rate_Total] * ScriptFormula(5);
 
                 Target.TranslateFacing(_destination, true);
                 _mover = new ActorMover(Target);
@@ -490,6 +1061,8 @@ namespace Mooege.Core.GS.Powers.Implementations
                 return true;
             }
 
+            // (TODO) Update -> While moving head first, any enemy in path Gets slowed, RUNE_A
+
             public override void Remove()
             {
                 base.Remove();
@@ -506,13 +1079,14 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO RuneA,E
     #region MantraOfEvasion
     [ImplementsPowerSNO(Skills.Skills.Monk.Mantras.MantraOfEvasion)]
     public class MonkMantraOfEvasion : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new CasterBuff());
             AddBuff(User, new CastBonusBuff());
@@ -546,19 +1120,43 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         class BaseFullEffectsBuff : BaseDodgeBuff
         {
-            // TODO: rune buff effects and such will go here
+            // TODO: Rune_E, when you or ally is under 20% life, shield around target reducing damage by 80% for 10 seconds.
+            // TODO: Rune_A, Dodging an enemy's attack, creates a burst of blames in raidus.
 
             public override bool Apply()
             {
                 if (!base.Apply())
                     return false;
-
+                if (Rune_B > 0)
+                {
+                    Target.Attributes[GameAttribute.CrowdControl_Reduction] += ScriptFormula(4);
+                }
+                if (Rune_C > 0)
+                {
+                    Target.Attributes[GameAttribute.Armor_Bonus_Percent] += ScriptFormula(5);
+                }
+                if (Rune_D > 0)
+                {
+                    Target.Attributes[GameAttribute.Running_Rate_Total] += ScriptFormula(6);
+                }
                 return true;
             }
 
             public override void Remove()
             {
                 base.Remove();
+                if (Rune_B > 0)
+                {
+                    Target.Attributes[GameAttribute.CrowdControl_Reduction] -= ScriptFormula(4);
+                }
+                if (Rune_C > 0)
+                {
+                    Target.Attributes[GameAttribute.Armor_Bonus_Percent] -= ScriptFormula(5);
+                }
+                if (Rune_D > 0)
+                {
+                    Target.Attributes[GameAttribute.Running_Rate_Total] += ScriptFormula(6);
+                }
             }
         }
 
@@ -610,14 +1208,19 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //TODO Rune_C
     #region BlindingFlash
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.BlindingFlash)]
     public class MonkBlindingFlash : Skill
     {
+        //Rune_D,B,A,E = done.
+        //buff[3] mass_confused -> Rune_C
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
+            var UsedPoint = SpawnProxy(User.Position);
 
             AttackPayload attack = new AttackPayload(this);
             attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(1));
@@ -628,9 +1231,31 @@ namespace Mooege.Core.GS.Powers.Implementations
                 // add main effect buff only if blind debuff took effect
                 if (AddBuff(hit.Target, new DebuffBlind(waitBuffEnd)))
                     AddBuff(hit.Target, new MainEffectBuff(waitBuffEnd));
+                if (Rune_C > 0)
+                {
+                    //chance of Charm.
+                }
             };
-
             attack.Apply();
+
+            if (Rune_B > 0)
+            {
+                yield return WaitSeconds(ScriptFormula(11));
+                UsedPoint.PlayEffectGroup(139497);
+                AttackPayload attack2 = new AttackPayload(this);
+                attack2.Targets = GetEnemiesInRadius(UsedPoint.Position, ScriptFormula(1));
+                attack2.OnHit = (hit) =>
+                {
+                    TickTimer waitBuffEnd = WaitSeconds(ScriptFormula(13));
+
+                    // add main effect buff only if blind debuff took effect
+                    if (AddBuff(hit.Target, new DebuffBlind(waitBuffEnd)))
+                        AddBuff(hit.Target, new MainEffectBuff(waitBuffEnd));
+                        AddBuff(hit.Target, new IndigoDebuff(waitBuffEnd));
+                        
+                };
+                attack2.Apply();
+            }
 
             yield break;
         }
@@ -658,12 +1283,59 @@ namespace Mooege.Core.GS.Powers.Implementations
                 base.Remove();
                 Target.Attributes[GameAttribute.Hit_Chance] += ScriptFormula(8);
                 Target.Attributes.BroadcastChangedIfRevealed();
+                if (Rune_A > 0)
+                {
+                    //addbuff that adds holy damage
+                    AddBuff(User, new FlashingRuneABuff(WaitSeconds(ScriptFormula(3))));
+                }
+            }
+        }
+        [ImplementsPowerBuff(1)]
+        class FlashingRuneABuff : PowerBuff
+        {
+            public FlashingRuneABuff(TickTimer timeout)
+            {
+                Timeout = timeout;
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+
+                Target.Attributes[GameAttribute.Attack_Bonus_Percent] += ScriptFormula(4);
+                Target.Attributes.BroadcastChangedIfRevealed();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Attack_Bonus_Percent] -= ScriptFormula(4);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
+        }
+        [ImplementsPowerBuff(4)]
+        class IndigoDebuff : PowerBuff
+        {
+            public IndigoDebuff(TickTimer timeout)
+            {
+                Timeout = timeout;
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
             }
         }
     }
     #endregion
-
-    //Below are just the classes and are being worked on. 
 
     //Complete
     #region LashingTailKick
@@ -672,7 +1344,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(30f); //disabled for testing
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             if (Rune_A > 0 || Rune_D > 0)
             {
@@ -735,7 +1408,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Close to complete for base skill.
+    //Close to complete for base skill. TODO:Runes
     #region TempestRush
     [ImplementsPowerSNO(Skills.Skills.Monk.SpiritSpenders.TempestRush)]
     public class TempestRush : ChanneledSkill
@@ -745,7 +1418,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelOpen()
         {
             EffectsPerSecond = 0.25f;
-            UsePrimaryResource(15f);
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             //User.Attributes[GameAttribute.Movement_Bonus_Run_Speed] += ScriptFormula(14);
             if (Rune_C > 0)
             {
@@ -766,13 +1439,14 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override void OnChannelUpdated()
         {
-            UsePrimaryResource(ScriptFormula(16));
+            UsePrimaryResource(ScriptFormula(16)/4f);
             User.TranslateFacing(TargetPosition);
             // client updates target actor position
         }
 
         public override IEnumerable<TickTimer> Main()
         {
+            AddBuff(User, new TempestBuff());
             AttackPayload attack = new AttackPayload(this);
             //TODO: damage offset from ground?? where does this go..
             attack.Targets = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(2), ScriptFormula(1));
@@ -787,7 +1461,28 @@ namespace Mooege.Core.GS.Powers.Implementations
                 };
             attack.Apply();
 
-            yield return WaitSeconds(ScriptFormula(1));
+            yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class TempestBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(0.5f);
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+            }
         }
     }
     #endregion
@@ -805,10 +1500,12 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             return base.GetContactEffectSNO();
         }
-        //TODO: Change actor animations to be Proxy first, then Bell, (then shattered then destroyed?)
+        //From videos: it seems you proxy the Proxy actor first, the "hit" looks like it goes with the projectile...
         public override IEnumerable<TickTimer> Main()
         {
-            //UsePrimaryResource(ScriptFormula(33));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            //UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             //projectile distance (50)
             if (Rune_B > 0)
             {
@@ -908,7 +1605,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AttackPayload attack = new AttackPayload(this);
@@ -1040,7 +1737,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            //No more cooldown since latest patch 8101
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new CastEffect(WaitSeconds(ScriptFormula(5))));
@@ -1157,7 +1854,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            //No more cooldown
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new CastEffect(WaitSeconds(ScriptFormula(4) * 60f)));
@@ -1311,7 +2008,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
+            //No more cooldown
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
 
@@ -1459,8 +2156,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UsePrimaryResource(ScriptFormula(6));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             AddBuff(User, new SerenityBuff(WaitSeconds(ScriptFormula(0))));
 
@@ -1549,6 +2246,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             var GroundSpot = SpawnProxy(User.Position);
             var Sanctuary = SpawnEffect(RuneSelect(98557, 98823, 149848, 142312, 98559, 142305), GroundSpot.Position, 0, WaitSeconds(ScriptFormula(0)));
             AttackPayload attack = new AttackPayload(this);
@@ -1683,23 +2383,29 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             yield break;
         }
     }
     #endregion
 
-    //TODO: Runes.
+    //Complete
     #region CycloneStrike
     [ImplementsPowerSNO(223473)]
     public class CycloneStrike : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //rune-D -> spirit
-            //crits -> Rune_E
-            //debuff -> Rune_C
-            //multi -> Rune_B
-            //randomAOE -> Rune_A
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+            if (Rune_C > 0)
+            {
+                foreach (Actor Ally in GetAlliesInRadius(User.Position, ScriptFormula(19)).Actors)
+                {
+                    Ally.Attributes[GameAttribute.Hitpoints_Granted] += ScriptFormula(20);
+                }
+            }
             AttackPayload attack = new AttackPayload(this);
             attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2), (int)ScriptFormula(5));
             attack.OnHit = hit =>
@@ -1710,8 +2416,42 @@ namespace Mooege.Core.GS.Powers.Implementations
             yield return WaitSeconds(0.5f);
             User.PlayEffectGroup(224247);
             WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(16) + ScriptFormula(17)), ScriptFormula(10), Rune_A > 0 ? DamageType.Fire : DamageType.Holy);
-
+            if (Rune_E > 0)
+            {
+                AddBuff(User, new CycloneDodgeBuff(WaitSeconds(ScriptFormula(27))));
+            }
+            if (Rune_A > 0)
+            {
+                foreach (Actor Enemy in GetEnemiesInRadius(User.Position, ScriptFormula(2), (int)ScriptFormula(5)).Actors)
+                {
+                    AddBuff(Enemy, new DebuffFeared(WaitSeconds(ScriptFormula(13))));
+                }
+            }
             yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class CycloneDodgeBuff : PowerBuff
+        {
+            public CycloneDodgeBuff(TickTimer timeout)
+            {
+                Timeout = timeout;
+            }
+
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                Target.Attributes[GameAttribute.Dodge_Chance_Bonus] += ScriptFormula(28);
+                Target.Attributes.BroadcastChangedIfRevealed();
+                return true;
+            }
+
+            public override void Remove()
+            {
+                base.Remove();
+                Target.Attributes[GameAttribute.Dodge_Chance_Bonus] -= ScriptFormula(28);
+                Target.Attributes.BroadcastChangedIfRevealed();
+            }
         }
     }
     #endregion

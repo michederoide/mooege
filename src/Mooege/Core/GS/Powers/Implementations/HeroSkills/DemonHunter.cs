@@ -29,6 +29,7 @@ using Mooege.Core.GS.Actors;
 using Mooege.Core.GS.Actors.Movement;
 using Mooege.Net.GS.Message.Definitions.Actor;
 using Mooege.Net.GS.Message;
+using Mooege.Net.GS.Message.Definitions.ACD;
 
 
 namespace Mooege.Core.GS.Powers.Implementations
@@ -251,7 +252,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            //StartDefaultCooldown();
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             // ground summon effect for rune c
@@ -441,8 +442,13 @@ namespace Mooege.Core.GS.Powers.Implementations
     public class HungeringArrow : Skill
     {
         //BoneArrow
+
         public override IEnumerable<TickTimer> Main()
         {
+            //These are both zero, but we will keep them in the event blizzard changed their mind.
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             var projectile = new Projectile(this, RuneSelect(129932, 154590, 154591, 154592, 154593, 154594), User.Position);
             var target = GetEnemiesInRadius(TargetPosition, ScriptFormula(3)).GetClosestTo(TargetPosition);
             if (target != null)
@@ -499,6 +505,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+
             var proj = new Projectile(this, RuneSelect(220527, 222102, 222115, 222128, 220527, 222141), User.Position);
             proj.Position.Z += 5f;  // fix height
             proj.OnCollision = (hit) =>
@@ -621,9 +630,9 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             foreach (Vector3D position in targetDirs)
             {
-                User.PlayEffectGroup(134689);
-                var proj = new Projectile(this, 178987, User.Position);
-                proj.Position.Z += 5f;  // fix height
+                //using BoneArrow Projectile for now, unknown where SafetyShot Projectile went.
+                var proj = new Projectile(this, 203006, User.Position);
+                proj.Position.Z += 6f;  // fix height
                 proj.OnCollision = (hit) =>
                 {
                     // hit effect
@@ -773,6 +782,8 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelOpen()
         {
             EffectsPerSecond = 0.1f;
+            //initial hatred cost
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             //User.PlayEffectGroup(150049); //unknown where this could go.
             User.Attributes[GameAttribute.Projectile_Speed] = User.Attributes[GameAttribute.Projectile_Speed] * ScriptFormula(22);
             User.Attributes.BroadcastChangedIfRevealed();
@@ -794,12 +805,12 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
-            //initial hatred cost (4)
-            UsePrimaryResource(1.5f);
             //projectiles
             var proj1 = new Projectile(this, 150061, User.Position);
             proj1.Position.Z += 5f;
+            //TargetPosition needs to have a general spread of fire.
             proj1.Launch(TargetPosition, ScriptFormula(2));
+            UsePrimaryResource(ScriptFormula(19) * EffectsPerSecond);
             proj1.OnCollision = (hit) =>
             {
                 SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
@@ -819,12 +830,13 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            GeneratePrimaryResource(ScriptFormula(2));
             var proj1 = new Projectile(this, 75678, User.Position);
             proj1.Position.Z += 5f;
             proj1.OnCollision = (hit) =>
             {
                 //TODO: Rope effect to mobs
-                hit.PlayEffectGroup(76228); // impact effect (fix height)
+                hit.PlayEffectGroup(76093); // impact effect (fix height)
                 proj1.Destroy();
                 WeaponDamage(hit, ScriptFormula(5), DamageType.Physical);
                 AddBuff(hit, new EntangleDebuff());
@@ -846,8 +858,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (!base.Apply())
                     return false;
 
-                Target.Attributes[GameAttribute.Movement_Scalar_Reduction_Percent] += ScriptFormula(0);
-                Target.Attributes.BroadcastChangedIfRevealed();
+                AddBuff(Target, new DebuffSlowed(0.7f, WaitSeconds(ScriptFormula(4))));
 
                 return true;
             }
@@ -855,8 +866,6 @@ namespace Mooege.Core.GS.Powers.Implementations
             public override void Remove()
             {
                 base.Remove();
-                Target.Attributes[GameAttribute.Movement_Scalar_Reduction_Percent] -= ScriptFormula(0);
-                Target.Attributes.BroadcastChangedIfRevealed();
             }
         }
     }
@@ -867,10 +876,9 @@ namespace Mooege.Core.GS.Powers.Implementations
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.ElementalArrow)]
     public class ElementalArrow : Skill
     {
-
         public override IEnumerable<TickTimer> Main()
         {
-
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             var proj = new Projectile(this, RuneSelect(77604, 131664, 155092, 155749, 155938, 154674), User.Position);
             if (Rune_C > 0)
             { proj.Position.Z += 3f; }
@@ -956,6 +964,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
+            //patch added attack speed = 1.5
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
             UseSecondaryResource(EvalTag(PowerKeys.ResourceCost));
             //if Female
             AddBuff(User, new ShadowPowerFemale());
@@ -976,7 +986,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 if (!base.Apply())
                     return false;
-                Target.Attributes[GameAttribute.Attacks_Per_Second_Percent] += ScriptFormula(0);
+                Target.Attributes[GameAttribute.Attacks_Per_Second_Percent] += ScriptFormula(1);
 
                 if (Rune_A > 0)
                 {
@@ -1034,7 +1044,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            UseSecondaryResource(ScriptFormula(7));
+            GeneratePrimaryResource(ScriptFormula(8));
 
             if (Rune_C > 0)
             {
@@ -1110,7 +1120,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(ScriptFormula(14));
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             User.PlayEffectGroup(RuneSelect(77647, 154203, 154204, 154208, 154211, 154212));
             AttackPayload attack = new AttackPayload(this);
@@ -1185,8 +1195,8 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartDefaultCooldown();
-            UseSecondaryResource(ScriptFormula(2));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UseSecondaryResource(EvalTag(PowerKeys.ResourceCost));
 
             var cloudCover = SpawnProxy(User.Position, WaitSeconds(ScriptFormula(4)));
             cloudCover.PlayEffectGroup(131425);
@@ -1336,22 +1346,22 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             //"Use SpecialWalk Steering"
 
-            UsePrimaryResource(ScriptFormula(19));
             //projectiles
-            var Target = GetEnemiesInRadius(User.Position, ScriptFormula(2)).GetClosestTo(User.Position);
+            var Target = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(2), 180f).GetClosestTo(User.Position);
             //todo:else should it fire if there are no mobs? seems like it should but unknown how that should work.  
 
             var proj1 = new Projectile(this, 149790, User.Position);
             proj1.Position.Z += 6f;
             proj1.Launch(Target.Position, ScriptFormula(10));
+            UsePrimaryResource(ScriptFormula(19));
             proj1.OnCollision = (hit) =>
             {
                 SpawnEffect(218504, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 6f)); // impact effect (fix height)
                 proj1.Destroy();
-                WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
+                WeaponDamage(hit, ScriptFormula(1), DamageType.Physical);
             };
 
-            yield return WaitSeconds(ScriptFormula(1));
+            yield return WaitSeconds(ScriptFormula(4));
         }
     }
     #endregion
@@ -1361,16 +1371,10 @@ namespace Mooege.Core.GS.Powers.Implementations
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.MarkedForDeath)]
     public class MarkedForDeath : Skill
     {
-
         public override IEnumerable<TickTimer> Main()
         {
             UseSecondaryResource(EvalTag(PowerKeys.ResourceCost));
-            //StartDefaultCooldown();
-
-
             AddBuff(Target, new DeathMarkBuff());
-
-
             yield break;
         }
         [ImplementsPowerBuff(0)]
@@ -1402,18 +1406,18 @@ namespace Mooege.Core.GS.Powers.Implementations
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.Preparation)]
     public class Preparation : Skill
     {
-
         public override IEnumerable<TickTimer> Main()
         {
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            UseSecondaryResource(EvalTag(PowerKeys.ResourceCost));
+
             User.PlayEffectGroup(RuneSelect(132466, 148872, 148873, 148874, 148875, 148876));
             if (Rune_A > 0)
             {
-                UseSecondaryResource(ScriptFormula(0));
                 GeneratePrimaryResource(999f);
             }
             else if (Rune_D > 0)
             {
-                StartCooldown(WaitSeconds(120f));
                 GenerateSecondaryResource(999f);
                 //Restore 55% of life
             }
@@ -1425,12 +1429,10 @@ namespace Mooege.Core.GS.Powers.Implementations
                     GenerateSecondaryResource(999f);
                 }
                 else
-                    StartCooldown(WaitSeconds(120f));
                 GenerateSecondaryResource(999f);
             }
             else
             {
-                StartCooldown(WaitSeconds(120f));
                 GenerateSecondaryResource(999f);
                 if (Rune_B > 0)
                 {
@@ -1503,6 +1505,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
             var GroundSpot = SpawnProxy(TargetPosition);
 
             var proj = new Projectile(this, RuneSelect(129603, 166549, 166550, 167218, 166636, 166621), User.Position);
@@ -1577,14 +1580,60 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             //Rune_A has two chakrams, both same direction just flipped paths
 
-            //Rune_B makes a loop around then destroys
+            //Rune_B makes a boomerrang, travelling away from then back to User
 
             //Rune_C makes a slow curve
+            //projectile speed = 0.2 while the rest is done by attack speed
 
             //Rune_D spirals out to target, actor calls it a straight projectile.
 
             //Rune_E is just a buff shield
+            if (Rune_E > 0)
+            {
+                AddBuff(User, new ChakramBuff());
+            }
+            else
+            {
+                var proj = new Projectile(this, RuneSelect(129228, 129228, 148845, 148846, 148847, -1), User.Position);
+                proj.Position.Z += 3f;  // fix height //might be a better height at 3?
+                proj.Launch(TargetPosition, 0.2f);
+                proj.OnCollision = (hit) =>
+                {
+                    WeaponDamage(hit, ScriptFormula(0), RuneSelect(DamageType.Physical, DamageType.Physical, DamageType.Lightning, DamageType.Poison, DamageType.Arcane, DamageType.Physical));
+                    proj.Destroy();
+                };
+            }
             yield break;
+        }
+        [ImplementsPowerBuff(0)]
+        class ChakramBuff : PowerBuff
+        {
+            const float _damageRate = 0.5f;
+            TickTimer _damageTimer = null;
+
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(12));
+            }
+
+            public override bool Update()
+            {
+                if (base.Update())
+                    return true;
+
+                if (_damageTimer == null || _damageTimer.TimedOut)
+                {
+                    _damageTimer = WaitSeconds(_damageRate);
+
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(15));
+                    attack.AddWeaponDamage(ScriptFormula(13), DamageType.Physical);
+                    attack.Apply();
+                }
+
+                return false;
+            }
         }
     }
     #endregion
@@ -1615,7 +1664,137 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //TODO: Add Fan of knives and Vault -> Need Velocityx or ill do it later.
+    //TODO - Fix vault
+    #region Vault
+    [ImplementsPowerSNO(Skills.Skills.DemonHunter.Discipline.Vault)]
+    public class DemonHunterVault : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            //StartCooldown(WaitSeconds(10f));
+
+            ActorMover mover = new ActorMover(User);
+            mover.MoveArc(TargetPosition, 3, -0.1f, new ACDTranslateArcMessage
+            {
+                //Field3 = 303110, // used for male barb leap, not needed?
+                FlyingAnimationTagID = AnimationSetKeys.Attack2.ID,
+                LandingAnimationTagID = -1,
+                Field7 = PowerSNO
+            });
+
+            // wait for landing
+            while (!mover.Update())
+                yield return WaitTicks(1);
+
+            yield break;
+        }
+    }
+    #endregion
+
+    //TODO:Fix Rune B projectile on User, Check Rune_E
+    #region FanOfKnives
+    [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.FanOfKnives)]
+    public class DemonHunterFanOfKnives : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+
+            if (Rune_E > 0)
+            {
+                AddBuff(User, new AlabasterBuff());
+            }
+            else if (Rune_B > 0)
+            {
+                Vector3D[] targetDirs;
+                targetDirs = new Vector3D[(int)ScriptFormula(13)];
+
+                int takenPos = 0;
+                foreach (Actor actor in GetEnemiesInRadius(User.Position, ScriptFormula(17)).Actors)
+                {
+                    targetDirs[takenPos] = actor.Position;
+                    ++takenPos;
+                    if (takenPos >= targetDirs.Length)
+                        break;
+                }
+                if (takenPos < targetDirs.Length)
+                {
+                    //this seems to generate a projectile on User..?
+                    PowerMath.GenerateSpreadPositions(User.Position, TargetPosition, 10f, targetDirs.Length - takenPos)
+                             .CopyTo(targetDirs, takenPos);
+                }
+
+                foreach (Vector3D position in targetDirs)
+                {
+                    var proj = new Projectile(this, 147809, User.Position);
+                    proj.Position.Z += 5f;  // fix height
+                    proj.OnCollision = (hit) =>
+                    {
+                        WeaponDamage(hit, ScriptFormula(16), DamageType.Physical);
+                        proj.Destroy();
+                    };
+                    proj.Launch(position, ScriptFormula(7));
+                }
+            }
+            else
+            {
+                User.PlayEffectGroup(77547);
+
+                yield return WaitSeconds(0.5f);
+                AttackPayload attack = new AttackPayload(this);
+                attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
+                attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                attack.OnHit = (hit) =>
+                {
+                    if (Rune_C > 0)
+                    {
+                        if (Rand.NextDouble() < ScriptFormula(10))
+                        {
+                            AddBuff(hit.Target, new DebuffStunned(WaitSeconds(ScriptFormula(11))));
+                        }
+                    }
+                    else
+                    AddBuff(hit.Target, new DebuffSlowed(ScriptFormula(6), WaitSeconds(ScriptFormula(5))));
+                };
+                attack.Apply();
+            }
+            yield break;
+        }
+
+        [ImplementsPowerBuff(0)]
+        class AlabasterBuff : PowerBuff
+        {
+            public override void Init()
+            {
+                base.Init();
+                Timeout = WaitSeconds(ScriptFormula(15));
+            }
+            public override bool Apply()
+            {
+                if (!base.Apply())
+                    return false;
+                return true;
+            }
+            public override void Remove()
+            {
+                base.Remove();
+            }
+            public override void OnPayload(Payload payload)
+            {
+                if (payload.Target == Target && payload is DeathPayload)
+                {
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(2));
+                    attack.AddWeaponDamage(ScriptFormula(0), DamageType.Physical);
+                    attack.Apply();
+                    base.Remove();
+                }
+            }
+        }
+    }
+    #endregion
+
     //spirit walk: 0xF2F224EA  (used on pet proxy)
     //vault: 0x04E733FD 
     //diamondskin: 0x061F7489
