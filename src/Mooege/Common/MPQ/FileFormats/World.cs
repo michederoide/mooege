@@ -236,7 +236,7 @@ namespace Mooege.Common.MPQ.FileFormats
         public void Read(MpqFileStream stream)
         {
             this.Name = stream.ReadString(128, true);
-            Int0 = stream.ReadValueS32();
+            CommandType = stream.ReadValueS32();
             this.TagMap = stream.ReadSerializedItem<TagMap>();
             stream.Position += (3 * 4);
         }
