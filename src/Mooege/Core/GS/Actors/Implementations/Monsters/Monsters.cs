@@ -96,12 +96,11 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
         }
     }
     #endregion
-    #region Ghost_A
-    //This shows ingame as Enraged Phantom.
-    [HandledSNO(370)]
-    public class Ghost_A : Monster
+    #region Ghost
+    [HandledSNO(370, 136943)]
+    public class Ghost : Monster
     {
-        public Ghost_A(World world, int snoId, TagMap tags)
+        public Ghost(World world, int snoId, TagMap tags)
             : base(world, snoId, tags)
         {
             this.Brain = new MonsterBrain(this);
@@ -175,9 +174,162 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
             : base(world, snoId, tags)
         {
             this.Brain = new MonsterBrain(this);
-            (Brain as MonsterBrain).AddPresetPower(30550);
+            (Brain as MonsterBrain).AddPresetPower(30550); //Summon_Zombie_Crawler.pow, no idea what this would do.
             (Brain as MonsterBrain).AddPresetPower(30592);
             (Brain as MonsterBrain).AddPresetPower(30005);
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
+            this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
+        }
+    }
+    #endregion
+    #region Skeleton
+    //No Uniques Added
+    [HandledSNO(5393, 87012, 5395, 5397, 80652, 5407, 5408, 5411, 434)]
+    public class Skeleton : Monster
+    {
+        public Skeleton(World world, int snoId, TagMap tags)
+            : base(world, snoId, tags)
+        {
+            this.Brain = new MonsterBrain(this);
+            (Brain as MonsterBrain).AddPresetPower(30592);
+            (Brain as MonsterBrain).AddPresetPower(30005);
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
+            this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
+        }
+    }
+    #endregion
+    #region Skeleton_TemplerIntro_NoWander
+    [HandledSNO(105863)]
+    public class Skeleton_TemplerIntro_NoWander : Monster
+    {
+        public Skeleton_TemplerIntro_NoWander(World world, int snoId, TagMap tags)
+            : base(world, snoId, tags)
+        {
+            this.Brain = new MonsterBrain(this);
+            (Brain as MonsterBrain).AddPresetPower(30592);
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
+            this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
+        }
+    }
+    #endregion
+    #region SkeletonSummoner
+    //No Uniques Added
+    [HandledSNO(5387)]
+    public class SkeletonSummoner : Monster
+    {
+        public SkeletonSummoner(World world, int snoId, TagMap tags)
+            : base(world, snoId, tags)
+        {
+            this.Brain = new MonsterBrain(this);
+            (Brain as MonsterBrain).AddPresetPower(30503);
+            (Brain as MonsterBrain).AddPresetPower(29990);
+            (Brain as MonsterBrain).AddPresetPower(30001);
+            (Brain as MonsterBrain).AddPresetPower(30005);
+            (Brain as MonsterBrain).AddPresetPower(30543); //Summon Skeletons
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
+            this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
+        }
+    }
+    #endregion
+    #region SkeletonArcher
+    [HandledSNO(5346, 218400, 5347)]
+    public class SkeletonArcher : Monster
+    {
+        public SkeletonArcher(World world, int snoId, TagMap tags)
+            : base(world, snoId, tags)
+        {
+            this.Brain = new MonsterBrain(this);
+            (Brain as MonsterBrain).AddPresetPower(30495);
+            (Brain as MonsterBrain).AddPresetPower(30334);
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
+            this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
+        }
+    }
+    #endregion
+    #region ShieldSkeleton
+    //No Uniques Added
+    [HandledSNO(5275, 5276, 5277)]
+    public class ShieldSkeletonSkeleton : Monster
+    {
+        public ShieldSkeletonSkeleton(World world, int snoId, TagMap tags)
+            : base(world, snoId, tags)
+        {
+            this.Brain = new MonsterBrain(this);
+            (Brain as MonsterBrain).AddPresetPower(30474);
+            (Brain as MonsterBrain).AddPresetPower(30473);
+            (Brain as MonsterBrain).AddPresetPower(30592);
+            (Brain as MonsterBrain).AddPresetPower(30005);
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
+            this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
+        }
+    }
+    #endregion
+    #region Grotesque
+    //No Uniques Added
+    [HandledSNO(3847, 3848, 218307, 218308, 218405, 4564)]
+    public class Grotesque : Monster
+    {
+        //3851 suicide blood, 220536 suicide imps = these happen on different SNOs and happen as they are dying.
+
+        public Grotesque(World world, int snoId, TagMap tags)
+            : base(world, snoId, tags)
+        {
+            this.Brain = new MonsterBrain(this);
+            (Brain as MonsterBrain).AddPresetPower(30531);
+            (Brain as MonsterBrain).AddPresetPower(30530);
+            //(Brain as MonsterBrain).AddPresetPower(30529); //Explode
+            (Brain as MonsterBrain).AddPresetPower(30592);
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
+            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
+            this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
+        }
+    }
+    #endregion
+    #region FleshPitFlyers
+    //No Uniques Added
+    [HandledSNO(4156, 218314, 218362, 4157, 81954, 368, 195747)]
+    public class FleshPitFlyers : Monster
+    {
+        public FleshPitFlyers(World world, int snoId, TagMap tags)
+            : base(world, snoId, tags)
+        {
+            this.Brain = new MonsterBrain(this);
+            (Brain as MonsterBrain).AddPresetPower(30334);
+            (Brain as MonsterBrain).AddPresetPower(30592);
             this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
             this.Attributes[GameAttribute.Hitpoints_Max] = 5f;
             this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
