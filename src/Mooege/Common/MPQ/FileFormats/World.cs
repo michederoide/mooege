@@ -228,7 +228,7 @@ namespace Mooege.Common.MPQ.FileFormats
         public string Name { get; private set; }
 
         [PersistentProperty("I0")]
-        public int Int0 { get; private set; }
+        public int CommandType { get; private set; }
 
         [PersistentProperty("TagMap")]
         public TagMap TagMap { get; private set; }
