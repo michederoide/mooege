@@ -221,7 +221,7 @@ namespace Mooege.Core.GS.Generators
             Vector3D initialStartTilePosition = new Vector3D(480, 480, 0);
             Dictionary<Vector3D, TileInfo> worldTiles = new Dictionary<Vector3D, TileInfo>();
             worldTiles.Add(initialStartTilePosition, entrance);
-            AddAdiacentTiles(worldTiles, entrance, tiles, 0, initialStartTilePosition);
+            AddAdjacentTiles(worldTiles, entrance, tiles, 0, initialStartTilePosition);
 
 
 
@@ -277,7 +277,7 @@ namespace Mooege.Core.GS.Generators
         /// If exit was not found look for deadend(filler?). </param>
         /// <param name="position">Position of originating tile.</param>
         /// <param name="x">Originating tile world x position</param>
-        private static int AddAdiacentTiles(Dictionary<Vector3D, TileInfo> worldTiles, TileInfo tileInfo, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
+        private static int AddAdjacentTiles(Dictionary<Vector3D, TileInfo> worldTiles, TileInfo tileInfo, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
         {
             Logger.Debug("Counter: {0}, ExitDirectionbitsOfGivenTile: {1}", counter, tileInfo.ExitDirectionBits);
             var lookUpExits = GetLookUpExitBits(tileInfo.ExitDirectionBits);
@@ -308,12 +308,12 @@ namespace Mooege.Core.GS.Generators
                 exitTypes.Remove(chosenExitDirection);
             }
 
-            //add addiacent tiles for each randomized direction
+            //add Adjacent tiles for each randomized direction
             foreach (var exit in randomizedExitTypes)
             {                
                 if ((lookUpExits & (int)exit.Key) > 0 && !worldTiles.ContainsKey(exit.Value))
                 {
-                    counter = AddAddiacentTileAtExit(worldTiles, tiles, counter, exit.Value);
+                    counter = AddAdjacentTileAtExit(worldTiles, tiles, counter, exit.Value);
                 }
             }
 
@@ -321,13 +321,13 @@ namespace Mooege.Core.GS.Generators
         }
 
         /// <summary>
-        /// Adds an addiacent tile in the given exit position
+        /// Adds an Adjacent tile in the given exit position
         /// </summary>
         /// <param name="worldTiles"></param>
         /// <param name="tiles"></param>
         /// <param name="counter"></param>
         /// <returns></returns>
-        private static int AddAddiacentTileAtExit(Dictionary<Vector3D, TileInfo> worldTiles, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
+        private static int AddAdjacentTileAtExit(Dictionary<Vector3D, TileInfo> worldTiles, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
         {
             TileTypes tileTypeToFind = TileTypes.Normal;
             if (counter > 5)
@@ -336,12 +336,12 @@ namespace Mooege.Core.GS.Generators
                 else tileTypeToFind = TileTypes.EventTile1;
             }
             //Find if other exits are in the area of the new tile to add
-            Dictionary<TileExits, ExitStatus> exitStatus = GetAddiacentExitStatus(worldTiles, position);
+            Dictionary<TileExits, ExitStatus> exitStatus = GetAdjacentExitStatus(worldTiles, position);
             TileInfo newTile = GetTileInfo(tiles, (int)tileTypeToFind, exitStatus);
             if (newTile == null) return counter;
             worldTiles.Add(position, newTile);
             Logger.Debug("Added tile: Type: {0}, SNOScene: {1}, ExitTypes: {2}", newTile.TileType, newTile.SNOScene, newTile.ExitDirectionBits);
-            counter = AddAdiacentTiles(worldTiles, newTile, tiles, counter + 1, position);
+            counter = AddAdjacentTiles(worldTiles, newTile, tiles, counter + 1, position);
             return counter;
         }
 
@@ -350,10 +350,10 @@ namespace Mooege.Core.GS.Generators
         /// </summary>
         /// <param name="worldTiles">Tiles already added to world</param>
         /// <param name="position">Position</param>
-        private static Dictionary<TileExits, ExitStatus> GetAddiacentExitStatus(Dictionary<Vector3D, TileInfo> worldTiles, Vector3D position)
+        private static Dictionary<TileExits, ExitStatus> GetAdjacentExitStatus(Dictionary<Vector3D, TileInfo> worldTiles, Vector3D position)
         {
             Dictionary<TileExits, ExitStatus> exitStatusDict = new Dictionary<TileExits, ExitStatus>();
-            //Compute East Addiacent Location
+            //Compute East Adjacent Location
             Vector3D positionEast = new Vector3D(position.X + 240, position.Y, position.Z);
             ExitStatus exitStatusEast = GetExistStatus(worldTiles, positionEast, TileExits.West);
             exitStatusDict.Add(TileExits.East, exitStatusEast);
