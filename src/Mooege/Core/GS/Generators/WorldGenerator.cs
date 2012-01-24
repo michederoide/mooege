@@ -30,6 +30,7 @@ using Mooege.Common.MPQ.FileFormats;
 using World = Mooege.Core.GS.Map.World;
 using Scene = Mooege.Core.GS.Map.Scene;
 using Mooege.Core.GS.Common.Types.Scene;
+using Mooege.Core.GS.Actors;
 using System;
 
 
@@ -40,7 +41,7 @@ namespace Mooege.Core.GS.Generators
     {
         static readonly Logger Logger = LogManager.CreateLogger();
 
-        
+
 
         public static World Generate(Game game, int worldSNO)
         {
@@ -124,7 +125,7 @@ namespace Mooege.Core.GS.Generators
                     RotationAxis = sceneChunk.PRTransform.Quaternion.Vector3D,
                     SceneGroupSNO = -1
                 };
-               
+
                 // If the scene has a subscene (cluster ID is set), choose a random subscenes from the cluster load it and attach it to parent scene /farmy
                 if (sceneChunk.SceneSpecification.ClusterID != -1)
                 {
@@ -186,6 +187,12 @@ namespace Mooege.Core.GS.Generators
             }
 
             loadLevelAreas(levelAreas, world);
+            //test new portal
+            //if (worldData.IsGenerated)
+            //{
+            //var portal = new Portal(world, 60713, 
+            //    }
+
             return world;
         }
 
@@ -193,38 +200,90 @@ namespace Mooege.Core.GS.Generators
         {
             Dictionary<int, TileInfo> tiles = new Dictionary<int, TileInfo>();
 
-            foreach (var drlgparam in worldData.DRLGParams)
+            //Each DRLGParam is a level
+            for (int paramIndex = 0; paramIndex < worldData.DRLGParams.Count; paramIndex++)
             {
+                var drlgparam = worldData.DRLGParams[paramIndex];
                 foreach (var tile in drlgparam.Tiles)
                 {
                     Logger.Debug("RandomGeneration: TileType: {0}", (TileTypes)tile.TileType);
                     tiles.Add(tile.SNOScene, tile);
                 }
+
+                TileInfo entrance = new TileInfo();
+                //HACK for Defiled Crypt as there is no tile yet with type 200. Maybe changing in DB would make more sense than putting this hack in
+                //    [11]: {[161961, Mooege.Common.MPQ.MPQAsset]}Worlds\\a1trDun_Cave_Old_Ruins_Random01.wrl
+                if (worldSNO == 161961)
+                {
+                    entrance = tiles[131902];
+                    tiles.Remove(131902);
+                }
+                else
+                    entrance = GetTileInfo(tiles, TileTypes.Entrance);
+
+                Vector3D initialStartTilePosition = new Vector3D(480, 480, 0);
+                Dictionary<Vector3D, TileInfo> worldTiles = new Dictionary<Vector3D, TileInfo>();
+                worldTiles.Add(initialStartTilePosition, entrance);
+                AddadjacentTiles(worldTiles, entrance, tiles, 0, initialStartTilePosition);
+
+                foreach (var tile in worldTiles)
+                {
+                    AddTile(worldData, tile.Value, tile.Key);
+                }
+
+                //Process commands
+                foreach (var command in drlgparam.Commands)
+                {
+                    //Adds information about level
+                    if (command.CommandType == (int)CommandType.Group)
+                    {
+                        //  command.TagMap
+                        //{Mooege.Core.GS.Common.Types.TagMap.TagMap}
+                        //    _tagMapEntries: Count = 6
+                        //    TagMapEntries: Count = 6
+                        //    TagMapSize: 0
+                        //command.TagMap.TagMapEntries
+                        //Count = 6
+                        //    [0]: {851986 = -1}
+                        //    [1]: {1015841 = 1}
+                        //    [2]: {851987 = -1}
+                        //    [3]: {851993 = -1}
+                        //    [4]: {1015822 = 0}
+                        //    [5]: {851983 = 19780} //19780 LevelArea A1_trDun_Level01
+                        //hardcode this now until proper tagmap implementation is done
+                        foreach (var chunk in worldData.SceneParams.SceneChunks)
+                        {
+                            if (command.TagMap.ContainsKey(DRLGCommandKeys.Group.Level))
+                                chunk.SceneSpecification.SNOLevelAreas[paramIndex] = command.TagMap[DRLGCommandKeys.Group.Level].Id;
+                        }
+
+
+                    }
+                    if (command.CommandType == (int)CommandType.AddExit)
+                    {
+                        //drlgparam.Commands[6].TagMap.TagMapEntries
+                        //[0]: {852000 = -1}    Type SNO (2)
+                        //[1]: {851984 = 60713} Type SNO (2) [20:16] (snobot) [1] 60713 Worlds trDun_Cain_Intro, 
+                        //[2]: {1020032 = 1}    (0)
+                        //[3]: {852050 = 0}     //Starting location? ID (7)
+                        //[4]: {1015841 = 1}    (0)
+                        //[5]: {852051 = 172}   //Destination Actor Tag (7)
+                        //[6]: {1015814 = 0}    (0)
+                        //[7]: {854612 = -1}    Type SNO (2)
+                        //[8]: {1015813 = 300}  (0) Tiletype (exit)
+                        //[9]: {1020416 = 1}    (0)
+                        //[10]: {854613 = -1}   Type SNO (2)
+                        //[11]: {1015821 = -1}  (0)
+
+                        //find all tiles of type
+                        //foreach(tiles.
+                        foreach (var tile in worldTiles)
+                        {
+                        }
+                    }
+                }
+
             }
-
-            var tilesByType = new Dictionary<Mooege.Common.MPQ.FileFormats.TileTypes, List<Mooege.Common.MPQ.FileFormats.TileInfo>>();
-
-            TileInfo entrance = new TileInfo();
-            //HACK for Defiled Crypt as there is no tile yet with type 200. Maybe changing in DB would make more sense than putting this hack in
-            //    [11]: {[161961, Mooege.Common.MPQ.MPQAsset]}Worlds\\a1trDun_Cave_Old_Ruins_Random01.wrl
-            if (worldSNO == 161961)
-            {
-                entrance = tiles[131902];
-                tiles.Remove(131902);
-            }
-            else
-                entrance = GetTileInfo(tiles, TileTypes.Entrance);
-
-            Vector3D initialStartTilePosition = new Vector3D(480, 480, 0);
-            Dictionary<Vector3D, TileInfo> worldTiles = new Dictionary<Vector3D, TileInfo>();
-            worldTiles.Add(initialStartTilePosition, entrance);
-            AddAdjacentTiles(worldTiles, entrance, tiles, 0, initialStartTilePosition);
-
-            foreach (var tile in worldTiles)
-            {
-                AddTile(worldData, tile.Value, tile.Key);
-            }
-
             //Coordinates are added after selection of tiles and map
             //Leave it for Defiler Crypt debugging
             //AddTile(world, tiles[132218], new Vector3D(720, 480, 0));
@@ -254,7 +313,7 @@ namespace Mooege.Core.GS.Generators
         /// If exit was not found look for deadend(filler?). </param>
         /// <param name="position">Position of originating tile.</param>
         /// <param name="x">Originating tile world x position</param>
-        private static int AddAdjacentTiles(Dictionary<Vector3D, TileInfo> worldTiles, TileInfo tileInfo, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
+        private static int AddadjacentTiles(Dictionary<Vector3D, TileInfo> worldTiles, TileInfo tileInfo, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
         {
             Logger.Debug("Counter: {0}, ExitDirectionbitsOfGivenTile: {1}", counter, tileInfo.ExitDirectionBits);
             var lookUpExits = GetLookUpExitBits(tileInfo.ExitDirectionBits);
@@ -285,12 +344,12 @@ namespace Mooege.Core.GS.Generators
                 exitTypes.Remove(chosenExitDirection);
             }
 
-            //add Adjacent tiles for each randomized direction
+            //add adjacent tiles for each randomized direction
             foreach (var exit in randomizedExitTypes)
-            {                
+            {
                 if ((lookUpExits & (int)exit.Key) > 0 && !worldTiles.ContainsKey(exit.Value))
                 {
-                    counter = AddAdjacentTileAtExit(worldTiles, tiles, counter, exit.Value);
+                    counter = AddadjacentTileAtExit(worldTiles, tiles, counter, exit.Value);
                 }
             }
 
@@ -298,13 +357,13 @@ namespace Mooege.Core.GS.Generators
         }
 
         /// <summary>
-        /// Adds an Adjacent tile in the given exit position
+        /// Adds an adjacent tile in the given exit position
         /// </summary>
         /// <param name="worldTiles"></param>
         /// <param name="tiles"></param>
         /// <param name="counter"></param>
         /// <returns></returns>
-        private static int AddAdjacentTileAtExit(Dictionary<Vector3D, TileInfo> worldTiles, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
+        private static int AddadjacentTileAtExit(Dictionary<Vector3D, TileInfo> worldTiles, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
         {
             TileTypes tileTypeToFind = TileTypes.Normal;
             if (counter > 5)
@@ -313,12 +372,12 @@ namespace Mooege.Core.GS.Generators
                 else tileTypeToFind = TileTypes.EventTile1;
             }
             //Find if other exits are in the area of the new tile to add
-            Dictionary<TileExits, ExitStatus> exitStatus = GetAdjacentExitStatus(worldTiles, position);
+            Dictionary<TileExits, ExitStatus> exitStatus = GetadjacentExitStatus(worldTiles, position);
             TileInfo newTile = GetTileInfo(tiles, (int)tileTypeToFind, exitStatus);
             if (newTile == null) return counter;
             worldTiles.Add(position, newTile);
             Logger.Debug("Added tile: Type: {0}, SNOScene: {1}, ExitTypes: {2}", newTile.TileType, newTile.SNOScene, newTile.ExitDirectionBits);
-            counter = AddAdjacentTiles(worldTiles, newTile, tiles, counter + 1, position);
+            counter = AddadjacentTiles(worldTiles, newTile, tiles, counter + 1, position);
             return counter;
         }
 
@@ -327,10 +386,10 @@ namespace Mooege.Core.GS.Generators
         /// </summary>
         /// <param name="worldTiles">Tiles already added to world</param>
         /// <param name="position">Position</param>
-        private static Dictionary<TileExits, ExitStatus> GetAdjacentExitStatus(Dictionary<Vector3D, TileInfo> worldTiles, Vector3D position)
+        private static Dictionary<TileExits, ExitStatus> GetadjacentExitStatus(Dictionary<Vector3D, TileInfo> worldTiles, Vector3D position)
         {
             Dictionary<TileExits, ExitStatus> exitStatusDict = new Dictionary<TileExits, ExitStatus>();
-            //Compute East Adjacent Location
+            //Compute East adjacent Location
             Vector3D positionEast = new Vector3D(position.X + 240, position.Y, position.Z);
             ExitStatus exitStatusEast = GetExistStatus(worldTiles, positionEast, TileExits.West);
             exitStatusDict.Add(TileExits.East, exitStatusEast);
@@ -389,7 +448,7 @@ namespace Mooege.Core.GS.Generators
         /// <returns></returns>
         private static int GetLookUpExitBits(int exitDirectionBits)
         {
-            return (((exitDirectionBits & ~3) & (int)0x4U) << 1 | ((exitDirectionBits & ~3) & (int)0x8U) >> 1) 
+            return (((exitDirectionBits & ~3) & (int)0x4U) << 1 | ((exitDirectionBits & ~3) & (int)0x8U) >> 1)
                 + (((exitDirectionBits & ~12) & (int)0x1U) << 1 | ((exitDirectionBits & ~12) & (int)0x2U) >> 1);
         }
 
@@ -408,7 +467,7 @@ namespace Mooege.Core.GS.Generators
             Dictionary<int, TileInfo> acceptedTiles = new Dictionary<int, TileInfo>();
             //By default use all tiles
             acceptedTiles = tiles;
-            foreach(TileExits exit in Enum.GetValues(typeof(TileExits)))
+            foreach (TileExits exit in Enum.GetValues(typeof(TileExits)))
             {
                 if (exitStatus[exit] == ExitStatus.Open) mustHaveExits += (int)exit;
                 //delete from the pool of tiles those that do have exits that are blocked
@@ -437,8 +496,8 @@ namespace Mooege.Core.GS.Generators
                 //return filler
                 return null;
             }
-            
-            return RandomHelper.RandomItem(tilesWithRightDirection, x=>(x.Probability/100));
+
+            return RandomHelper.RandomItem(tilesWithRightDirection, x => (x.Probability / 100));
         }
 
         /// <summary>
@@ -460,7 +519,7 @@ namespace Mooege.Core.GS.Generators
             sceneChunk.PRTransform = new PRTransform();
             sceneChunk.PRTransform.Quaternion = new Quaternion();
             sceneChunk.PRTransform.Quaternion.W = 1.0f;
-            sceneChunk.PRTransform.Quaternion.Vector3D = new Vector3D(0,0,0);            
+            sceneChunk.PRTransform.Quaternion.Vector3D = new Vector3D(0, 0, 0);
             sceneChunk.PRTransform.Vector3D = new Vector3D();
             sceneChunk.PRTransform.Vector3D = location;
 
@@ -498,7 +557,7 @@ namespace Mooege.Core.GS.Generators
 
             sceneChunk.SceneSpecification = spec;
 
-            
+
             worldData.SceneParams.SceneChunks.Add(sceneChunk);
             worldData.SceneParams.ChunkCount++;
         }
@@ -525,9 +584,9 @@ namespace Mooege.Core.GS.Generators
             // Each monster are created in Mooege.Core.GS.Actors.Implementations.Monsters
             // By Poluxxx
             int[] aSNO = new int[] { 
-                    6652      // Zombie
-                    , 6646      // Ravenous
-                    , 136943    // Ghost
+                   // 6652      // Zombie
+                     6443      // Ravenous
+                    //, 136943    // Ghost
             };
 
             foreach (int la in levelAreas.Keys)
@@ -593,7 +652,7 @@ namespace Mooege.Core.GS.Generators
                                     // Adventure are basically made up of a markerSet that has relative PRTransforms
                                     // it has some other fields that are always 0 and a reference to a symbol actor
                                     // no idea what they are used for - farmy
-                                    
+
                                     var adventure = spawnEntry.SNOHandle.Target as Adventure;
                                     var markerSet = new SNOHandle(adventure.SNOMarkerSet).Target as MarkerSet;
 
@@ -656,14 +715,14 @@ namespace Mooege.Core.GS.Generators
                     // HACK: don't spawn monsters in tristram town scenes /mdz
                     if (MPQStorage.Data.Assets[SNOGroup.Scene][scene.SceneSNO.Id].Name.StartsWith("trOut_Tristram_"))
                         continue;
-                    
+
 
                     for (int i = 0; i < 100; i++)
                     {
                         if (RandomHelper.NextDouble() > 0.8)
                         {
                             // TODO Load correct spawn population
-                             // 2.5 is units per square, TODO: Find out how to calculate units per square. Is it F1 * V0.I1 / SquareCount?
+                            // 2.5 is units per square, TODO: Find out how to calculate units per square. Is it F1 * V0.I1 / SquareCount?
                             int x = RandomHelper.Next(scene.NavMesh.SquaresCountX);
                             int y = RandomHelper.Next(scene.NavMesh.SquaresCountY);
 
@@ -705,7 +764,7 @@ namespace Mooege.Core.GS.Generators
 
             if (actor == null)
             {
-                if(actorHandle.Id != -1)
+                if (actorHandle.Id != -1)
                     Logger.Warn("ActorFactory did not load actor {0}", actorHandle);
                 return;
             }
