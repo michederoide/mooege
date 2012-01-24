@@ -58,8 +58,7 @@ namespace Mooege.Core.GS.Generators
             {
                 Logger.Error("World {0} [{1}] is a dynamic world! Can't generate proper dynamic worlds yet!", worldAsset.Name, worldAsset.SNOId);
 
-                return GenerateRandomDungeon(game, worldSNO, worldData);
-                //return null;
+                GenerateRandomDungeon(worldSNO, worldData);
             }
 
             var world = new World(game, worldSNO);
@@ -190,10 +189,8 @@ namespace Mooege.Core.GS.Generators
             return world;
         }
 
-        private static World GenerateRandomDungeon(Game game, int worldSNO, Mooege.Common.MPQ.FileFormats.World worldData)
+        private static void GenerateRandomDungeon(int worldSNO, Mooege.Common.MPQ.FileFormats.World worldData)
         {
-            var world = new World(game, worldSNO);
-
             Dictionary<int, TileInfo> tiles = new Dictionary<int, TileInfo>();
 
             foreach (var drlgparam in worldData.DRLGParams)
@@ -223,29 +220,9 @@ namespace Mooege.Core.GS.Generators
             worldTiles.Add(initialStartTilePosition, entrance);
             AddAdjacentTiles(worldTiles, entrance, tiles, 0, initialStartTilePosition);
 
-
-
-            //Make sure there are no negative coordinates
-            // Shift all coordinates with required values
-            int shiftX = 0;
-            int shiftY = 0;
             foreach (var tile in worldTiles)
             {
-                if (tile.Key.X < 0 && Math.Abs(tile.Key.X) > shiftX) shiftX = (int)Math.Abs(tile.Key.X);
-                if (tile.Key.Y < 0 && Math.Abs(tile.Key.Y) > shiftY) shiftY = (int)Math.Abs(tile.Key.Y);
-            }
-
-            //shift tiles with needed values
-            foreach (var tile in worldTiles)
-            {
-                tile.Key.X += shiftX;
-                tile.Key.Y += shiftY;
-            }
-
-
-            foreach (var tile in worldTiles)
-            {
-                AddTile(world, tile.Value, tile.Key);
+                AddTile(worldData, tile.Value, tile.Key);
             }
 
             //Coordinates are added after selection of tiles and map
@@ -253,7 +230,7 @@ namespace Mooege.Core.GS.Generators
             //AddTile(world, tiles[132218], new Vector3D(720, 480, 0));
             //AddTile(world, tiles[132203], new Vector3D(480, 240, 0));
             //AddTile(world, tiles[132263], new Vector3D(240, 480, 0));
-            return world;
+            //return world;
         }
 
         /// <summary>
@@ -460,8 +437,8 @@ namespace Mooege.Core.GS.Generators
                 //return filler
                 return null;
             }
-
-            return RandomHelper.RandomItem(tilesWithRightDirection, x=>1);
+            
+            return RandomHelper.RandomItem(tilesWithRightDirection, x=>(x.Probability/100));
         }
 
         /// <summary>
@@ -476,18 +453,21 @@ namespace Mooege.Core.GS.Generators
             return RandomHelper.RandomItem(tilesWithRightDirection, x => 1);
         }
 
-        private static void AddTile(World world, TileInfo tileInfo, Vector3D location)
+        private static void AddTile(Mooege.Common.MPQ.FileFormats.World worldData, TileInfo tileInfo, Vector3D location)
         {
-            var levelAreas = new Dictionary<int, List<Scene>>();
-            var scene = new Scene(world, location, tileInfo.SNOScene, null);
-            scene.MiniMapVisibility = true; // SceneMiniMapVisibility.Visited;
-            //scene.Position = new Vector3D(0, 0, 0);
-            scene.RotationW = 1.0f; //scene.RotationAmount = 1.0f;
-            scene.RotationAxis = new Vector3D(0, 0, 0);
-            scene.SceneGroupSNO = -1;
+            var sceneChunk = new SceneChunk();
+            sceneChunk.SNOHandle = new SNOHandle(tileInfo.SNOScene);
+            sceneChunk.PRTransform = new PRTransform();
+            sceneChunk.PRTransform.Quaternion = new Quaternion();
+            sceneChunk.PRTransform.Quaternion.W = 1.0f;
+            sceneChunk.PRTransform.Quaternion.Vector3D = new Vector3D(0,0,0);            
+            sceneChunk.PRTransform.Vector3D = new Vector3D();
+            sceneChunk.PRTransform.Vector3D = location;
+
+
 
             var spec = new SceneSpecification();
-            scene.Specification = spec;
+            //scene.Specification = spec;
             spec.Cell = new Vector2D() { X = 0, Y = 0 };
             spec.CellZ = 0;
             spec.SNOLevelAreas = new int[] { 154588, -1, -1, -1 };
@@ -516,21 +496,11 @@ namespace Mooege.Core.GS.Generators
             spec.SceneCachedValues.AABB2 = sceneData.AABBMarketSetBounds;
             spec.SceneCachedValues.Unknown4 = new int[4] { 0, 0, 0, 0 };
 
-            scene.LoadMarkers();
+            sceneChunk.SceneSpecification = spec;
 
-            // add scene to level area dictionary
-            foreach (var levelArea in scene.Specification.SNOLevelAreas)
-            {
-                if (levelArea != -1)
-                {
-                    if (!levelAreas.ContainsKey(levelArea))
-                        levelAreas.Add(levelArea, new List<Scene>());
-
-                    levelAreas[levelArea].Add(scene);
-                }
-            }
-
-            loadLevelAreas(levelAreas, world);
+            
+            worldData.SceneParams.SceneChunks.Add(sceneChunk);
+            worldData.SceneParams.ChunkCount++;
         }
 
         /// <summary>

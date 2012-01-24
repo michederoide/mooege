@@ -98,7 +98,7 @@ namespace Mooege.Common.MPQ.FileFormats
     public class SceneParams : ISerializableData
     {
         public List<SceneChunk> SceneChunks = new List<SceneChunk>();
-        public int ChunkCount { get; private set; }
+        public int ChunkCount { get; set; }
 
         public void Read(MpqFileStream stream)
         {
@@ -110,9 +110,9 @@ namespace Mooege.Common.MPQ.FileFormats
 
     public class SceneChunk : ISerializableData
     {
-        public SNOHandle SNOHandle { get; private set; }
-        public PRTransform PRTransform { get; private set; }
-        public SceneSpecification SceneSpecification { get; private set; }
+        public SNOHandle SNOHandle { get; set; }
+        public PRTransform PRTransform { get; set; }
+        public SceneSpecification SceneSpecification { get; set; }
 
         public void Read(MpqFileStream stream)
         {
@@ -191,7 +191,7 @@ namespace Mooege.Common.MPQ.FileFormats
         public int SNOScene { get; private set; }
 
         [PersistentProperty("Int2")]
-        public int Int2 { get; private set; }
+        public int Probability { get; private set; }
 
         [PersistentProperty("TagMap")]
         public TagMap TagMap { get; private set; }
@@ -204,7 +204,7 @@ namespace Mooege.Common.MPQ.FileFormats
             ExitDirectionBits = stream.ReadValueS32();
             TileType = stream.ReadValueS32();
             SNOScene = stream.ReadValueS32();
-            Int2 = stream.ReadValueS32();
+            Probability = stream.ReadValueS32();
             this.TagMap = stream.ReadSerializedItem<TagMap>();
 
             stream.Position += (2 * 4);
