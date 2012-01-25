@@ -134,11 +134,10 @@ namespace Mooege.Core.MooNet.Services
             }
         }
 
-        public override void CancelFindGame(IRpcController controller, bnet.protocol.game_master.CancelFindGameRequest request, Action<bnet.protocol.NoData> done)
+        public override void CancelGame(IRpcController controller, bnet.protocol.game_master.CancelGameRequest request, Action<bnet.protocol.NoData> done)
         {
             throw new NotImplementedException();
         }
-
         public override void GameEnded(IRpcController controller, bnet.protocol.game_master.GameEndedNotification request, Action<bnet.protocol.NO_RESPONSE> done)
         {
             throw new NotImplementedException();

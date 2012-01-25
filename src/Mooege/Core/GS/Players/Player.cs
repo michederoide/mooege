@@ -307,7 +307,6 @@ namespace Mooege.Core.GS.Players
             this.Attributes[GameAttribute.Get_Hit_Max_Per_Level] = 10f;
             this.Attributes[GameAttribute.Get_Hit_Max_Base] = 50f;
             this.Attributes[GameAttribute.Hit_Chance] = 1f;
-            this.Attributes[GameAttribute.Dodge_Rating_Total] = 3.051758E-05f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Item_CurrentHand] = 1.199219f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Item_Total_MainHand] = 1.199219f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.199219f;
@@ -342,9 +341,9 @@ namespace Mooege.Core.GS.Players
             this.Attributes[GameAttribute.Hitpoints_Cur] = this.Attributes[GameAttribute.Hitpoints_Max_Total];
 
             //Resource //TODO: Originals were 200f, this is so you can test skills.
-            this.Attributes[GameAttribute.Resource_Cur, this.ResourceID] = 400f;
-            this.Attributes[GameAttribute.Resource_Max, this.ResourceID] = 400f;
-            this.Attributes[GameAttribute.Resource_Max_Total, this.ResourceID] = 400f;
+            this.Attributes[GameAttribute.Resource_Cur, this.ResourceID] = 400;
+            this.Attributes[GameAttribute.Resource_Max, this.ResourceID] = 400;
+            this.Attributes[GameAttribute.Resource_Max_Total, this.ResourceID] = 400;
             this.Attributes[GameAttribute.Resource_Effective_Max, this.ResourceID] = 400f;
             this.Attributes[GameAttribute.Resource_Regen_Total, this.ResourceID] = 3.051758E-05f;
             this.Attributes[GameAttribute.Resource_Type_Primary] = this.ResourceID;
@@ -374,10 +373,10 @@ namespace Mooege.Core.GS.Players
                      */
                     //Secondary Resource for the Demon Hunter
                     int Discipline = this.ResourceID + 1; //0x00000006
-                    this.Attributes[GameAttribute.Resource_Cur, Discipline] = 30f;
-                    this.Attributes[GameAttribute.Resource_Max, Discipline] = 30f;
-                    this.Attributes[GameAttribute.Resource_Max_Total, Discipline] = 30f;
-                    this.Attributes[GameAttribute.Resource_Effective_Max, Discipline] = 30f;
+                    this.Attributes[GameAttribute.Resource_Cur, Discipline] = 30;
+                    this.Attributes[GameAttribute.Resource_Max, Discipline] = 30;
+                    this.Attributes[GameAttribute.Resource_Max_Total, Discipline] = 30;
+                    this.Attributes[GameAttribute.Resource_Effective_Max, Discipline] = 30;
                     this.Attributes[GameAttribute.Resource_Type_Secondary] = Discipline;
                     break;
                 case ToonClass.Monk:
@@ -1625,13 +1624,13 @@ namespace Mooege.Core.GS.Players
         {
             if (amount > 0f)
             {
-                this.Attributes[GameAttribute.Resource_Cur, resourceID] = Math.Min(
+                this.Attributes[GameAttribute.Resource_Cur, resourceID] = (int)Math.Min(
                     this.Attributes[GameAttribute.Resource_Cur, resourceID] + amount,
                     this.Attributes[GameAttribute.Resource_Max, resourceID]);
             }
             else
             {
-                this.Attributes[GameAttribute.Resource_Cur, resourceID] = Math.Max(
+                this.Attributes[GameAttribute.Resource_Cur, resourceID] = (int)Math.Max(
                     this.Attributes[GameAttribute.Resource_Cur, resourceID] + amount,
                     0f);
             }
