@@ -171,7 +171,7 @@ namespace Mooege.Core.MooNet.Toons
         {
             get
             {
-                return D3.Hero.Digest.CreateBuilder().SetVersion(893)
+                return D3.Hero.Digest.CreateBuilder().SetVersion(895)
                                 .SetHeroId(this.D3EntityID)
                                 .SetHeroName(this.HeroNameField.Value)
                                 .SetGbidClass(this.HeroClassFieldTransform((int)this.HeroClassField.Value))
@@ -256,7 +256,7 @@ namespace Mooege.Core.MooNet.Toons
 
         private void SetFields(string name, int hashCode, int @class, ToonFlags flags, byte level, GameAccount owner, uint timePlayed, int goldAmount)
         {
-            this.D3EntityID = D3.OnlineService.EntityId.CreateBuilder().SetIdHigh((ulong)EntityIdHelper.HighIdType.ToonId + this.PersistentID).SetIdLow(this.PersistentID).Build();
+            this.D3EntityID = D3.OnlineService.EntityId.CreateBuilder().SetIdHigh((ulong)EntityIdHelper.HighIdType.ToonId).SetIdLow(this.PersistentID).Build();
 
 
             this.HeroNameField.Value = name;
@@ -447,4 +447,3 @@ namespace Mooege.Core.MooNet.Toons
         }
     }
         #endregion
-}
