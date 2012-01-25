@@ -481,7 +481,7 @@ namespace Mooege.Core.GS.Players
             else if (message is ACDClientTranslateMessage) OnPlayerMovement(client, (ACDClientTranslateMessage)message);
             else if (message is TryWaypointMessage) OnTryWaypoint(client, (TryWaypointMessage)message);
             else if (message is RequestBuyItemMessage) OnRequestBuyItem(client, (RequestBuyItemMessage)message);
-            else if (message is RequestAddSocketMessage) OnRequestAddSocket(client, (RequestAddSocketMessage)message);
+            //else if (message is RequestAddSocketMessage) OnRequestAddSocket(client, (RequestAddSocketMessage)message);
             else if (message is HirelingDismissMessage) OnHirelingDismiss();
             else if (message is SocketSpellMessage) OnSocketSpell(client, (SocketSpellMessage)message);
             else if (message is PlayerTranslateFacingMessage) OnTranslateFacing(client, (PlayerTranslateFacingMessage)message);
@@ -671,7 +671,7 @@ namespace Mooege.Core.GS.Players
                 Angle = message.Angle,
                 TurnImmediately = false,
                 Speed = message.Speed,
-                //Field5 = message.Field5,
+                //Field5 = message.Field5,  // TODO: don't even know what this is, might be message.Field6 now?
                 AnimationTag = message.AnimationTag
             };
 
@@ -703,17 +703,17 @@ namespace Mooege.Core.GS.Players
             vendor.OnRequestBuyItem(this, requestBuyItemMessage.ItemId);
         }
 
-        private void OnRequestAddSocket(GameClient client, RequestAddSocketMessage requestAddSocketMessage)
-        {
-            var item = World.GetItem(requestAddSocketMessage.ItemID);
-            if (item == null || item.Owner != this)
-                return;
-            var jeweler = World.GetActorInstance<Jeweler>();
-            if (jeweler == null)
-                return;
+        //private void OnRequestAddSocket(GameClient client, RequestAddSocketMessage requestAddSocketMessage)
+        //{
+        //    var item = World.GetItem(requestAddSocketMessage.ItemID);
+        //    if (item == null || item.Owner != this)
+        //        return;
+        //    var jeweler = World.GetActorInstance<Jeweler>();
+        //    if (jeweler == null)
+        //        return;
 
-            jeweler.OnAddSocket(this, item);
-        }
+        //    jeweler.OnAddSocket(this, item);
+        //}
 
         private void OnHirelingDismiss()
         {
@@ -1719,24 +1719,12 @@ namespace Mooege.Core.GS.Players
 
         #endregion
 
-        #region StoneOfRecall, CubeOfNephalem, CauldonOfJourdan
+        #region StoneOfRecall
 
         public void EnableStoneOfRecall()
         {
             Attributes[GameAttribute.Skill, 0x0002EC66] = 1;
             Attributes[GameAttribute.Skill_Total, 0x0002EC66] = 1;
-            Attributes.SendChangedMessage(this.InGameClient);
-        }
-
-        public void EnableCauldronOfJordan()
-        {         
-            Attributes[GameAttribute.ItemMeltUnlocked] = true;
-            Attributes.SendChangedMessage(this.InGameClient);
-        }
-
-        public void EnableCubeOfNephalem()
-        {
-            Attributes[GameAttribute.SalvageUnlocked] = true;
             Attributes.SendChangedMessage(this.InGameClient);
         }
 

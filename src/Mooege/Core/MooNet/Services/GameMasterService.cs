@@ -119,18 +119,18 @@ namespace Mooege.Core.MooNet.Services
                 .SetRequestId(gameFound.RequestId)
                 .SetGameHandle(gameFound.GameHandle);
 
-            this.Client.MakeRPCWithListenerId(request.ObjectId, () =>
+            this.Client.MakeRPCWithListenerId(request.FactoryObjectId, () =>
                 bnet.protocol.game_master.GameFactorySubscriber.CreateStub(this.Client).NotifyGameFound(null, notificationBuilder.Build(), callback => { }));
             
             if(gameFound.Started)
             {
                 Logger.Warn("Client {0} joining game with FactoryID:{1}", this.Client.Account.CurrentGameAccount.CurrentToon.HeroNameField.Value, gameFound.FactoryID);
-                gameFound.JoinGame(clients, request.ObjectId);
+                gameFound.JoinGame(clients, request.FactoryObjectId);
             }
             else
             {
                 Logger.Warn("Client {0} creating new game", this.Client.Account.CurrentGameAccount.CurrentToon.HeroNameField.Value);
-                gameFound.StartGame(clients, request.ObjectId);
+                gameFound.StartGame(clients, request.FactoryObjectId);
             }
         }
 
