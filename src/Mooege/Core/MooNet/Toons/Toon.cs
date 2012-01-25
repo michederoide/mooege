@@ -55,7 +55,7 @@ namespace Mooege.Core.MooNet.Toons
         AllUnknowns = Unknown1 | Unknown2 | Unknown3 | Unknown4
     }
     #endregion
-    
+
     public class Toon : PersistentRPCObject
     {
         //Fields that notify clients on change
@@ -207,7 +207,7 @@ namespace Mooege.Core.MooNet.Toons
         }
 
 
-        
+
         //TODO: Use same order in ToonClass so there is no need for two enums
         public int VoiceClassID // Used for Conversations
         {
@@ -447,3 +447,4 @@ namespace Mooege.Core.MooNet.Toons
         }
     }
         #endregion
+}
