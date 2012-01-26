@@ -1,0 +1,26 @@
+<project name="Mooege-NAnt-build" default="rebuild">
+	<!-- This build requires NAnt + NAnt Contrib to run -->  
+	<property name="configuration" value="release"/>
+	<target name="clean" description="Delete all previously compiled binaries.">
+		<delete>
+			<fileset>
+				<include name="**/bin/**" />
+				<include name="**/obj/**" />
+				<include name="**/*.suo" />
+				<include name="**/*.user" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="build" description="Build all targets.">
+		<call target="build.Mooege"/>
+	</target>
+
+	<target name="rebuild" depends="clean, build" />
+
+	<target name="build.Mooege">
+		<msbuild project="Mooege-VS2010.csproj">
+		</msbuild>
+	</target>
+
+</project>
