@@ -4,10 +4,10 @@
 	<target name="clean" description="Delete all previously compiled binaries.">
 		<delete>
 			<fileset>
-				<include name="**/bin/**" />
-				<include name="**/obj/**" />
-				<include name="**/*.suo" />
-				<include name="**/*.user" />
+				<include name="../src/mooege/**/bin/**" />
+				<include name="../src/mooege/**/obj/**" />
+				<include name="../src/mooege/**/*.suo" />
+				<include name="../src/mooege/**/*.user" />
 			</fileset>
 		</delete>
 	</target>
@@ -19,7 +19,7 @@
 	<target name="rebuild" depends="clean, build" />
 
 	<target name="build.Mooege">
-		<msbuild project="Mooege-VS2010.csproj">
+		<msbuild project="../src/mooege/Mooege-VS2010.csproj">
 		</msbuild>
 	</target>
 
