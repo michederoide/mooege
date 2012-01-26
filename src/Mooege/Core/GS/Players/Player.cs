@@ -16,7 +16,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
@@ -49,6 +48,7 @@ using Mooege.Net.GS.Message.Definitions.Artisan;
 using Mooege.Core.GS.Actors.Implementations.Artisans;
 using Mooege.Core.GS.Actors.Implementations.Hirelings;
 using Mooege.Net.GS.Message.Definitions.Hireling;
+using System;
 using Mooege.Common.Helpers;
 using Mooege.Net.GS.Message.Definitions.ACD;
 
@@ -341,9 +341,9 @@ namespace Mooege.Core.GS.Players
             this.Attributes[GameAttribute.Hitpoints_Cur] = this.Attributes[GameAttribute.Hitpoints_Max_Total];
 
             //Resource //TODO: Originals were 200f, this is so you can test skills.
-            this.Attributes[GameAttribute.Resource_Cur, this.ResourceID] = 400;
-            this.Attributes[GameAttribute.Resource_Max, this.ResourceID] = 400;
-            this.Attributes[GameAttribute.Resource_Max_Total, this.ResourceID] = 400;
+            this.Attributes[GameAttribute.Resource_Cur, this.ResourceID] = 400f;
+            this.Attributes[GameAttribute.Resource_Max, this.ResourceID] = 400f;
+            this.Attributes[GameAttribute.Resource_Max_Total, this.ResourceID] = 400f;
             this.Attributes[GameAttribute.Resource_Effective_Max, this.ResourceID] = 400f;
             this.Attributes[GameAttribute.Resource_Regen_Total, this.ResourceID] = 3.051758E-05f;
             this.Attributes[GameAttribute.Resource_Type_Primary] = this.ResourceID;
