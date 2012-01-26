@@ -29,6 +29,7 @@ using Mooege.Core.GS.Common.Types.TagMap;
 using Mooege.Net.GS.Message;
 using Mooege.Core.GS.Players;
 using Mooege.Net.GS.Message.Definitions.Actor;
+using Mooege.Core.GS.Actors.Implementations.Minions;
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
@@ -2046,14 +2047,55 @@ namespace Mooege.Core.GS.Powers.Implementations
     [ImplementsPowerSNO(Skills.Skills.Barbarian.Situational.CallOfTheAncients)]
     public class CallOfTheAncients : Skill
     {
-
         public override IEnumerable<TickTimer> Main()
         {
-            /*Vector3D[] spawnPoints = PowerMath.GenerateSpreadPositions(TargetPosition, new Vector3D(TargetPosition.X, TargetPosition.Y + 5f, TargetPosition.Z), 120, 3);
-            User.PlayEffectGroup(215458);
-            SpawnEffect(90443, spawnPoints[0], 0, WaitSeconds(15f));
-            SpawnEffect(90535, spawnPoints[1], 0, WaitSeconds(15f));
-            SpawnEffect(90536, spawnPoints[2], 0, WaitSeconds(15f));*/
+            StartCooldown(60f);
+
+            List<Actor> ancients = new List<Actor>();
+            for (int i = 0; i < 3; i++)
+            {
+                if (i == 0)
+                {
+                    var ancient = new AncientKorlic(this.World, this, i);
+                    ancient.Brain.DeActivate();
+                    ancient.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+                    ancient.Attributes[GameAttribute.Untargetable] = true;
+                    ancient.EnterWorld(ancient.Position);
+                    ancient.PlayActionAnimation(97105);
+                    ancients.Add(ancient);
+                    yield return WaitSeconds(0.2f);
+                }
+                if (i == 1)
+                {
+                    var ancient = new AncientTalic(this.World, this, i);
+                    ancient.Brain.DeActivate();
+                    ancient.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+                    ancient.Attributes[GameAttribute.Untargetable] = true;
+                    ancient.EnterWorld(ancient.Position);
+                    ancient.PlayActionAnimation(97109);
+                    ancients.Add(ancient);
+                    yield return WaitSeconds(0.2f);
+                }
+                if (i == 2)
+                {
+                    var ancient = new AncientMawdawc(this.World, this, i);
+                    ancient.Brain.DeActivate();
+                    ancient.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+                    ancient.Attributes[GameAttribute.Untargetable] = true;
+                    ancient.EnterWorld(ancient.Position);
+                    ancient.PlayActionAnimation(97107);
+                    ancients.Add(ancient);
+                    yield return WaitSeconds(0.2f);
+                }
+            }
+            yield return WaitSeconds(0.8f);
+
+            foreach (Actor ancient in ancients)
+            {
+                (ancient as Minion).Brain.Activate();
+                ancient.Attributes[GameAttribute.Untargetable] = false;
+                ancient.Attributes.BroadcastChangedIfRevealed();
+            }
             yield break;
         }
     }
