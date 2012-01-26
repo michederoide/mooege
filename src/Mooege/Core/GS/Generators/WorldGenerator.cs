@@ -187,13 +187,19 @@ namespace Mooege.Core.GS.Generators
             }
 
             loadLevelAreas(levelAreas, world);
-            //test new portal
-            //if (worldData.IsGenerated)
-            //{
-            //var portal = new Portal(world, 60713, 
-            //    }
 
             return world;
+        }
+
+        /// <summary>
+        /// Status of an added exit to world
+        /// Used when a new tile is needed in a specific place
+        /// </summary>
+        public enum ExitStatus
+        {
+            Free, //no tile in that direction
+            Blocked, //"wall" in that direction
+            Open //"path" in that direction
         }
 
         private static void GenerateRandomDungeon(int worldSNO, Mooege.Common.MPQ.FileFormats.World worldData)
@@ -224,64 +230,18 @@ namespace Mooege.Core.GS.Generators
                 Vector3D initialStartTilePosition = new Vector3D(480, 480, 0);
                 Dictionary<Vector3D, TileInfo> worldTiles = new Dictionary<Vector3D, TileInfo>();
                 worldTiles.Add(initialStartTilePosition, entrance);
-                AddadjacentTiles(worldTiles, entrance, tiles, 0, initialStartTilePosition);
+                AddAdjacentTiles(worldTiles, entrance, tiles, 0, initialStartTilePosition);
 
                 foreach (var tile in worldTiles)
                 {
                     AddTile(worldData, tile.Value, tile.Key);
                 }
 
-                //Process commands
-                foreach (var command in drlgparam.Commands)
-                {
-                    //Adds information about level
-                    if (command.CommandType == (int)CommandType.Group)
-                    {
-                        //  command.TagMap
-                        //{Mooege.Core.GS.Common.Types.TagMap.TagMap}
-                        //    _tagMapEntries: Count = 6
-                        //    TagMapEntries: Count = 6
-                        //    TagMapSize: 0
-                        //command.TagMap.TagMapEntries
-                        //Count = 6
-                        //    [0]: {851986 = -1}
-                        //    [1]: {1015841 = 1}
-                        //    [2]: {851987 = -1}
-                        //    [3]: {851993 = -1}
-                        //    [4]: {1015822 = 0}
-                        //    [5]: {851983 = 19780} //19780 LevelArea A1_trDun_Level01
-                        //hardcode this now until proper tagmap implementation is done
-                        foreach (var chunk in worldData.SceneParams.SceneChunks)
-                        {
-                            if (command.TagMap.ContainsKey(DRLGCommandKeys.Group.Level))
-                                chunk.SceneSpecification.SNOLevelAreas[paramIndex] = command.TagMap[DRLGCommandKeys.Group.Level].Id;
-                        }
+                //AddFiller
 
+                ProcessCommands(drlgparam, worldData, paramIndex);
 
-                    }
-                    if (command.CommandType == (int)CommandType.AddExit)
-                    {
-                        //drlgparam.Commands[6].TagMap.TagMapEntries
-                        //[0]: {852000 = -1}    Type SNO (2)
-                        //[1]: {851984 = 60713} Type SNO (2) [20:16] (snobot) [1] 60713 Worlds trDun_Cain_Intro, 
-                        //[2]: {1020032 = 1}    (0)
-                        //[3]: {852050 = 0}     //Starting location? ID (7)
-                        //[4]: {1015841 = 1}    (0)
-                        //[5]: {852051 = 172}   //Destination Actor Tag (7)
-                        //[6]: {1015814 = 0}    (0)
-                        //[7]: {854612 = -1}    Type SNO (2)
-                        //[8]: {1015813 = 300}  (0) Tiletype (exit)
-                        //[9]: {1020416 = 1}    (0)
-                        //[10]: {854613 = -1}   Type SNO (2)
-                        //[11]: {1015821 = -1}  (0)
-
-                        //find all tiles of type
-                        //foreach(tiles.
-                        foreach (var tile in worldTiles)
-                        {
-                        }
-                    }
-                }
+ 
 
             }
             //Coordinates are added after selection of tiles and map
@@ -292,16 +252,69 @@ namespace Mooege.Core.GS.Generators
             //return world;
         }
 
+
         /// <summary>
-        /// Status of an added exit to world
-        /// Used when a new tile is needed in a specific place
+        /// Processes the commands for generating world
         /// </summary>
-        public enum ExitStatus
+        /// <param name="drlgParams"></param>
+        /// <param name="worldData"></param>
+        /// <param name="levelIndex"></param>
+        private static void ProcessCommands(DRLGParams drlgParams, Mooege.Common.MPQ.FileFormats.World worldData, int levelIndex)
         {
-            Free, //no tile in that direction
-            Blocked, //"wall" in that direction
-            Open //"path" in that direction
+            //Process commands
+            foreach (var command in drlgParams.Commands)
+            {
+                //Adds information about level
+                if (command.CommandType == (int)CommandType.Group)
+                {
+                    //  command.TagMap
+                    //{Mooege.Core.GS.Common.Types.TagMap.TagMap}
+                    //    _tagMapEntries: Count = 6
+                    //    TagMapEntries: Count = 6
+                    //    TagMapSize: 0
+                    //command.TagMap.TagMapEntries
+                    //Count = 6
+                    //    [0]: {851986 = -1}
+                    //    [1]: {1015841 = 1}
+                    //    [2]: {851987 = -1}
+                    //    [3]: {851993 = -1}
+                    //    [4]: {1015822 = 0}
+                    //    [5]: {851983 = 19780} //19780 LevelArea A1_trDun_Level01
+                    //hardcode this now until proper tagmap implementation is done
+                    foreach (var chunk in worldData.SceneParams.SceneChunks)
+                    {
+                        if (command.TagMap.ContainsKey(DRLGCommandKeys.Group.Level))
+                            chunk.SceneSpecification.SNOLevelAreas[levelIndex] = command.TagMap[DRLGCommandKeys.Group.Level].Id;
+                    }
+
+
+                }
+                if (command.CommandType == (int)CommandType.AddExit)
+                {
+                    //drlgparam.Commands[6].TagMap.TagMapEntries
+                    //[0]: {852000 = -1}    Type SNO (2)
+                    //[1]: {851984 = 60713} Type SNO (2) [20:16] (snobot) [1] 60713 Worlds trDun_Cain_Intro, 
+                    //[2]: {1020032 = 1}    (0)
+                    //[3]: {852050 = 0}     //Starting location? ID (7)
+                    //[4]: {1015841 = 1}    (0)
+                    //[5]: {852051 = 172}   //Destination Actor Tag (7)
+                    //[6]: {1015814 = 0}    (0)
+                    //[7]: {854612 = -1}    Type SNO (2)
+                    //[8]: {1015813 = 300}  (0) Tiletype (exit)
+                    //[9]: {1020416 = 1}    (0)
+                    //[10]: {854613 = -1}   Type SNO (2)
+                    //[11]: {1015821 = -1}  (0)
+
+                    //find all tiles of TileType                         
+                    //foreach (var tile in worldTiles)
+                    //{
+
+                    //}
+                }
+            }
         }
+
+
 
         /// <summary>
         /// Adds tiles to all exits of a tile
@@ -313,7 +326,7 @@ namespace Mooege.Core.GS.Generators
         /// If exit was not found look for deadend(filler?). </param>
         /// <param name="position">Position of originating tile.</param>
         /// <param name="x">Originating tile world x position</param>
-        private static int AddadjacentTiles(Dictionary<Vector3D, TileInfo> worldTiles, TileInfo tileInfo, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
+        private static int AddAdjacentTiles(Dictionary<Vector3D, TileInfo> worldTiles, TileInfo tileInfo, Dictionary<int, TileInfo> tiles, int counter, Vector3D position)
         {
             Logger.Debug("Counter: {0}, ExitDirectionbitsOfGivenTile: {1}", counter, tileInfo.ExitDirectionBits);
             var lookUpExits = GetLookUpExitBits(tileInfo.ExitDirectionBits);
@@ -353,6 +366,17 @@ namespace Mooege.Core.GS.Generators
                 }
             }
 
+            //Add fillers in the directions that there were no tiles
+            foreach (var exit in randomizedExitTypes)
+            {
+                //Add filler to all free tiles (all exits should have been filled and the blocked ones don't need anything else)
+                if (GetExistStatus(worldTiles, exit.Value, exit.Key) == ExitStatus.Free)
+                {
+                    //random filler
+                    worldTiles.Add(exit.Value, GetTileInfo(tiles, 0));
+                }
+            }
+
             return counter;
         }
 
@@ -377,7 +401,7 @@ namespace Mooege.Core.GS.Generators
             if (newTile == null) return counter;
             worldTiles.Add(position, newTile);
             Logger.Debug("Added tile: Type: {0}, SNOScene: {1}, ExitTypes: {2}", newTile.TileType, newTile.SNOScene, newTile.ExitDirectionBits);
-            counter = AddadjacentTiles(worldTiles, newTile, tiles, counter + 1, position);
+            counter = AddAdjacentTiles(worldTiles, newTile, tiles, counter + 1, position);
             return counter;
         }
 
@@ -489,11 +513,18 @@ namespace Mooege.Core.GS.Generators
         /// <returns></returns>
         private static TileInfo GetTileInfo(Dictionary<int, TileInfo> tiles, int exitDirectionBits)
         {
+            //if no exit direction bits return filler
+            if (exitDirectionBits == 0)
+            {
+                //return filler
+                return GetTileInfo(tiles, TileTypes.Filler);
+            }
+
             List<TileInfo> tilesWithRightDirection = (from pair in tiles where ((pair.Value.ExitDirectionBits & exitDirectionBits) > 0) select pair.Value).ToList<TileInfo>();
             if (tilesWithRightDirection.Count == 0)
             {
                 Logger.Debug("Did not find matching tile");
-                //return filler
+                //TODO: Never return null. Try to find other tiles that match entry pattern and rotate
                 return null;
             }
 
@@ -508,8 +539,8 @@ namespace Mooege.Core.GS.Generators
         /// <returns></returns>
         private static TileInfo GetTileInfo(Dictionary<int, TileInfo> tiles, TileTypes tileType)
         {
-            var tilesWithRightDirection = (from pair in tiles where (pair.Value.TileType == (int)tileType) select pair.Value);
-            return RandomHelper.RandomItem(tilesWithRightDirection, x => 1);
+            var tilesWithRightType = (from pair in tiles where (pair.Value.TileType == (int)tileType) select pair.Value);
+            return RandomHelper.RandomItem(tilesWithRightType, x => 1);
         }
 
         private static void AddTile(Mooege.Common.MPQ.FileFormats.World worldData, TileInfo tileInfo, Vector3D location)
@@ -529,7 +560,7 @@ namespace Mooege.Core.GS.Generators
             //scene.Specification = spec;
             spec.Cell = new Vector2D() { X = 0, Y = 0 };
             spec.CellZ = 0;
-            spec.SNOLevelAreas = new int[] { 154588, -1, -1, -1 };
+            spec.SNOLevelAreas = new int[] { -1, -1, -1, -1 };
             spec.SNOMusic = -1;
             spec.SNONextLevelArea = -1;
             spec.SNONextWorld = -1;
