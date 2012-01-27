@@ -227,7 +227,11 @@ namespace Mooege.Core.MooNet.Objects
 
         public override bnet.protocol.presence.Field GetField()
         {   
-            var variantValue = bnet.protocol.attribute.Variant.CreateBuilder().SetMessageValue(Value.ToByteString()).Build();
+            var variantValue = bnet.protocol.attribute.Variant.CreateBuilder();
+            if (Value == null)
+            variantValue.SetMessageValue(ByteString.Empty).Build();
+            else
+            variantValue.SetMessageValue(Value.ToByteString()).Build();
             return base.GetField(variantValue);
         }
 
