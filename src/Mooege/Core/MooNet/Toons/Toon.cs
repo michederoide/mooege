@@ -108,7 +108,7 @@ namespace Mooege.Core.MooNet.Toons
         public StringPresenceField HeroNameField
             = new StringPresenceField(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Hero, 5, 0);
 
-		public IntPresenceField Field6
+        public IntPresenceField Field6
             = new IntPresenceField(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Hero, 6, 0, 0);
 
         public IntPresenceField Field7
@@ -457,3 +457,4 @@ namespace Mooege.Core.MooNet.Toons
         }
     }
         #endregion
+}

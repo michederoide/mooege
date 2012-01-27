@@ -69,9 +69,6 @@ namespace Mooege.Core.MooNet.Accounts
         public BoolPresenceField GameAccountStatusField
             = new BoolPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 1, 0, false);
 
-		public IntPresenceField GameAccountStatusIdField
-            = new IntPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 5, 0);
-
 
 #endregion
 
@@ -185,6 +182,7 @@ namespace Mooege.Core.MooNet.Accounts
         {
             //
             this.Owner = AccountManager.GetAccountByPersistentID(accountId);
+            this.OwnerIdField.Value = Owner.BnetEntityId;
             this.SetField();
         }
 
@@ -196,6 +194,7 @@ namespace Mooege.Core.MooNet.Accounts
             : base(account.BnetEntityId.Low)
         {
             this.Owner = account;
+            this.OwnerIdField.Value = Owner.BnetEntityId;
             this.SetField();
 
             this.BannerConfiguration =
@@ -214,7 +213,6 @@ namespace Mooege.Core.MooNet.Accounts
 
         private void SetField()
         {
-            this.OwnerIdField.Value = owner.BnetEntityId;
             InitPresenceFields();
 
             var bnetGameAccountHigh = ((ulong)EntityIdHelper.HighIdType.GameAccountId) + (0x6200004433);
@@ -288,6 +286,7 @@ namespace Mooege.Core.MooNet.Accounts
             presenceFieldList.Add(this.ProgramField);
             presenceFieldList.Add(this.GameAccountStatusIdField);
             presenceFieldList.Add(this.BattleTagField);
+            presenceFieldList.Add(this.OwnerIdField);
             presenceFieldList.Add(this.AccountField);
         }
 
@@ -329,6 +328,7 @@ namespace Mooege.Core.MooNet.Accounts
             operationList.Add(this.GameAccountStatusIdField.GetFieldOperation());
             operationList.Add(this.BattleTagField.GetFieldOperation());
             operationList.Add(this.AccountField.GetFieldOperation());
+            operationList.Add(this.OwnerIdField.GetFieldOperation());
 
             return operationList;
         }
