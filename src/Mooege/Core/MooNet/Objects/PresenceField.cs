@@ -229,10 +229,10 @@ namespace Mooege.Core.MooNet.Objects
         {   
             var variantValue = bnet.protocol.attribute.Variant.CreateBuilder();
             if (Value == null)
-            variantValue.SetMessageValue(ByteString.Empty).Build();
+                variantValue.SetMessageValue(ByteString.Empty);
             else
-            variantValue.SetMessageValue(Value.ToByteString()).Build();
-            return base.GetField(variantValue);
+                variantValue.SetMessageValue(Value.ToByteString());
+            return base.GetField(variantValue.Build());
         }
 
         public override bnet.protocol.presence.FieldOperation GetFieldOperation()

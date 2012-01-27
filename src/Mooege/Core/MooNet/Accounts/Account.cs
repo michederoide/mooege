@@ -212,7 +212,7 @@ namespace Mooege.Core.MooNet.Accounts
                     if (queryKey.Group == 1 && queryKey.Field == 1) // Account's last selected toon.
                     {
                         if (this.IsOnline) // check if the account is online actually.
-                            field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetMessageValue(this.LastSelectedHero.ToByteString()).Build());
+                            field.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetMessageValue(this.LastSelectedHeroField.Value.ToByteString()).Build());
                     }
                     else if (queryKey.Group == 1 && queryKey.Field == 2) // Account's last selected Game Account
                     {
