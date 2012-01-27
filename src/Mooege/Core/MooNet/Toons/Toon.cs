@@ -275,6 +275,8 @@ namespace Mooege.Core.MooNet.Toons
             this.HashCode = hashCode;
             this.TimePlayed = timePlayed;
             this.GoldAmount = goldAmount;
+            this.Field6.Value = 99999999999999999;
+            this.Field7.Value = 99999999999999999;
 
             var visualItems = new[]
             {                                
@@ -301,6 +303,14 @@ namespace Mooege.Core.MooNet.Toons
 
         #region Notifications
 
+        //hero class generated
+        //D3,Hero,1,0 -> D3.Hero.GbidClass: Hero Class
+        //D3,Hero,2,0 -> D3.Hero.Level: Hero's current level
+        //D3,Hero,3,0 -> D3.Hero.VisualEquipment: VisualEquipment
+        //D3,Hero,4,0 -> D3.Hero.PlayerFlags: Hero's flags
+        //D3,Hero,5,0 -> ?D3.Hero.NameText: Hero's Name
+        //D3,Hero,6,0 -> Unk Int64 (0)
+        //D3,Hero,7,0 -> Unk Int64 (0)
         public List<PresenceFieldBase> GetPresenceFields()
         {
             List<PresenceFieldBase> _fieldList = new List<PresenceFieldBase>();
@@ -314,28 +324,6 @@ namespace Mooege.Core.MooNet.Toons
             _fieldList.Add(this.Field7);
             return _fieldList;
 
-        }
-
-        //hero class generated
-        //D3,Hero,1,0 -> D3.Hero.GbidClass: Hero Class
-        //D3,Hero,2,0 -> D3.Hero.Level: Hero's current level
-        //D3,Hero,3,0 -> D3.Hero.VisualEquipment: VisualEquipment
-        //D3,Hero,4,0 -> D3.Hero.PlayerFlags: Hero's flags
-        //D3,Hero,5,0 -> ?D3.Hero.NameText: Hero's Name
-        //D3,Hero,6,0 -> Unk Int64 (0)
-        //D3,Hero,7,0 -> Unk Int64 (0)
-
-        public override List<bnet.protocol.presence.FieldOperation> GetSubscriptionNotifications()
-        {
-            var operationList = new List<bnet.protocol.presence.FieldOperation>();
-            operationList.Add(this.HeroClassField.GetFieldOperation());
-            operationList.Add(this.HeroLevelField.GetFieldOperation());
-            operationList.Add(this.HeroVisualEquipmentField.GetFieldOperation());
-            operationList.Add(this.HeroFlagsField.GetFieldOperation());
-            operationList.Add(this.HeroNameField.GetFieldOperation());
-            operationList.Add(this.Field6.GetFieldOperation());
-            operationList.Add(this.Field7.GetFieldOperation());
-            return operationList;
         }
 
 

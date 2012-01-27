@@ -146,10 +146,29 @@ namespace Mooege.Core.MooNet.Objects
         /// <param name="client">The subscriber.</param>
         protected void NotifySubscriptionAdded(MooNetClient client)
         {
-            var operations = GetSubscriptionNotifications();
-            MakeRPC(client, operations);
+            List<FieldOperation> operations = new List<FieldOperation>();
+            //Get all field operations no matter if synced or not
+            foreach (var field in presenceFieldList)
+            {
+                if (field is EntityIdPresenceFieldList)
+                {
+                    operations.AddRange(((EntityIdPresenceFieldList)field).GetFieldOperationList());
+                }
+                else
+                {
+                    operations.Add(field.GetFieldOperation());
+                }
+            }
+
+            //construct a list with only this client
+            var clientList = new List<MooNetClient>();
+            clientList.Add(client);
+            UpdateSubscribers(clientList, operations);
         }
 
+        /// <summary>
+        /// Notifies all subscribers about changes in this object
+        /// </summary>
         public void NotifyUpdate()
         {
             var changedFields = GetNotSyncedFields();
@@ -167,9 +186,6 @@ namespace Mooege.Core.MooNet.Objects
                 }
                 field.isSynced = true;
             }
-
-            //var operations = ChangedFields.GetChangedFieldList();
-            //ChangedFields.ClearChanged();
             UpdateSubscribers(this.Subscribers, operations);
         }
 

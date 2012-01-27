@@ -306,34 +306,6 @@ namespace Mooege.Core.MooNet.Accounts
             presenceFieldList.Add(this.OwnerIdField);
         }
 
-
-        public override List<bnet.protocol.presence.FieldOperation> GetSubscriptionNotifications()
-        {
-            //for now set it here
-            //this.GameAccountStatusField.Value = this.IsOnline;
-            this.GameAccountStatusIdField.Value = (int)(this.GameAccountStatusField.Value == true ? 1324923597904795 : 0);
-
-            var operationList = new List<bnet.protocol.presence.FieldOperation>();
-
-
-
-            operationList.Add(BannerConfigurationField.GetFieldOperation());
-            if (this.Owner.LastSelectedHeroField.Value != Account.AccountHasNoToons && this.CurrentHeroIdField.Value != null /*no hero has been selected yet*/)
-            {
-                operationList.Add(this.CurrentHeroIdField.GetFieldOperation());
-                operationList.AddRange(this.CurrentToon.GetSubscriptionNotifications());
-            }
-
-            operationList.Add(this.GameAccountStatusField.GetFieldOperation());
-            operationList.Add(this.ProgramField.GetFieldOperation());
-            operationList.Add(this.GameAccountStatusIdField.GetFieldOperation());
-            operationList.Add(this.BattleTagField.GetFieldOperation());
-            operationList.Add(this.AccountField.GetFieldOperation());
-            operationList.Add(this.OwnerIdField.GetFieldOperation());
-
-            return operationList;
-        }
-
         #endregion
 
         public void Update(bnet.protocol.presence.FieldOperation operation)
