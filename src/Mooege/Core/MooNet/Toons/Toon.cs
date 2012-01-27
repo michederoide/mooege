@@ -114,6 +114,8 @@ namespace Mooege.Core.MooNet.Toons
         public IntPresenceField Field7
             = new IntPresenceField(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Hero, 7, 0, 0);
 
+
+
         #endregion
 
         /// <summary>
@@ -308,7 +310,8 @@ namespace Mooege.Core.MooNet.Toons
             _fieldList.Add(this.HeroVisualEquipmentField);
             _fieldList.Add(this.HeroFlagsField);
             _fieldList.Add(this.HeroNameField);
-
+            _fieldList.Add(this.Field6);
+            _fieldList.Add(this.Field7);
             return _fieldList;
 
         }
@@ -332,7 +335,6 @@ namespace Mooege.Core.MooNet.Toons
             operationList.Add(this.HeroNameField.GetFieldOperation());
             operationList.Add(this.Field6.GetFieldOperation());
             operationList.Add(this.Field7.GetFieldOperation());
-
             return operationList;
         }
 

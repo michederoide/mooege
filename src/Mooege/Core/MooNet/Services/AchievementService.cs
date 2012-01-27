@@ -42,7 +42,6 @@ namespace Mooege.Core.MooNet.Services
         {
             // This should register client with achievement notifier service. -Egris
             var snapshot = bnet.protocol.achievements.Snapshot.CreateBuilder();
-
             foreach (var achievement in this.Client.Account.CurrentGameAccount.Achievements)
                 snapshot.AddAchievementSnapshot(achievement);
 

@@ -51,6 +51,9 @@ namespace Mooege.Core.MooNet.Accounts
         public IntPresenceField ScreenStatusField
             = new IntPresenceField(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Channel, 2, 0);
 
+        public BoolPresenceField GameAccountStatusField
+            = new BoolPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 1, 0, false);
+
         public FourCCPresenceField ProgramField
             = new FourCCPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 4, 0);
 
@@ -64,10 +67,7 @@ namespace Mooege.Core.MooNet.Accounts
             = new StringPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 7, 0);
 
         public ByteStringPresenceField<bnet.protocol.EntityId> OwnerIdField
-            = new ByteStringPresenceField<bnet.protocol.EntityId>(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.Account, 8, 0);
-
-        public BoolPresenceField GameAccountStatusField
-            = new BoolPresenceField(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 1, 0, false);
+            = new ByteStringPresenceField<bnet.protocol.EntityId>(FieldKeyHelper.Program.BNet, FieldKeyHelper.OriginatingClass.GameAccount, 8, 0);
 
 
 #endregion
@@ -195,6 +195,7 @@ namespace Mooege.Core.MooNet.Accounts
         {
             this.Owner = account;
             this.OwnerIdField.Value = Owner.BnetEntityId;
+
             this.SetField();
 
             this.BannerConfiguration =
@@ -268,7 +269,22 @@ namespace Mooege.Core.MooNet.Accounts
         }
 
         #region Notifications
-
+        //gameaccount
+        //D3,GameAccount,1,0 -> D3.Account.BannerConfiguration
+        //D3,GameAccount,2,0 -> ToonId
+        //D3,Hero,1,0 -> Hero Class
+        //D3,Hero,2,0 -> Hero's current level
+        //D3,Hero,3,0 -> D3.Hero.VisualEquipment
+        //D3,Hero,4,0 -> Hero's flags
+        //D3,Hero,5,0 -> Hero Name
+        //D3,Hero,6,0 -> Unk Int64 (0)
+        //D3,Hero,7,0 -> Unk Int64 (0)
+        //Bnet,GameAccount,1,0 -> GameAccount Online
+        //Bnet,GameAccount,4,0 -> FourCC = "D3"
+        //Bnet,GameAccount,5,0 -> Unk Int (0 if GameAccount is Offline)
+        //Bnet,GameAccount,6,0 -> BattleTag
+        //Bnet,GameAccount,7,0 -> Account.Low + "#1"
+        //Bnet,GameAccount,8,0 -> Account.EntityId
         public void InitPresenceFields()
         {
             this.presenceFieldList = new List<PresenceFieldBase>();
@@ -286,8 +302,8 @@ namespace Mooege.Core.MooNet.Accounts
             presenceFieldList.Add(this.ProgramField);
             presenceFieldList.Add(this.GameAccountStatusIdField);
             presenceFieldList.Add(this.BattleTagField);
-            presenceFieldList.Add(this.OwnerIdField);
             presenceFieldList.Add(this.AccountField);
+            presenceFieldList.Add(this.OwnerIdField);
         }
 
 
@@ -299,22 +315,7 @@ namespace Mooege.Core.MooNet.Accounts
 
             var operationList = new List<bnet.protocol.presence.FieldOperation>();
 
-            //gameaccount
-            //D3,GameAccount,1,0 -> D3.Account.BannerConfiguration
-            //D3,GameAccount,2,0 -> ToonId
-            //D3,Hero,1,0 -> Hero Class
-            //D3,Hero,2,0 -> Hero's current level
-            //D3,Hero,3,0 -> D3.Hero.VisualEquipment
-            //D3,Hero,4,0 -> Hero's flags
-            //D3,Hero,5,0 -> Hero Name
-            //D3,Hero,6,0 -> Unk Int64 (0)
-            //D3,Hero,7,0 -> Unk Int64 (0)
-            //Bnet,GameAccount,1,0 -> GameAccount Online
-            //Bnet,GameAccount,4,0 -> FourCC = "D3"
-            //Bnet,GameAccount,5,0 -> Unk Int (0 if GameAccount is Offline)
-            //Bnet,GameAccount,6,0 -> BattleTag
-            //Bnet,GameAccount,7,0 -> Account.Low + "#1"
-            //Bnet,GameAccount,8,0 -> Account.EntityId
+
 
             operationList.Add(BannerConfigurationField.GetFieldOperation());
             if (this.Owner.LastSelectedHeroField.Value != Account.AccountHasNoToons && this.CurrentHeroIdField.Value != null /*no hero has been selected yet*/)
