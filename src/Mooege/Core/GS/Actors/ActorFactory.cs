@@ -84,7 +84,8 @@ namespace Mooege.Core.GS.Actors
                                 return new Portal(world, snoId, tags);
                             case GizmoGroup.BossPortal:
                                 Logger.Warn("Skipping loading of boss portals");
-                                return null;
+                                return new Portal(world, snoId, tags);
+                                //return null;
                             case GizmoGroup.CheckPoint:
                                 return new Checkpoint(world, snoId, tags);
                             case GizmoGroup.Waypoint:
