@@ -535,7 +535,7 @@ namespace Mooege.Core.GS.Generators
                 //delete from the pool of tiles those that do have exits that are blocked
                 if (exitStatus[exit] == ExitStatus.Blocked)
                 {
-                    acceptedTiles = tiles.Where(pair => (pair.Value.ExitDirectionBits & (int)exit) == 0).ToDictionary(pair => pair.Key, pair => pair.Value);
+                    acceptedTiles = acceptedTiles.Where(pair => (pair.Value.ExitDirectionBits & (int)exit) == 0).ToDictionary(pair => pair.Key, pair => pair.Value);
                 }
             }
 
