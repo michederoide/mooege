@@ -78,10 +78,15 @@ namespace Mooege.Core.GS.Actors
                         {
                             case GizmoGroup.LootContainer:
                                 return new LootContainer(world, snoId, tags);
+                            case GizmoGroup.Door:
+                                return new Door(world, snoId, tags);
                             case GizmoGroup.DestructibleLootContainer:
+                            case GizmoGroup.Barricade:
                                 return new DesctructibleLootContainer(world, snoId, tags);
                             case GizmoGroup.Portal:
                                 return new Portal(world, snoId, tags);
+                            //case GizmoGroup.Barricade:
+                                //return new Barricade(world, snoId, tags);
                             case GizmoGroup.BossPortal:
                                 Logger.Warn("Skipping loading of boss portals");
                                 return new Portal(world, snoId, tags);
@@ -104,10 +109,8 @@ namespace Mooege.Core.GS.Actors
 
                             case GizmoGroup.ActChangeTempObject:
                             case GizmoGroup.Banner:
-                            case GizmoGroup.Barricade:
                             case GizmoGroup.CathedralIdol:
                             case GizmoGroup.Destructible:
-                            case GizmoGroup.Door:
                             case GizmoGroup.DungeonStonePortal:
                             case GizmoGroup.Headstone:
                             case GizmoGroup.HearthPortal:
