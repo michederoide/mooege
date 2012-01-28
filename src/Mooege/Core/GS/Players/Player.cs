@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 mooege project
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
@@ -49,6 +48,7 @@ using Mooege.Net.GS.Message.Definitions.Artisan;
 using Mooege.Core.GS.Actors.Implementations.Artisans;
 using Mooege.Core.GS.Actors.Implementations.Hirelings;
 using Mooege.Net.GS.Message.Definitions.Hireling;
+using System;
 using Mooege.Common.Helpers;
 using Mooege.Net.GS.Message.Definitions.ACD;
 
@@ -307,7 +307,6 @@ namespace Mooege.Core.GS.Players
             this.Attributes[GameAttribute.Get_Hit_Max_Per_Level] = 10f;
             this.Attributes[GameAttribute.Get_Hit_Max_Base] = 50f;
             this.Attributes[GameAttribute.Hit_Chance] = 1f;
-            this.Attributes[GameAttribute.Dodge_Rating_Total] = 3.051758E-05f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Item_CurrentHand] = 1.199219f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Item_Total_MainHand] = 1.199219f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.199219f;
@@ -374,10 +373,10 @@ namespace Mooege.Core.GS.Players
                      */
                     //Secondary Resource for the Demon Hunter
                     int Discipline = this.ResourceID + 1; //0x00000006
-                    this.Attributes[GameAttribute.Resource_Cur, Discipline] = 30f;
-                    this.Attributes[GameAttribute.Resource_Max, Discipline] = 30f;
-                    this.Attributes[GameAttribute.Resource_Max_Total, Discipline] = 30f;
-                    this.Attributes[GameAttribute.Resource_Effective_Max, Discipline] = 30f;
+                    this.Attributes[GameAttribute.Resource_Cur, Discipline] = 30;
+                    this.Attributes[GameAttribute.Resource_Max, Discipline] = 30;
+                    this.Attributes[GameAttribute.Resource_Max_Total, Discipline] = 30;
+                    this.Attributes[GameAttribute.Resource_Effective_Max, Discipline] = 30;
                     this.Attributes[GameAttribute.Resource_Type_Secondary] = Discipline;
                     break;
                 case ToonClass.Monk:
@@ -481,7 +480,7 @@ namespace Mooege.Core.GS.Players
             else if (message is ACDClientTranslateMessage) OnPlayerMovement(client, (ACDClientTranslateMessage)message);
             else if (message is TryWaypointMessage) OnTryWaypoint(client, (TryWaypointMessage)message);
             else if (message is RequestBuyItemMessage) OnRequestBuyItem(client, (RequestBuyItemMessage)message);
-            else if (message is RequestAddSocketMessage) OnRequestAddSocket(client, (RequestAddSocketMessage)message);
+            //else if (message is RequestAddSocketMessage) OnRequestAddSocket(client, (RequestAddSocketMessage)message);
             else if (message is HirelingDismissMessage) OnHirelingDismiss();
             else if (message is SocketSpellMessage) OnSocketSpell(client, (SocketSpellMessage)message);
             else if (message is PlayerTranslateFacingMessage) OnTranslateFacing(client, (PlayerTranslateFacingMessage)message);
@@ -703,17 +702,17 @@ namespace Mooege.Core.GS.Players
             vendor.OnRequestBuyItem(this, requestBuyItemMessage.ItemId);
         }
 
-        private void OnRequestAddSocket(GameClient client, RequestAddSocketMessage requestAddSocketMessage)
-        {
-            var item = World.GetItem(requestAddSocketMessage.ItemID);
-            if (item == null || item.Owner != this)
-                return;
-            var jeweler = World.GetActorInstance<Jeweler>();
-            if (jeweler == null)
-                return;
+        //private void OnRequestAddSocket(GameClient client, RequestAddSocketMessage requestAddSocketMessage)
+        //{
+        //    var item = World.GetItem(requestAddSocketMessage.ItemID);
+        //    if (item == null || item.Owner != this)
+        //        return;
+        //    var jeweler = World.GetActorInstance<Jeweler>();
+        //    if (jeweler == null)
+        //        return;
 
-            jeweler.OnAddSocket(this, item);
-        }
+        //    jeweler.OnAddSocket(this, item);
+        //}
 
         private void OnHirelingDismiss()
         {
@@ -1127,6 +1126,7 @@ namespace Mooege.Core.GS.Players
                 snoActiveSkills = this.SkillSet.ActiveSkills,
                 snoTraits = this.SkillSet.PassiveSkills,
                 SavePointData = new SavePointData { snoWorld = -1, SavepointId = -1, },
+                //m_SeenTutorials = this.SeenTutorials,
             };
         }
 
@@ -1624,13 +1624,13 @@ namespace Mooege.Core.GS.Players
         {
             if (amount > 0f)
             {
-                this.Attributes[GameAttribute.Resource_Cur, resourceID] = Math.Min(
+                this.Attributes[GameAttribute.Resource_Cur, resourceID] = (int)Math.Min(
                     this.Attributes[GameAttribute.Resource_Cur, resourceID] + amount,
                     this.Attributes[GameAttribute.Resource_Max, resourceID]);
             }
             else
             {
-                this.Attributes[GameAttribute.Resource_Cur, resourceID] = Math.Max(
+                this.Attributes[GameAttribute.Resource_Cur, resourceID] = (int)Math.Max(
                     this.Attributes[GameAttribute.Resource_Cur, resourceID] + amount,
                     0f);
             }
@@ -1718,24 +1718,12 @@ namespace Mooege.Core.GS.Players
 
         #endregion
 
-        #region StoneOfRecall, CubeOfNephalem, CauldonOfJourdan
+        #region StoneOfRecall
 
         public void EnableStoneOfRecall()
         {
             Attributes[GameAttribute.Skill, 0x0002EC66] = 1;
             Attributes[GameAttribute.Skill_Total, 0x0002EC66] = 1;
-            Attributes.SendChangedMessage(this.InGameClient);
-        }
-
-        public void EnableCauldronOfJordan()
-        {         
-            Attributes[GameAttribute.ItemMeltUnlocked] = true;
-            Attributes.SendChangedMessage(this.InGameClient);
-        }
-
-        public void EnableCubeOfNephalem()
-        {
-            Attributes[GameAttribute.SalvageUnlocked] = true;
             Attributes.SendChangedMessage(this.InGameClient);
         }
 

@@ -35,6 +35,7 @@ using Mooege.Core.MooNet.Games;
 using Mooege.Net.MooNet;
 using System.Text;
 using Monster = Mooege.Core.GS.Actors.Monster;
+using Mooege.Core.MooNet.Toons;
 
 namespace Mooege.Core.GS.Games
 {
@@ -86,8 +87,6 @@ namespace Mooege.Core.GS.Games
             if (invokerClient.InGameClient == null)
                 return "You can only invoke this command while ingame.";
 
-            invokerClient.InGameClient.Player.EnableCauldronOfJordan();
-            invokerClient.InGameClient.Player.EnableCubeOfNephalem();
             invokerClient.InGameClient.Player.EnableStoneOfRecall();
 
             return string.Format("Done");
@@ -174,21 +173,27 @@ namespace Mooege.Core.GS.Games
             if (invokerClient == null)
                 return "You can not invoke this command from console.";
 
-            if (invokerClient.InGameClient == null)
-                return "You can only invoke this command while ingame.";
-
-            var player = invokerClient.InGameClient.Player;
             var amount = 1;
 
-            if(@params!=null)
+            if (@params != null)
             {
                 if (!Int32.TryParse(@params[0], out amount))
                     amount = 1;
             }
 
-                player.Attributes[GameAttribute.Level] = amount;               
+            //if client in game
+            if (invokerClient.InGameClient != null)
+            {
+                var player = invokerClient.InGameClient.Player;
+                player.Attributes[GameAttribute.Level] = amount;
+                player.PlayEffect(Net.GS.Message.Definitions.Effect.Effect.LevelUp);
+            }
 
-            return string.Format("Log out and Log back in to be Level " + amount);
+            var hero = ToonManager.GetToonByLowID(invokerClient.Account.CurrentGameAccount.CurrentHeroIdField.Value.IdLow);
+            hero.HeroLevelField.Value = amount;
+            invokerClient.Account.CurrentGameAccount.NotifyUpdate();
+
+            return string.Format("If in game log out and log back in for icon update to level: " + amount);
         }
     }
 

@@ -55,7 +55,7 @@ namespace Mooege.Core.MooNet.Toons
         AllUnknowns = Unknown1 | Unknown2 | Unknown3 | Unknown4
     }
     #endregion
-    
+
     public class Toon : PersistentRPCObject
     {
         //Fields that notify clients on change
@@ -108,6 +108,14 @@ namespace Mooege.Core.MooNet.Toons
         public StringPresenceField HeroNameField
             = new StringPresenceField(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Hero, 5, 0);
 
+        public IntPresenceField Field6
+            = new IntPresenceField(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Hero, 6, 0, 0);
+
+        public IntPresenceField Field7
+            = new IntPresenceField(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Hero, 7, 0, 0);
+
+
+
         #endregion
 
         /// <summary>
@@ -115,12 +123,18 @@ namespace Mooege.Core.MooNet.Toons
         /// </summary>
         public D3.OnlineService.EntityId D3EntityID { get; private set; }
 
+        /// <summary>
+        /// Toon's hash-code.
+        /// </summary>
+        public int HashCode { get; set; }
+
+
         //OBSOLETE: NEVER USED
         //TODO: Remove this in next commit
-        /// <summary>
-        /// Toon handle struct.
-        /// </summary>
-        public ToonHandleHelper ToonHandle { get; private set; }
+        ///// <summary>
+        ///// Toon handle struct.
+        ///// </summary>
+        //public ToonHandleHelper ToonHandle { get; private set; }
 
         /// <summary>
         /// Toon's owner account.
@@ -165,7 +179,7 @@ namespace Mooege.Core.MooNet.Toons
         {
             get
             {
-                return D3.Hero.Digest.CreateBuilder().SetVersion(893)
+                return D3.Hero.Digest.CreateBuilder().SetVersion(895)
                                 .SetHeroId(this.D3EntityID)
                                 .SetHeroName(this.HeroNameField.Value)
                                 .SetGbidClass(this.HeroClassFieldTransform((int)this.HeroClassField.Value))
@@ -201,7 +215,7 @@ namespace Mooege.Core.MooNet.Toons
         }
 
 
-        
+
         //TODO: Use same order in ToonClass so there is no need for two enums
         public int VoiceClassID // Used for Conversations
         {
@@ -234,23 +248,23 @@ namespace Mooege.Core.MooNet.Toons
 
         #region c-tor and setfields
 
-        public Toon(ulong persistentId, string name, byte @class, byte gender, byte level, long accountId, uint timePlayed, int goldAmount) // Toon with given persistent ID
+        public Toon(ulong persistentId, string name, int hashCode, byte @class, byte gender, byte level, long accountId, uint timePlayed, int goldAmount) // Toon with given persistent ID
             : base(persistentId)
         {
             this.HeroClassField.transformDelegate += HeroClassFieldTransform;
-            this.SetFields(name, (int)@class, (ToonFlags)gender, level, GameAccountManager.GetAccountByPersistentID((ulong)accountId), timePlayed, goldAmount);
+            this.SetFields(name, hashCode, (int)@class, (ToonFlags)gender, level, GameAccountManager.GetAccountByPersistentID((ulong)accountId), timePlayed, goldAmount);
         }
 
-        public Toon(string name, int classHash, ToonFlags flags, byte level, GameAccount account) // Toon with **newly generated** persistent ID
-            : base(StringHashHelper.HashIdentity(name + "#" + account.Owner.HashCode.ToString("D3")))
+        public Toon(string name, int hashCode, int classHash, ToonFlags flags, byte level, GameAccount account) // Toon with **newly generated** persistent ID
+            : base(StringHashHelper.HashIdentity(name + "#" + hashCode.ToString("D3")))
         {
             this.HeroClassField.transformDelegate += HeroClassFieldTransform;
-            this.SetFields(name, Toon.GetClassFromHash(classHash), flags, level, account, 0, 0);
+            this.SetFields(name, hashCode, Toon.GetClassFromHash(classHash), flags, level, account, 0, 0);
         }
 
-        private void SetFields(string name, int @class, ToonFlags flags, byte level, GameAccount owner, uint timePlayed, int goldAmount)
+        private void SetFields(string name, int hashCode, int @class, ToonFlags flags, byte level, GameAccount owner, uint timePlayed, int goldAmount)
         {
-            this.D3EntityID = D3.OnlineService.EntityId.CreateBuilder().SetIdHigh((ulong)EntityIdHelper.HighIdType.ToonId + this.PersistentID).SetIdLow(this.PersistentID).Build();
+            this.D3EntityID = D3.OnlineService.EntityId.CreateBuilder().SetIdHigh((ulong)EntityIdHelper.HighIdType.ToonId).SetIdLow(this.PersistentID).Build();
 
 
             this.HeroNameField.Value = name;
@@ -258,8 +272,11 @@ namespace Mooege.Core.MooNet.Toons
             this.HeroFlagsField.Value = (uint)flags;
             this.HeroLevelField.Value = level;
             this.GameAccount = owner;
+            this.HashCode = hashCode;
             this.TimePlayed = timePlayed;
             this.GoldAmount = goldAmount;
+            this.Field6.Value = 99999999999999999;
+            this.Field7.Value = 99999999999999999;
 
             var visualItems = new[]
             {                                
@@ -286,6 +303,14 @@ namespace Mooege.Core.MooNet.Toons
 
         #region Notifications
 
+        //hero class generated
+        //D3,Hero,1,0 -> D3.Hero.GbidClass: Hero Class
+        //D3,Hero,2,0 -> D3.Hero.Level: Hero's current level
+        //D3,Hero,3,0 -> D3.Hero.VisualEquipment: VisualEquipment
+        //D3,Hero,4,0 -> D3.Hero.PlayerFlags: Hero's flags
+        //D3,Hero,5,0 -> ?D3.Hero.NameText: Hero's Name
+        //D3,Hero,6,0 -> Unk Int64 (0)
+        //D3,Hero,7,0 -> Unk Int64 (0)
         public List<PresenceFieldBase> GetPresenceFields()
         {
             List<PresenceFieldBase> _fieldList = new List<PresenceFieldBase>();
@@ -295,28 +320,10 @@ namespace Mooege.Core.MooNet.Toons
             _fieldList.Add(this.HeroVisualEquipmentField);
             _fieldList.Add(this.HeroFlagsField);
             _fieldList.Add(this.HeroNameField);
-
+            _fieldList.Add(this.Field6);
+            _fieldList.Add(this.Field7);
             return _fieldList;
 
-        }
-
-        //hero class generated
-        //D3,Hero,1,0 -> D3.Hero.GbidClass: Hero Class
-        //D3,Hero,2,0 -> D3.Hero.Level: Hero's current level
-        //D3,Hero,3,0 -> D3.Hero.VisualEquipment: VisualEquipment
-        //D3,Hero,4,0 -> D3.Hero.PlayerFlags: Hero's flags
-        //D3,Hero,5,0 -> ?D3.Hero.NameText: Hero's Name
-
-        public override List<bnet.protocol.presence.FieldOperation> GetSubscriptionNotifications()
-        {
-            var operationList = new List<bnet.protocol.presence.FieldOperation>();
-            operationList.Add(this.HeroClassField.GetFieldOperation());
-            operationList.Add(this.HeroLevelField.GetFieldOperation());
-            operationList.Add(this.HeroVisualEquipmentField.GetFieldOperation());
-            operationList.Add(this.HeroFlagsField.GetFieldOperation());
-            operationList.Add(this.HeroNameField.GetFieldOperation());
-
-            return operationList;
         }
 
 
@@ -338,8 +345,8 @@ namespace Mooege.Core.MooNet.Toons
                 {
                     var query =
                         string.Format(
-                            "UPDATE toons SET name='{0}', class={1}, gender={2}, level={3}, accountId={4}, timePlayed={5}, goldAmount={6} WHERE id={7}",
-                            this.HeroNameField.Value, (byte)this.Class, (byte)this.Gender, this.HeroLevelField.Value, this.GameAccount.PersistentID, this.TimePlayed, this.GoldAmount, this.PersistentID);
+                            "UPDATE toons SET name='{0}', hashCode={1}, class={2}, gender={3}, level={4}, accountId={5}, timePlayed={6}, goldAmount={7} WHERE id={8}",
+                            this.HeroNameField.Value, this.HashCode, (byte)this.Class, (byte)this.Gender, this.HeroLevelField.Value, this.GameAccount.PersistentID, this.TimePlayed, this.GoldAmount, this.PersistentID);
                     var cmd = new SQLiteCommand(query, DBManager.Connection);
                     cmd.ExecuteNonQuery();
                 }
@@ -347,8 +354,8 @@ namespace Mooege.Core.MooNet.Toons
                 {
                     var query =
                         string.Format(
-                            "INSERT INTO toons (id, name, class, gender, level, timePlayed, accountId, goldAmount) VALUES({0},'{1}',{2},{3},{4},{5},{6},{7})",
-                            this.PersistentID, this.HeroNameField.Value, (byte)this.Class, (byte)this.Gender, this.HeroLevelField.Value, this.TimePlayed, this.GameAccount.PersistentID, this.GoldAmount);
+                            "INSERT INTO toons (id, name, hashcode, class, gender, level, timePlayed, accountId, goldAmount) VALUES({0},'{1}', {2}, {3},{4},{5},{6},{7},{8})",
+                            this.PersistentID, this.HeroNameField.Value, this.HashCode, (byte)this.Class, (byte)this.Gender, this.HeroLevelField.Value, this.TimePlayed, this.GameAccount.PersistentID, this.GoldAmount);
                     var cmd = new SQLiteCommand(query, DBManager.Connection);
                     cmd.ExecuteNonQuery();
 
