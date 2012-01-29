@@ -120,7 +120,7 @@ namespace Mooege.Core.GS.Actors.Actions
                             return;
                         _path = _pathRequestTask.Path;
                         _pathRequestTask = null;
-                        this.Owner.TranslateFacing(_path.First(), false);
+                        this.Owner.TranslateFacing(_path[2], false);
                         _ownerMover.Move(_path[2], this.Owner.WalkSpeed, new Net.GS.Message.Definitions.ACD.ACDTranslateNormalMessage
                         {
                             TurnImmediately = false,

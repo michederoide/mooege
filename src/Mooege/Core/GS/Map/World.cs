@@ -747,7 +747,7 @@ namespace Mooege.Core.GS.Map
 
         public bool CheckLocationForFlag(Vector3D location, Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags flags)
         {
-            // Currently returns true if you can walk, false if you cant. no matter the flag. my math to use the 2d array of squares seems to be wrong so using the grid. - DarkLotus
+            // We loop Scenes as its far quicker than looking thru the QuadTree - DarkLotus
             foreach (Scene s in this._scenes.Values)
             {
                 if (s.Bounds.IntersectsWith(new Rect(location.X, location.Y, 1f, 1f)))
@@ -755,20 +755,21 @@ namespace Mooege.Core.GS.Map
                     // found scene intersecting with location.
                     int x = (int)((location.X - s.Bounds.Left) / 2.5f);
                     int y = (int)((location.Y - s.Bounds.Top) / 2.5f);
-                    if (s.NavMesh.WalkGrid[x, y] == 1)
+                    /*if (s.NavMesh.WalkGrid[x, y] == 1)
                     {
                         return true;
-                    }
+                    }*/
                     // Should use below code as you cancheck any flag then, but my math is off or something returns bad results - DarkLotus
-                    /*int total = (int)((x * s.NavMesh.SquaresCountX) + y);
+                    int total = (int)((y * s.NavMesh.SquaresCountY) + x);
                     if (total < 0 || total > s.NavMesh.NavMeshSquareCount)
                     {
                         Logger.Error("DarkLotus Cant Code:( Navmesh overflow");
+                        return false;
                     }
                     if(s.NavMesh.Squares[total].Flags.HasFlag(flags))
                     {
                         return true;
-                    }*/
+                    }
                     return false;
                    
                 }

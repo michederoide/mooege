@@ -221,9 +221,10 @@ namespace Mooege.Core.GS.Powers.Payloads
             //move user to new position
             //TODO: Find last waypoint
             var lastWaypoint = new Common.Types.Math.Vector3D();
-            lastWaypoint.X = 3143.75F;
+            lastWaypoint = this.Target.CheckPointPosition;
+            /*lastWaypoint.X = 3143.75F;
             lastWaypoint.Y = 2828.75F;
-            lastWaypoint.Z = 59.17559F;
+            lastWaypoint.Z = 59.17559F;*/
             var deathWorld = new ACDWorldPositionMessage();
             deathWorld.ActorID = this.Target.DynamicID;
             deathWorld.WorldLocation = new WorldLocationMessageData();
