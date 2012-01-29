@@ -759,6 +759,7 @@ namespace Mooege.Core.GS.Map
                     {
                         return true;
                     }
+                    // Should use below code as you cancheck any flag then, but my math is off or something returns bad results - DarkLotus
                     /*int total = (int)((x * s.NavMesh.SquaresCountX) + y);
                     if (total < 0 || total > s.NavMesh.NavMeshSquareCount)
                     {
@@ -772,6 +773,7 @@ namespace Mooege.Core.GS.Map
                    
                 }
             }
+            // Location not inside a known scene - DarkLotus
             return false;
         }
     }

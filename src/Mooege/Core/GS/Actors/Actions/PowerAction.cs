@@ -43,6 +43,9 @@ namespace Mooege.Core.GS.Actors.Actions
         private ActorMover _ownerMover;
         private TickTimer _pathUpdateTimer;
 
+        private List<Vector3D> _path = new List<Vector3D>();
+        private AI.Pather.PathRequestTask _pathRequestTask;
+
         public PowerAction(Actor owner, int powerSNO)
             : base(owner)
         {
@@ -103,8 +106,33 @@ namespace Mooege.Core.GS.Actors.Actions
                 }
                 else
                 {
+                    
+                    if (_ownerMover.Arrived)
+                    {
+                        if (_pathRequestTask == null)
+                            _pathRequestTask = Owner.World.Game.Pathfinder.GetPath(Owner, Owner.Position, _target.Position); // called once to create task
+
+                        if (!_pathRequestTask.PathFound)
+                            return;
+
+                        // No path found, so end Action.
+                        if (_pathRequestTask.Path.Count < 3)
+                            return;
+                        _path = _pathRequestTask.Path;
+                        _pathRequestTask = null;
+                        this.Owner.TranslateFacing(_path.First(), false);
+                        _ownerMover.Move(_path[2], this.Owner.WalkSpeed, new Net.GS.Message.Definitions.ACD.ACDTranslateNormalMessage
+                        {
+                            TurnImmediately = false,
+                            AnimationTag = this.Owner.AnimationSet == null ? 0 : this.Owner.AnimationSet.GetAnimationTag(Mooege.Common.MPQ.FileFormats.AnimationTags.Walk)
+                        });
+                        _path.Clear();
+                    }
+                    
+                    
+
                     // update or create path movement
-                    if (_pathUpdateTimer == null || _pathUpdateTimer.TimedOut)
+                    /*if (_pathUpdateTimer == null || _pathUpdateTimer.TimedOut)
                     {
                         _pathUpdateTimer = new SecondsTickTimer(this.Owner.World.Game, PathUpdateDelay);
 
@@ -119,10 +147,12 @@ namespace Mooege.Core.GS.Actors.Actions
                             TurnImmediately = false,
                             AnimationTag = this.Owner.AnimationSet == null ? 0 : this.Owner.AnimationSet.GetAnimationTag(Mooege.Common.MPQ.FileFormats.AnimationTags.Walk)
                         });
-                    }
+                    }*/
                     else
                     {
                         _ownerMover.Update();
+                        if (_ownerMover.Arrived)
+                            _ownerMover = new ActorMover(this.Owner);
                     }
                 }
             }
