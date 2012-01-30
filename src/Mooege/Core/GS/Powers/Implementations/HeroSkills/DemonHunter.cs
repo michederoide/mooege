@@ -439,7 +439,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     #endregion
 
     //TODO: needs the actor position fixed, since the arrow jumps from position to positions when changing direction
-    //TODO: needs the actor position fixed, since the arrow jumps from position to positions when changing direction
     #region HungeringArrow
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredGenerators.HungeringArrow)]
     public class HungeringArrow : Skill
@@ -453,6 +452,7 @@ namespace Mooege.Core.GS.Powers.Implementations
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             var projectile = new Projectile(this, RuneSelect(129932, 154590, 154591, 154592, 154593, 154594), User.Position);
+            projectile.Position.Z += 5f;
             projectile.Launch(TargetPosition, ScriptFormula(7));
             projectile.OnCollision = (hit) =>
             {
