@@ -637,7 +637,6 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            UsePrimaryResource(ScriptFormula(0));
             if (Rune_A > 0)
             {
                 //Projectile Giant Bat Actors
@@ -720,6 +719,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 if (_damageTimer == null || _damageTimer.TimedOut)
                 {
                     _damageTimer = WaitSeconds(_damageRate);
+                    UsePrimaryResource(ScriptFormula(0)); //testing in this area for resource. 
                     if (Rune_E > 0)
                     {
                         WeaponDamage(GetEnemiesInRadius(User.Position, ScriptFormula(21)), ScriptFormula(19), DamageType.Fire);
@@ -1679,8 +1679,27 @@ namespace Mooege.Core.GS.Powers.Implementations
     {
         public override IEnumerable<TickTimer> Main()
         {
-            var Spawner = SpawnProxy(RandomDirection(User.Position, ScriptFormula(4), ScriptFormula(1)));
-            SpawnEffect(134115, Spawner.Position, 0f, WaitSeconds(ScriptFormula(3)));
+            int maxFetishes = 5;
+            List<Actor> Fetishes = new List<Actor>();
+            for (int i = 0; i < maxFetishes; i++)
+            {
+                var Fetish = new FetishMelee(this.World, this, i);
+                Fetish.Brain.DeActivate();
+                Fetish.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+                Fetish.Attributes[GameAttribute.Untargetable] = true;
+                Fetish.EnterWorld(Fetish.Position);
+                Fetish.PlayActionAnimation(90118);
+                Fetishes.Add(Fetish);
+                yield return WaitSeconds(0.2f);
+            }
+            yield return WaitSeconds(0.8f);
+            foreach (Actor Fetish in Fetishes)
+            {
+                (Fetish as Minion).Brain.Activate();
+                Fetish.Attributes[GameAttribute.Untargetable] = false;
+                Fetish.Attributes.BroadcastChangedIfRevealed();
+                Fetish.PlayActionAnimation(87190); //Not sure why this is required, but after the summon is done, it'll just be frozen otherwise.
+            }
 
             //TODOs
             //Spawns 5 melee Fighters. (pets)
@@ -1716,72 +1735,51 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Hacky by MDZ -> Pet Class
+    //Pet Class
     #region Gargantuan
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.Gargantuan)]
     public class Gargantuan : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
-            var garg = new Minion(this.World, 122305, this.User, null);
-            garg.Position = User.Position;
-            garg.Scale = 1f;
-            garg.SetBrain(new MonsterBrain(garg));
-            garg.AddPresetPower(30005);
-            garg.AddPresetPower(30001);
-            garg.AddPresetPower(30592);
-            garg.AddPresetPower(30550);
-            garg.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
-            garg.Attributes[GameAttribute.Hitpoints_Max] = 5f;
-            garg.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
-            garg.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
-            garg.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
-            garg.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
-            garg.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
-            User.World.Enter(garg);
-            /*// HACK: made up garggy spell :)
+            var garg = new GargantuanMinion(this.World, this, 0);
+            garg.Brain.DeActivate();
+            garg.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+            garg.Attributes[GameAttribute.Untargetable] = true;
+            garg.EnterWorld(garg.Position);
+            garg.PlayActionAnimation(155988);
+            yield return WaitSeconds(0.8f);
 
-            Vector3D inFrontOfTarget = PowerMath.TranslateDirection2D(TargetPosition, User.Position, TargetPosition, 11f);
-            inFrontOfTarget.Z = User.Position.Z;
-            var garggy = SpawnEffect(122305, inFrontOfTarget, TargetPosition, WaitInfinite());
-
-            garggy.PlayActionAnimation(155988);
-
-            yield return WaitSeconds(2f);
-
-            for (int n = 0; n < 3; ++n)
-            {
-                garggy.PlayActionAnimation(211382);
-
-                yield return WaitSeconds(0.5f);
-
-                SpawnEffect(192210, TargetPosition);
-                WeaponDamage(GetEnemiesInRadius(TargetPosition, 12f), 1.00f, DamageType.Poison);
-
-                yield return WaitSeconds(0.4f);
-            }
-
-            garggy.PlayActionAnimation(155536); //mwhaha
-            yield return WaitSeconds(1.5f);
-
-            garggy.PlayActionAnimation(171024);
-            yield return WaitSeconds(2f);
-
-            garggy.Destroy();*/
-
+            (garg as Minion).Brain.Activate();
+            garg.Attributes[GameAttribute.Untargetable] = false;
+            garg.Attributes.BroadcastChangedIfRevealed();
+            garg.PlayActionAnimation(144967); //Not sure why this is required, but after the summon is done, it'll just be frozen otherwise.
+            
             yield break;
         }
     }
     #endregion
 
-    //Pet Class?
+    //Pet Class
     #region Hex
     [ImplementsPowerSNO(Skills.Skills.WitchDoctor.Support.Hex)]
     public class Hex : Skill
     {
         public override IEnumerable<TickTimer> Main()
         {
-            StartCooldown(EvalTag(PowerKeys.CooldownTime));
+            StartCooldown(EvalTag(PowerKeys.CooldownTime)); 
+            
+            var hex = new HexMinion(this.World, this, 0);
+            hex.Brain.DeActivate();
+            hex.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+            hex.Attributes[GameAttribute.Untargetable] = true;
+            hex.EnterWorld(hex.Position);
+            hex.PlayActionAnimation(90118);
+            yield return WaitSeconds(0.8f);
+
+            (hex as Minion).Brain.Activate();
+            hex.Attributes[GameAttribute.Untargetable] = false;
+            hex.Attributes.BroadcastChangedIfRevealed();
             yield break;
         }
     }
@@ -1806,7 +1804,17 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             //the rest of this is spiders, which are pets i presume?
             yield return WaitSeconds(0.05f);
-            SpawnEffect(107031, TargetPosition);
+
+            var spider = new CorpseSpider(this.World, this, 0);
+            spider.Brain.DeActivate();
+            spider.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+            spider.Attributes[GameAttribute.Untargetable] = true;
+            spider.EnterWorld(spider.Position);
+            yield return WaitSeconds(0.05f);
+
+            (spider as Minion).Brain.Activate();
+            spider.Attributes[GameAttribute.Untargetable] = false;
+            spider.Attributes.BroadcastChangedIfRevealed();
 
             yield break;
         }

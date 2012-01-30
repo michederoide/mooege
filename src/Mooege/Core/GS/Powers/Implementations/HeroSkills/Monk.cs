@@ -30,6 +30,7 @@ using Mooege.Core.GS.Ticker;
 using Mooege.Core.GS.Common.Types.TagMap;
 using Mooege.Core.GS.Powers.Payloads;
 using Mooege.Net.GS.Message.Definitions.ACD;
+using Mooege.Core.GS.Actors.Implementations.Minions;
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
@@ -2384,6 +2385,17 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override IEnumerable<TickTimer> Main()
         {
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+            var mystic = new MysticAllyMinion(this.World, this, 0);
+            mystic.Brain.DeActivate();
+            mystic.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+            mystic.Attributes[GameAttribute.Untargetable] = true;
+            mystic.EnterWorld(mystic.Position);
+            mystic.PlayActionAnimation(130606);
+
+            yield return WaitSeconds(0.8f);
+                (mystic as Minion).Brain.Activate();
+                mystic.Attributes[GameAttribute.Untargetable] = false;
+                mystic.Attributes.BroadcastChangedIfRevealed();
 
             yield break;
         }
