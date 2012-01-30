@@ -57,6 +57,17 @@ namespace Mooege.Core.GS.Skills
                 var cmd_first_insert = new SQLiteCommand(query_first_insert, DBManager.Connection);
                 var reader_first_install = cmd_first_insert.ExecuteReader();
                 Logger.Debug("SkillSet: No Entry for {0}", toon.D3EntityID.IdLow);
+				this.HotBarSkills = new HotbarButtonData[9] {     
+                new HotbarButtonData { SNOSkill = this.ActiveSkills[0], ItemGBId = -1 }, // left-click
+                new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // right-click
+                new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // hidden-bar - left-click switch - which key??
+                new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // hidden-bar - right-click switch (press x ingame)
+                new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // bar-1
+                new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // bar-2
+                new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // bar-3
+                new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // bar-4 
+                new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = 0x622256D4 } // bar-5 - potion
+                };
             }
             else
             {
@@ -71,7 +82,8 @@ namespace Mooege.Core.GS.Skills
                 new HotbarButtonData { SNOSkill = (int)reader["skill_2"], ItemGBId = -1 }, // bar-4 
                 new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = 0x622256D4 } // bar-5 - potion
                 };
-            }                 
+            }     
+			
 
             this.PassiveSkills = new int[3] { -1, -1, -1 }; // setting passive skills here crashes the client, need to figure out the reason. /raist       
         }
