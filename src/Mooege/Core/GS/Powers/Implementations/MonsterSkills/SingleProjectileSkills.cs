@@ -54,7 +54,20 @@ namespace Mooege.Core.GS.Powers.Implementations
                 WeaponDamage(hit, 1.00f, DamageType.Physical);
                 projectile.Destroy();
             });
-            StartCooldown(WaitSeconds(5f)); //Let's not fire them off too many times..
+            return Launch();
+        }
+    }
+
+    [ImplementsPowerSNO(30258)]  // graveRobber_Projectile.pow
+    public class graveRobberProjectile : SingleProjectileSkill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            SetProjectile(this, 4365, User.Position, 1f, (hit) =>
+            {
+                WeaponDamage(hit, 1.00f, DamageType.Physical);
+                projectile.Destroy();
+            });
             return Launch();
         }
     }
@@ -71,7 +84,63 @@ namespace Mooege.Core.GS.Powers.Implementations
                 projectile.Destroy();
             });
             projectile.Position.Z += 5f; //adjust height
-            StartCooldown(WaitSeconds(5f)); //Let's not fire them off too many times..
+            return Launch();
+        }
+    }
+
+    [ImplementsPowerSNO(99077)]  // Goatman_Shaman_Iceball.pow
+    public class ShamanIceBallProjectile : SingleProjectileSkill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            SetProjectile(this, 80143, User.Position, 0.5f, (hit) =>
+            {
+                hit.PlayEffectGroup(99355);
+                WeaponDamage(hit, 2.00f, DamageType.Cold);
+                projectile.Destroy();
+            });
+            projectile.Position.Z += 5f; //adjust height
+            return Launch();
+        }
+    }
+
+    [ImplementsPowerSNO(129661)]  // DemonHunter_Sentry_TurretAttack.pow
+    public class TurretAttackProjectile : SingleProjectileSkill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            SetProjectile(this, 141734, User.Position, 0.5f, (hit) =>
+            {
+                //hit.PlayEffectGroup(150040);
+                WeaponDamage(hit, ScriptFormula(1), DamageType.Physical);
+                projectile.Destroy();
+            });
+            projectile.Position.Z += 5f; //adjust height
+            return Launch();
+        }
+    }
+
+    [ImplementsPowerSNO(152540)]  // Unique_Monster_Generic_Projectile.pow
+    public class UniqueMonsterGenericProjectile : SingleProjectileSkill
+    {
+        //I believe this is correct, because uniques come in different elements
+        //it needs different projectiles and effects. just unsure how to use them different /wet
+        //Arcane 159150 / 159158
+        //Poison 159160 / 159139
+        //phys 159161 / 159109
+        //holy 158977 / 159075
+        //fire 158577 / 159100
+        //lightning 158976 / 159092
+        //cold 158575 / 159143
+        public override IEnumerable<TickTimer> Main()
+        {
+            SetProjectile(this, 159150, User.Position, 0.5f, (hit) =>
+            {
+                hit.PlayEffectGroup(159158);
+                WeaponDamage(hit, 2.00f, DamageType.Arcane);
+                projectile.Destroy();
+            });
+            projectile.Position.Z += 5f; //adjust height
             return Launch();
         }
     }
@@ -88,7 +157,6 @@ namespace Mooege.Core.GS.Powers.Implementations
                 projectile.Destroy();
             });
             projectile.Position.Z += 2f + (float)Rand.NextDouble() * 4;
-            StartCooldown(WaitSeconds(5f)); //Let's not fire them off too many times..
             return Launch();
         }
     }

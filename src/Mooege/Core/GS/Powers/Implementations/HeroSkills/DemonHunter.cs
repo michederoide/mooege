@@ -30,6 +30,7 @@ using Mooege.Core.GS.Actors.Movement;
 using Mooege.Net.GS.Message.Definitions.Actor;
 using Mooege.Net.GS.Message;
 using Mooege.Net.GS.Message.Definitions.ACD;
+using Mooege.Core.GS.Actors.Implementations.Minions;
 
 
 namespace Mooege.Core.GS.Powers.Implementations
@@ -1659,6 +1660,17 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
+            var FerretFriend = new CompanionMinion(this.World, this, 0);
+            FerretFriend.Brain.DeActivate();
+            FerretFriend.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+            FerretFriend.Attributes[GameAttribute.Untargetable] = true;
+            FerretFriend.EnterWorld(FerretFriend.Position);
+            yield return WaitSeconds(0.8f);
+
+            (FerretFriend as Minion).Brain.Activate();
+            FerretFriend.Attributes[GameAttribute.Untargetable] = false;
+            FerretFriend.Attributes.BroadcastChangedIfRevealed();
+
             yield break;
         }
     }

@@ -18,7 +18,7 @@ namespace Mooege.Core.GS.Actors.Implementations.Minions
         {
             Scale = 1.2f; //they look cooler bigger :)
             //TODO: get a proper value for this.
-            this.WalkSpeed *= 3;
+            this.WalkSpeed *= 5;
             SetBrain(new MinionBrain(this));
             (Brain as MonsterBrain).AddPresetPower(30592);  //Weapon_Instant
             (Brain as MonsterBrain).AddPresetPower(187092); //basic melee

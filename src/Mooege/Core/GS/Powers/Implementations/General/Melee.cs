@@ -23,9 +23,11 @@ using System.Text;
 using Mooege.Core.GS.Skills;
 using Mooege.Core.GS.Ticker;
 using Mooege.Core.GS.Actors;
+using Mooege.Core.GS.Common.Types.TagMap;
 
 namespace Mooege.Core.GS.Powers.Implementations
 {
+    //30592
     [ImplementsPowerSNO(0x00007780)]  // Weapon_Melee_Instant.pow
     public class WeaponMeleeInstant : ActionTimedSkill
     {
@@ -37,9 +39,70 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override float GetActionSpeed()
         {
-            // for some reason the formula for _Instant.pow does not multiply by 1.1 even though it should
-            // manually scale melee speed
-            return base.GetActionSpeed() * 1.1f;
+            return base.GetActionSpeed();
+        }
+    }
+
+    [ImplementsPowerSNO(30596)]  // Weapon_Melee_Reach_Instant.pow
+    public class WeaponMeleeReachInstant : ActionTimedSkill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            WeaponDamage(GetEnemiesInRadius(User.Position, EvalTag(PowerKeys.AttackRadius)), 1.00f, DamageType.Physical);
+            yield break;
+        }
+
+        public override float GetActionSpeed()
+        {
+            return base.GetActionSpeed();
+        }
+    }
+
+    [ImplementsPowerSNO(30474)]  // Shield_Skeleton_Melee_Instant.pow
+    public class ShieldSkeletonMeleeInstant : ActionTimedSkill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            WeaponDamage(GetBestMeleeEnemy(), 1.00f, DamageType.Physical);
+            yield break;
+        }
+
+        public override float GetActionSpeed()
+        {
+            return base.GetActionSpeed();
+        }
+    }
+
+    [ImplementsPowerSNO(30530)]  // StitchMeleeAlternate.pow
+    public class StitchMeleeAlternate : ActionTimedSkill
+    {
+        //Crit Chance = 30/100
+        public override IEnumerable<TickTimer> Main()
+        {
+            WeaponDamage(GetEnemiesInRadius(User.Position, EvalTag(PowerKeys.AttackRadius)), 1.00f, DamageType.Physical);
+            yield break;
+        }
+
+        public override float GetActionSpeed()
+        {
+            return base.GetActionSpeed();
+        }
+    }
+
+    [ImplementsPowerSNO(30531)]  // StitchPush.pow
+    public class StitchPush : ActionTimedSkill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            WeaponDamage(GetEnemiesInRadius(User.Position, EvalTag(PowerKeys.AttackRadius)), 1.00f, DamageType.Physical);
+            foreach (Actor enemy in GetEnemiesInRadius(User.Position, EvalTag(PowerKeys.AttackRadius)).Actors)
+            Knockback(enemy, 14f);
+            yield break;
+        }
+
+        public override float GetActionSpeed()
+        {
+            return base.GetActionSpeed();
         }
     }
 }

@@ -11,19 +11,16 @@ using Mooege.Net.GS.Message.Definitions.Pet;
 
 namespace Mooege.Core.GS.Actors.Implementations.Minions
 {
-    class AncientKorlic : Minion
+    class FetishMelee : Minion
     {
-        public AncientKorlic(Map.World world, PowerContext context, int AncientsID)
-            : base(world, 90443, context.User, null)
+        //Melee - 87189, 89933 - ranged, 90320 - shaman, skeleton? - 89934
+        public FetishMelee(Map.World world, PowerContext context, int FetishID)
+            : base(world, 87189, context.User, null)
         {
             Scale = 1.2f; //they look cooler bigger :)
             //TODO: get a proper value for this.
             this.WalkSpeed *= 5;
             SetBrain(new MinionBrain(this));
-            (Brain as MonsterBrain).AddPresetPower(30592);  //Weapon_Instant
-            (Brain as MonsterBrain).AddPresetPower(187092); //basic melee
-            (Brain as MonsterBrain).AddPresetPower(168823); //cleave
-            (Brain as MonsterBrain).AddPresetPower(168824); //furious charge //Only Active with Rune_A
             //TODO: These values should most likely scale, but we don't know how yet, so just temporary values.
             Attributes[GameAttribute.Hitpoints_Max_Total] = 20f;
             Attributes[GameAttribute.Hitpoints_Max] = 20f;
@@ -31,15 +28,15 @@ namespace Mooege.Core.GS.Actors.Implementations.Minions
             Attributes[GameAttribute.Hitpoints_Cur] = 20f;
             Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
 
-            Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = context.ScriptFormula(11) * context.User.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0];
-            Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = context.ScriptFormula(13) * context.User.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0];
+            Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = context.ScriptFormula(22) * context.User.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0];
+            Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = context.ScriptFormula(23) * context.User.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0];
 
             Attributes[GameAttribute.Pet_Type] = 0x8;
             //Pet_Owner and Pet_Creator seems to be 0
             (context.User as Player).InGameClient.SendMessage(new PetMessage()
             {
                 Field0 = 0,
-                Field1 = AncientsID,
+                Field1 = FetishID,
                 PetId = this.DynamicID,
                 Field3 = 0x8,
             });
