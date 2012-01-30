@@ -42,10 +42,7 @@ namespace Mooege.Core.GS.Skills
         {
             this.@Class = @class;
 
-            public int[] ActiveSkills;
-            public HotbarButtonData[] HotBarSkills;
-            public int[] PassiveSkills;
-
+            
             this.ActiveSkills = Skills.GetAllActiveSkillsByClass(this.@Class).Take(6).ToArray();
             
             var query = string.Format("SELECT * from active_skills WHERE id_toon={0}", toon.D3EntityID.IdLow);
@@ -59,10 +56,7 @@ namespace Mooege.Core.GS.Skills
                 var query_first_insert = string.Format("INSERT INTO  active_skills (id_toon,skill_0,skill_1,skill_2,skill_3,skill_4,skill_5) VALUES ({0},{1},{2},{3},{4},{5},{6} )", toon.D3EntityID.IdLow, this.ActiveSkills[0], Skills.None, Skills.None, Skills.None, Skills.None, Skills.None, Skills.None);
                 var cmd_first_insert = new SQLiteCommand(query_first_insert, DBManager.Connection);
                 var reader_first_install = cmd_first_insert.ExecuteReader();
-
-
                 Logger.Debug("SkillSet: No Entry for {0}", toon.D3EntityID.IdLow);
-<<<<<<< HEAD
 				this.HotBarSkills = new HotbarButtonData[9] {     
                 new HotbarButtonData { SNOSkill = this.ActiveSkills[0], ItemGBId = -1 }, // left-click
                 new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // right-click
@@ -74,10 +68,6 @@ namespace Mooege.Core.GS.Skills
                 new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // bar-4 
                 new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = 0x622256D4 } // bar-5 - potion
                 };
-=======
-
-             
->>>>>>> 94c978ba11b9c3e9d48a8deedc55b9cbb14b6119
             }
             else
             {
