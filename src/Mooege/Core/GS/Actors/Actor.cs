@@ -131,6 +131,7 @@ namespace Mooege.Core.GS.Actors
         private Mooege.Common.MPQ.FileFormats.QuestRange _questRange;
 
         protected Mooege.Common.MPQ.FileFormats.ConversationList ConversationList;
+        public Vector3D CheckPointPosition { get; private set; }
 
         /// <summary>
         /// Returns true if actor has world location.
@@ -249,7 +250,7 @@ namespace Mooege.Core.GS.Actors
                 return;
 
             this.Position = position;
-
+            this.CheckPointPosition = position;
             if (this.World != null) // if actor got into a new world.
                 this.World.Enter(this); // let him enter first.
         }
@@ -282,7 +283,7 @@ namespace Mooege.Core.GS.Actors
                 this.World.Enter(this); // let him enter first.
 
             AfterChangeWorld();
-
+            this.CheckPointPosition = position;
             world.BroadcastIfRevealed(this.ACDWorldPositionMessage, this);
         }
 
