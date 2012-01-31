@@ -36,10 +36,10 @@ Global
 		{4CC19847-6F24-4453-9E31-126F94308AB9}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{4CC19847-6F24-4453-9E31-126F94308AB9}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = ..\src\Mooege\Mooege-VS2010.csproj
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal

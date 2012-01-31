@@ -90,7 +90,7 @@ namespace Mooege.Core.GS.Actors
 
         public void AddPresetPower(int powerSNO)
         {
-            (Brain as MonsterBrain).AddPresetPower(powerSNO);
+            (Brain as MinionBrain).AddPresetPower(powerSNO);
         }
     }
 }

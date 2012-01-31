@@ -11,19 +11,15 @@ using Mooege.Net.GS.Message.Definitions.Pet;
 
 namespace Mooege.Core.GS.Actors.Implementations.Minions
 {
-    class AncientKorlic : Minion
+    class MirrorImageMinion : Minion
     {
-        public AncientKorlic(Map.World world, PowerContext context, int AncientsID)
-            : base(world, 90443, context.User, null)
+        public MirrorImageMinion(Map.World world, PowerContext context, int ImageID)
+            : base(world, 98010, context.User, null) //male Mirror images
         {
             Scale = 1.2f; //they look cooler bigger :)
             //TODO: get a proper value for this.
             this.WalkSpeed *= 5;
             SetBrain(new MinionBrain(this));
-            (Brain as MonsterBrain).AddPresetPower(30592);  //Weapon_Instant
-            (Brain as MonsterBrain).AddPresetPower(187092); //basic melee
-            (Brain as MonsterBrain).AddPresetPower(168823); //cleave
-            (Brain as MonsterBrain).AddPresetPower(168824); //furious charge //Only Active with Rune_A
             //TODO: These values should most likely scale, but we don't know how yet, so just temporary values.
             Attributes[GameAttribute.Hitpoints_Max_Total] = 20f;
             Attributes[GameAttribute.Hitpoints_Max] = 20f;
@@ -39,7 +35,7 @@ namespace Mooege.Core.GS.Actors.Implementations.Minions
             (context.User as Player).InGameClient.SendMessage(new PetMessage()
             {
                 Field0 = 0,
-                Field1 = AncientsID,
+                Field1 = ImageID,
                 PetId = this.DynamicID,
                 Field3 = 0x8,
             });

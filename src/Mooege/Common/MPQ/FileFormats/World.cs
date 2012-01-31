@@ -52,6 +52,8 @@ namespace Mooege.Common.MPQ.FileFormats
 
         public World(MpqFile file)
         {
+            if (file.Size == 0)
+                return;
             var stream = file.Open();
 
             this.Header = new Header(stream);

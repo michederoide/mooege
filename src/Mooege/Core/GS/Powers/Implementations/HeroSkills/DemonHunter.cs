@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Mooege.Common.Helpers.Math;
 using Mooege.Core.GS.Ticker;
 using Mooege.Net.GS.Message.Definitions.Effect;
 using Mooege.Core.GS.Common.Types.Math;
@@ -30,6 +31,7 @@ using Mooege.Core.GS.Actors.Movement;
 using Mooege.Net.GS.Message.Definitions.Actor;
 using Mooege.Net.GS.Message;
 using Mooege.Net.GS.Message.Definitions.ACD;
+using Mooege.Core.GS.Actors.Implementations.Minions;
 
 
 namespace Mooege.Core.GS.Powers.Implementations
@@ -450,49 +452,33 @@ namespace Mooege.Core.GS.Powers.Implementations
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             var projectile = new Projectile(this, RuneSelect(129932, 154590, 154591, 154592, 154593, 154594), User.Position);
-            var target = GetEnemiesInRadius(TargetPosition, ScriptFormula(3)).GetClosestTo(TargetPosition);
-            if (target != null)
+            projectile.Position.Z += 5f;
+            projectile.Launch(TargetPosition, ScriptFormula(7));
+            projectile.OnCollision = (hit) =>
             {
-                projectile.Launch(target.Position, ScriptFormula(7));
-                projectile.OnCollision = (hit) =>
+                SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
+                bool firsthit = true;
+                float range = ScriptFormula(3);
+                if (firsthit = false)
                 {
-                    SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                    projectile.Destroy();
-                    WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
-                };
-            }
-            else
-            {
-                projectile.Launch(TargetPosition, ScriptFormula(7));
-                projectile.Position.Z += 5f;
-                projectile.OnCollision = (hit) =>
-                {
-                    SpawnEffect(129934, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f));
-                    projectile.Destroy();
-                    WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
-                };
-
-                for (int i = 0; i < 10; i++)
-                {
-                    var closetarget = GetEnemiesInRadius(projectile.Position, ScriptFormula(4)).GetClosestTo(projectile.Position);
-
-                    if (closetarget != null)
-                    {
-                        var projectileSeek = new Projectile(this, RuneSelect(129932, 154590, 154591, 154592, 154593, 154594), projectile.Position);
-                        projectile.Destroy();
-                        projectileSeek.Launch(closetarget.Position, ScriptFormula(7));
-                        projectileSeek.OnCollision = (hit) =>
-                        {
-                            SpawnEffect(129934, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f));
-                            projectileSeek.Destroy();
-                            WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
-                        };
-                        i = 10;
-                    }
-                    else
-                        yield return WaitSeconds(0.1f);
+                    range = ScriptFormula(4);
                 }
-            }
+                var remaningtargets = GetEnemiesInRadius(hit.Position, 10f);
+                int count = remaningtargets.Actors.Count();
+                var targets = (GetEnemiesInRadius(hit.Position, range));
+                double chance = RandomHelper.NextDouble();
+                targets.Actors.Remove(hit);
+                var closetarget = targets.GetClosestTo(hit.Position);
+                if (closetarget != null && chance > ScriptFormula(5))
+                {
+                    projectile.Launch(closetarget.Position, ScriptFormula(7));
+                }
+                else
+                {
+                    projectile.Destroy();
+                }
+            };
             yield break;
         }
     }
@@ -1659,6 +1645,17 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
+            var FerretFriend = new CompanionMinion(this.World, this, 0);
+            FerretFriend.Brain.DeActivate();
+            FerretFriend.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+            FerretFriend.Attributes[GameAttribute.Untargetable] = true;
+            FerretFriend.EnterWorld(FerretFriend.Position);
+            yield return WaitSeconds(0.8f);
+
+            (FerretFriend as Minion).Brain.Activate();
+            FerretFriend.Attributes[GameAttribute.Untargetable] = false;
+            FerretFriend.Attributes.BroadcastChangedIfRevealed();
+
             yield break;
         }
     }

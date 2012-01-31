@@ -28,6 +28,7 @@ using Mooege.Core.GS.Actors.Movement;
 using Mooege.Core.GS.Common.Types.TagMap;
 using Mooege.Net.GS.Message;
 using Mooege.Core.GS.Players;
+using Mooege.Core.GS.Actors.Implementations.Minions;
 
 //TODO List
 /* Channeled Skills seem to be very confusing when you try to add runes/attackpayload/etc.
@@ -2425,7 +2426,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Broken
+    //Incomplete.
     #region Archon
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.Archon)]
     public class Archon : Skill
@@ -2477,59 +2478,53 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
+    //Lots of Work.
     #region MirrorImage
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.MirrorImage)]
     public class MirrorImage : Skill
     {
+        //Once cast, you slide randomly into one of the ___ number of spots that other images fill around a circle.
+        //from there, all AI mirror images run randomly, targeting and casting spells..
+        //there is no following for these I believe.
         public override IEnumerable<TickTimer> Main()
         {
             //StartCooldown(EvalTag(PowerKeys.CooldownTime));
             //UsePrimaryResource(ScriptFormula(12));
+            int maxImages = (int)ScriptFormula(1);
+            List<Actor> Images = new List<Actor>();
+            for (int i = 0; i < maxImages; i++)
+            {
+                var Image = new MirrorImageMinion(this.World, this, i);
+                Image.Brain.DeActivate();
+                Image.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+                Image.Attributes[GameAttribute.Untargetable] = true;
+                Image.EnterWorld(Image.Position);
+                Images.Add(Image);
+                yield return WaitSeconds(0.2f);
+            }
+            yield return WaitSeconds(0.8f);
+            foreach (Actor Image in Images)
+            {
+                (Image as Minion).Brain.Activate();
+                Image.Attributes[GameAttribute.Untargetable] = false;
+                Image.Attributes.BroadcastChangedIfRevealed();
+            }
             yield break;
-        }
-        [ImplementsPowerBuff(0)]
-        class MirrorImageBuff : PowerBuff
-        {
-            public override void Init()
-            {
-                Timeout = WaitSeconds(15f);
-            }
-
-            public override bool Apply()
-            {
-                if (!base.Apply())
-                    return false;
-                return true;
-            }
-
-            public override void Remove()
-            {
-                base.Remove();
-            }
-        }
-        [ImplementsPowerBuff(1)]
-        class MirrorImage1Buff : PowerBuff
-        {
-            public override void Init()
-            {
-                Timeout = WaitSeconds(15f);
-            }
-
-            public override bool Apply()
-            {
-                if (!base.Apply())
-                    return false;
-                return true;
-            }
-
-            public override void Remove()
-            {
-                base.Remove();
-            }
         }
     }
     #endregion
 
-    //[Hard Skills TODO] Mirror Image, Familiar, Archon
-    //14 passive skills
+    //As much as the scriptformula says its a pet... it seems more of a buff besides firing.
+    //unknown how to go about this.
+    #region Familiar
+    [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.Familiar)]
+    public class Familiar : Skill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            User.PlayEffectGroup(167334);
+            yield break;
+        }
+    }
+    #endregion
 }
