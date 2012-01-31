@@ -653,11 +653,11 @@ namespace Mooege.Core.GS.Generators
             // Create an array of mobs, used with the loadActor in the load monster area loop
             // Each monster are created in Mooege.Core.GS.Actors.Implementations.Monsters
             // By Poluxxx
-            int[] aSNO = new int[] { 
-                   // 6652      // Zombie
-                     6443      // Ravenous
-                    //, 136943    // Ghost
-            };
+            //int[] aSNO = new int[] { 
+            //       // 6652      // Zombie
+            //         6443      // Ravenous
+            //        //, 136943    // Ghost
+            //};
 
             foreach (int la in levelAreas.Keys)
             {
@@ -706,15 +706,16 @@ namespace Mooege.Core.GS.Generators
                             switch (spawnEntry.SNOHandle.Group)
                             {
                                 case SNOGroup.Actor:
-
-                                    loadActor(spawnEntry.SNOHandle, gizmoLocations[location], world, new TagMap());
+                                    //TODO: Why to pass tagmap here and not load it inside Actor
+                                    loadActor(spawnEntry.SNOHandle, gizmoLocations[location], world, ((Mooege.Common.MPQ.FileFormats.Actor)spawnEntry.SNOHandle.Target).TagMap);
                                     break;
 
                                 case SNOGroup.Encounter:
 
                                     var encounter = spawnEntry.SNOHandle.Target as Encounter;
                                     var actor = RandomHelper.RandomItem(encounter.Spawnoptions, x => x.Probability);
-                                    loadActor(new SNOHandle(actor.SNOSpawn), gizmoLocations[location], world, new TagMap());
+                                    var actorHandle = new SNOHandle(actor.SNOSpawn);
+                                    loadActor(actorHandle, gizmoLocations[location], world, ((Mooege.Common.MPQ.FileFormats.Actor)actorHandle.Target).TagMap);
                                     break;
 
                                 case SNOGroup.Adventure:
@@ -798,25 +799,25 @@ namespace Mooege.Core.GS.Generators
 
                             if ((scene.NavMesh.Squares[y * scene.NavMesh.SquaresCountX + x].Flags & Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.NoSpawn) == 0)
                             {
-                                loadActor(
-                                    new SNOHandle(aSNO[RandomHelper.Next(aSNO.Length)]), // Poluxxx
-                                    new PRTransform
-                                    {
-                                        Vector3D = new Vector3D
-                                        {
-                                            X = (float)(x * 2.5 + scene.Position.X),
-                                            Y = (float)(y * 2.5 + scene.Position.Y),
-                                            Z = scene.NavMesh.Squares[y * scene.NavMesh.SquaresCountX + x].Z + scene.Position.Z
-                                        },
-                                        Quaternion = new Quaternion
-                                        {
-                                            W = (float)(RandomHelper.NextDouble() * System.Math.PI * 2),
-                                            Vector3D = new Vector3D(0, 0, 1)
-                                        }
-                                    },
-                                    world,
-                                    new TagMap()
-                                    );
+                                //loadActor(
+                                //    new SNOHandle(aSNO[RandomHelper.Next(aSNO.Length)]), // Poluxxx
+                                //    new PRTransform
+                                //    {
+                                //        Vector3D = new Vector3D
+                                //        {
+                                //            X = (float)(x * 2.5 + scene.Position.X),
+                                //            Y = (float)(y * 2.5 + scene.Position.Y),
+                                //            Z = scene.NavMesh.Squares[y * scene.NavMesh.SquaresCountX + x].Z + scene.Position.Z
+                                //        },
+                                //        Quaternion = new Quaternion
+                                //        {
+                                //            W = (float)(RandomHelper.NextDouble() * System.Math.PI * 2),
+                                //            Vector3D = new Vector3D(0, 0, 1)
+                                //        }
+                                //    },
+                                //    world,
+                                //    new TagMap()
+                                //    );
                             }
                         }
                     }
