@@ -231,6 +231,8 @@ namespace Mooege.Core.GS.Generators
                 Dictionary<Vector3D, TileInfo> worldTiles = new Dictionary<Vector3D, TileInfo>();
                 worldTiles.Add(initialStartTilePosition, entrance);
                 AddAdjacentTiles(worldTiles, entrance, tiles, 0, initialStartTilePosition);
+                AddFillers(worldTiles, tiles);
+
 
                 foreach (var tile in worldTiles)
                 {
@@ -314,7 +316,37 @@ namespace Mooege.Core.GS.Generators
             }
         }
 
+        /// <summary>
+        /// Adds filler tiles around the world
+        /// </summary>
+        /// <param name="worldTiles"></param>
+        /// <param name="tiles"></param>
+        private static void AddFillers(Dictionary<Vector3D, TileInfo> worldTiles, Dictionary<int, TileInfo> tiles)
+        {
 
+            Dictionary<Vector3D, TileInfo> fillersToAdd = new Dictionary<Vector3D, TileInfo>();
+            foreach (var tile in worldTiles)
+            {
+                Dictionary<TileExits, Vector3D> adjacentPositions = GetAdjacentPositions(tile.Key);
+                foreach (var position in adjacentPositions)
+                {
+                    //Add filler to all free tiles (all exits should have been filled and the blocked ones don't need anything else)
+                    if (GetExistStatus(worldTiles, position.Value, position.Key) == ExitStatus.Free)
+                    {
+                        //random filler
+                        if (!fillersToAdd.ContainsKey(position.Value))
+                            fillersToAdd.Add(position.Value, GetTileInfo(tiles, 0));
+                    }
+                    
+                }
+
+
+            }
+            foreach (var tile in fillersToAdd)
+            {
+                worldTiles.Add(tile.Key, tile.Value);
+            }
+        }
 
         /// <summary>
         /// Adds tiles to all exits of a tile
@@ -330,32 +362,8 @@ namespace Mooege.Core.GS.Generators
         {
             Logger.Debug("Counter: {0}, ExitDirectionbitsOfGivenTile: {1}", counter, tileInfo.ExitDirectionBits);
             var lookUpExits = GetLookUpExitBits(tileInfo.ExitDirectionBits);
-            Vector3D positionEast = new Vector3D(position.X - 240, position.Y, 0);
-            Vector3D positionWest = new Vector3D(position.X + 240, position.Y, 0);
-            Vector3D positionNorth = new Vector3D(position.X, position.Y - 240, 0);
-            Vector3D positionSouth = new Vector3D(position.X, position.Y + 240, 0);
 
-            //get a random direction
-            Dictionary<TileExits, Vector3D> exitTypes = new Dictionary<TileExits, Vector3D>();
-            exitTypes.Add(TileExits.East, positionEast);
-            exitTypes.Add(TileExits.West, positionWest);
-            exitTypes.Add(TileExits.North, positionNorth);
-            exitTypes.Add(TileExits.South, positionSouth);
-
-            Dictionary<TileExits, Vector3D> randomizedExitTypes = new Dictionary<TileExits, Vector3D>();
-            var count = exitTypes.Count;
-
-            //Randomise exit directions
-            for (int i = 0; i < count; i++)
-            {
-                //Chose a random exit to test
-                Vector3D chosenExitPosition = RandomHelper.RandomValue(exitTypes);
-                var chosenExitDirection = (from pair in exitTypes
-                                           where pair.Value == chosenExitPosition
-                                           select pair.Key).FirstOrDefault();
-                randomizedExitTypes.Add(chosenExitDirection, chosenExitPosition);
-                exitTypes.Remove(chosenExitDirection);
-            }
+            Dictionary<TileExits, Vector3D> randomizedExitTypes = GetAdjacentPositions(position, true);
 
             //add adjacent tiles for each randomized direction
             foreach (var exit in randomizedExitTypes)
@@ -363,17 +371,6 @@ namespace Mooege.Core.GS.Generators
                 if ((lookUpExits & (int)exit.Key) > 0 && !worldTiles.ContainsKey(exit.Value))
                 {
                     counter = AddadjacentTileAtExit(worldTiles, tiles, counter, exit.Value);
-                }
-            }
-
-            //Add fillers in the directions that there were no tiles
-            foreach (var exit in randomizedExitTypes)
-            {
-                //Add filler to all free tiles (all exits should have been filled and the blocked ones don't need anything else)
-                if (GetExistStatus(worldTiles, exit.Value, exit.Key) == ExitStatus.Free)
-                {
-                    //random filler
-                    worldTiles.Add(exit.Value, GetTileInfo(tiles, 0));
                 }
             }
 
@@ -431,6 +428,47 @@ namespace Mooege.Core.GS.Generators
             exitStatusDict.Add(TileExits.South, exitStatusSouth);
 
             return exitStatusDict;
+        }
+
+        /// <summary>
+        /// Returns a dictionary of all positions adjacent to a tile
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="isRandom"></param>
+        private static Dictionary<TileExits, Vector3D> GetAdjacentPositions(Vector3D position, bool isRandom = false)
+        {
+            Vector3D positionEast = new Vector3D(position.X - 240, position.Y, 0);
+            Vector3D positionWest = new Vector3D(position.X + 240, position.Y, 0);
+            Vector3D positionNorth = new Vector3D(position.X, position.Y - 240, 0);
+            Vector3D positionSouth = new Vector3D(position.X, position.Y + 240, 0);
+
+            //get a random direction
+            Dictionary<TileExits, Vector3D> exitTypes = new Dictionary<TileExits, Vector3D>();
+            exitTypes.Add(TileExits.East, positionEast);
+            exitTypes.Add(TileExits.West, positionWest);
+            exitTypes.Add(TileExits.North, positionNorth);
+            exitTypes.Add(TileExits.South, positionSouth);
+
+            if(!isRandom)
+                return exitTypes;
+
+            //randomize
+            Dictionary<TileExits, Vector3D> randomExitTypes = new Dictionary<TileExits, Vector3D>();
+            var count = exitTypes.Count;
+
+            //Randomise exit directions
+            for (int i = 0; i < count; i++)
+            {
+                //Chose a random exit to test
+                Vector3D chosenExitPosition = RandomHelper.RandomValue(exitTypes);
+                var chosenExitDirection = (from pair in exitTypes
+                                           where pair.Value == chosenExitPosition
+                                           select pair.Key).FirstOrDefault();
+                randomExitTypes.Add(chosenExitDirection, chosenExitPosition);
+                exitTypes.Remove(chosenExitDirection);
+            }
+
+            return randomExitTypes;
         }
 
         private static bool ContainsTileType(Dictionary<Vector3D, TileInfo> worldTiles, TileTypes tileType)
@@ -497,7 +535,7 @@ namespace Mooege.Core.GS.Generators
                 //delete from the pool of tiles those that do have exits that are blocked
                 if (exitStatus[exit] == ExitStatus.Blocked)
                 {
-                    acceptedTiles = tiles.Where(pair => (pair.Value.ExitDirectionBits & (int)exit) == 0).ToDictionary(pair => pair.Key, pair => pair.Value);
+                    acceptedTiles = acceptedTiles.Where(pair => (pair.Value.ExitDirectionBits & (int)exit) == 0).ToDictionary(pair => pair.Key, pair => pair.Value);
                 }
             }
 
@@ -525,6 +563,7 @@ namespace Mooege.Core.GS.Generators
             {
                 Logger.Debug("Did not find matching tile");
                 //TODO: Never return null. Try to find other tiles that match entry pattern and rotate
+                //There should be a field that defines if tile can be rotated
                 return null;
             }
 
