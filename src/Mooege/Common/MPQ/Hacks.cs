@@ -12,6 +12,7 @@ using Mooege.Core.GS.Items;
 using System.Text.RegularExpressions;
 using Mooege.Core.GS.Common.Types.TagMap;
 using Mooege.Common.Logging;
+using Mooege.Common.Helpers.IO;
 
 namespace Mooege.Common.MPQ
 {
@@ -39,7 +40,7 @@ namespace Mooege.Common.MPQ
             }
 
             TagNames = new Dictionary<int, string>();
-            using (var tagNameFile = File.OpenText(Path.Combine(Storage.Config.Instance.Root, "tagid_names.txt")))
+            using (var tagNameFile = File.OpenText(Path.Combine(FileHelpers.AssemblyRoot,Storage.Config.Instance.Root, "tagid_names.txt")))
             {
                 string line;
                 while ((line = tagNameFile.ReadLine()) != null)
