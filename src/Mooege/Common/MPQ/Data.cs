@@ -70,6 +70,8 @@ namespace Mooege.Common.MPQ
             this.LoadCatalog("CoreTOC.dat"); // as of patch beta patch 7841, blizz renamed TOC.dat as CoreTOC.dat
             this.LoadCatalog("TOC.dat", true, PatchExceptions.ToList()); // used for reading assets patched to zero bytes and removed from mainCatalog file.  
             this.LoadDBCatalog();
+
+            Hacks.OnMPQLoaded();
         }
 
         private void LoadCatalog(string fileName, bool useBaseMPQ = false, List<SNOGroup> groupsToLoad = null)
