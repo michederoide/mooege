@@ -616,6 +616,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
+    <None Include="..\..\assets\tagid_names.txt">
+      <Link>Assets\tagid_names.txt</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="..\..\assets\account.db">
       <Link>Assets\account.db</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
