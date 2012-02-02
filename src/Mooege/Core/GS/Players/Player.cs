@@ -540,6 +540,7 @@ namespace Mooege.Core.GS.Players
 
             this.SkillSet.ActiveSkills[message.SkillIndex] = message.SNOSkill;
 			this.SkillSet.UpdateAssignedSkill(message.SkillIndex,message.SNOSkill,this.Toon);
+			this.SkillSet.SwitchUpdateSkills(oldSNOSkill,message.SNOSkill,this.Toon);
             this.UpdateHeroState();
 			
         }
@@ -567,7 +568,9 @@ namespace Mooege.Core.GS.Players
         private void OnPlayerChangeHotbarButtonMessage(GameClient client, PlayerChangeHotbarButtonMessage message)
         {
             //this.SkillSet.HotBarSkills[message.BarIndex] = message.ButtonData;
-
+			
+			this.SkillSet.HotBarSkills[message.BarIndex].SNOSkill = message.ButtonData.SNOSkill;
+			
             Logger.Debug("HB Skill changed {0}", message.ButtonData.SNOSkill);
             Logger.Debug("HB Position {0}", message.BarIndex);
             Logger.Debug("Char involved on HB change {0}", this.Toon.D3EntityID.IdLow);

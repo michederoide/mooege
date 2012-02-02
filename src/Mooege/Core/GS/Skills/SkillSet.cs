@@ -50,17 +50,17 @@ namespace Mooege.Core.GS.Skills
             var cmd = new SQLiteCommand(query, DBManager.Connection);
             var reader = cmd.ExecuteReader();
 
-
+			//30592 base attack
 
             if (!reader.HasRows)
             {
-                var query_first_insert = string.Format("INSERT INTO  active_skills (id_toon,skill_0,skill_1,skill_2,skill_3,skill_4,skill_5) VALUES ({0},{1},{2},{3},{4},{5},{6} )", toon.D3EntityID.IdLow, this.CurrentActiveSkills[0], Skills.None, Skills.None, Skills.None, Skills.None, Skills.None, Skills.None);
+                var query_first_insert = string.Format("INSERT INTO  active_skills (id_toon,skill_0,skill_1,skill_2,skill_3,skill_4,skill_5) VALUES ({0},{1},{2},{3},{4},{5},{6} )", toon.D3EntityID.IdLow, this.CurrentActiveSkills[0], 30592, Skills.None, Skills.None, Skills.None, Skills.None, Skills.None);
                 var cmd_first_insert = new SQLiteCommand(query_first_insert, DBManager.Connection);
                 cmd_first_insert.ExecuteReader();
                 Logger.Debug("SkillSet: No Entry for {0}", toon.D3EntityID.IdLow);
 				this.HotBarSkills = new HotbarButtonData[9] {     
                 new HotbarButtonData { SNOSkill = this.CurrentActiveSkills[0], ItemGBId = -1 }, // left-click
-                new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // right-click
+                new HotbarButtonData { SNOSkill = 30592, ItemGBId = -1 }, // right-click
                 new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // hidden-bar - left-click switch - which key??
                 new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // hidden-bar - right-click switch (press x ingame)
                 new HotbarButtonData { SNOSkill = Skills.None, ItemGBId = -1 }, // bar-1
@@ -214,6 +214,20 @@ namespace Mooege.Core.GS.Skills
                     break;
 			}
 			
+		}
+		
+		public void SwitchUpdateSkills (int oldSNOSkill,int SNOSkill, Toon toon)
+		{
+			for (int i = 0; i < this.HotBarSkills.Length; i++)
+			{
+				if(this.HotBarSkills[i].SNOSkill == oldSNOSkill)
+				{
+					Logger.Debug("SkillSet: SwitchUpdateSkill Oldskill {0} Newskill {1}",oldSNOSkill,SNOSkill);
+					this.HotBarSkills[i].SNOSkill = SNOSkill;
+					this.UpdateHotbarSkills(,SNOSkill,toon);
+					return;
+				}
+			}
 		}
 
     }
