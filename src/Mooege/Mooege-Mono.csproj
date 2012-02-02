@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -100,6 +100,7 @@
     <Compile Include="Common\Helpers\Concurrency\ConcurrentList.cs" />
     <Compile Include="Common\Helpers\Math\FastRandom.cs" />
     <Compile Include="Common\Helpers\IO\FileHelpers.cs" />
+    <Compile Include="Common\MPQ\Hacks.cs" />
     <Compile Include="Common\MPQ\MPQAsset.cs" />
     <Compile Include="Common\MPQ\Data.cs" />
     <Compile Include="Common\MPQ\FileFormats\Act.cs" />
@@ -718,5 +719,10 @@
       <DependentUpon>WorldVisualizer.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\tagid_names.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>
