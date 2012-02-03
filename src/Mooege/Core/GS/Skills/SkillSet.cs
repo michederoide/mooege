@@ -224,7 +224,7 @@ namespace Mooege.Core.GS.Skills
 				{
 					Logger.Debug("SkillSet: SwitchUpdateSkill Oldskill {0} Newskill {1}",oldSNOSkill,SNOSkill);
 					this.HotBarSkills[i].SNOSkill = SNOSkill;
-					this.UpdateHotbarSkills(,SNOSkill,toon);
+					this.UpdateHotbarSkills(i,SNOSkill,toon);
 					return;
 				}
 			}
