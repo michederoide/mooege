@@ -68,7 +68,7 @@ namespace Mooege.Core.GS.Map
         /// List of scenes contained in the world.
         /// </summary>
         private readonly ConcurrentDictionary<uint, Scene> _scenes;
-
+        public ConcurrentDictionary<uint, Scene> Scenes { get { return _scenes; } }
         /// <summary>
         /// List of actors contained in the world.
         /// </summary>

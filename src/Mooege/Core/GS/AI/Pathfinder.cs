@@ -152,7 +152,7 @@ namespace Mooege.Core.GS.AI
             mPathFinder.Formula = HeuristicFormula.Custom1;
             mPathFinder.Diagonals = true; // Looks better, they can cut corners with this set to true - DarkLotus
             mPathFinder.ReopenCloseNodes = true;
-            mPathFinder.HeavyDiagonals = false;
+            mPathFinder.HeavyDiagonals = true;
             mPathFinder.HeuristicEstimate = 1;
             mPathFinder.PunishChangeDirection = true;
             mPathFinder.TieBreaker = true; ;
@@ -250,9 +250,66 @@ namespace Mooege.Core.GS.AI
             public List<Vector3D> GetPath()
             {
                 Path.AddRange(_pathfinder.FindPath(_actor, _start, _destination));
+                Path = PullPathString(Path);
                 PathFound = true;
                
                 return Path;
+            }
+
+            private List<Vector3D> PullPathString(List<Vector3D> Path)
+            {
+                //List<Vector3D> path = new List<Vector3D>();
+                Logger.Debug("Path Length before cull " + Path.Count);
+                for (int i = Path.Count - 1; i > 2; i--)
+                {
+                //if direction from square 1 to 2 is same as 2 to 3 remove 2
+                    if (i < Path.Count || i > 0)
+                    {
+                        if (Angle(Path[i].X, Path[i].Y, Path[i - 2].X, Path[i - 2].Y) == Angle(Path[i].X, Path[i].Y, Path[i - 1].X, Path[i - 1].Y))
+                        {
+                            Path.RemoveAt(i - 1);
+                        }
+                    }
+                    
+                }
+                Logger.Debug("Path Length after cull " + Path.Count);
+                return Path;
+            }
+
+
+            public double Angle(double px1, double py1, double px2, double py2)
+            {
+                // Negate X and Y values
+                double pxRes = px2 - px1;
+                double pyRes = py2 - py1;
+                double angle = 0.0;
+                // Calculate the angle
+                if (pxRes == 0.0)
+                {
+                    if (pxRes == 0.0)
+                        angle = 0.0;
+                    else if (pyRes > 0.0) angle = System.Math.PI / 2.0;
+                    else
+                        angle = System.Math.PI * 3.0 / 2.0;
+                }
+                else if (pyRes == 0.0)
+                {
+                    if (pxRes > 0.0)
+                        angle = 0.0;
+                    else
+                        angle = System.Math.PI;
+                }
+                else
+                {
+                    if (pxRes < 0.0)
+                        angle = System.Math.Atan(pyRes / pxRes) + System.Math.PI;
+                    else if (pyRes < 0.0) angle = System.Math.Atan(pyRes / pxRes) + (2 * System.Math.PI);
+                    else
+                        angle = System.Math.Atan(pyRes / pxRes);
+                }
+                // Convert to degrees
+                angle = angle * 180 / System.Math.PI; return angle;
+
             }
         }
 

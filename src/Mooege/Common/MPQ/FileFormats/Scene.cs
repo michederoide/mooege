@@ -186,7 +186,7 @@ namespace Mooege.Common.MPQ.FileFormats
             public NavCellFlags Flags { get; private set; }
             public short NeighbourCount { get; private set; }
             public int NeighborsIndex { get; private set; }
-
+            public System.Windows.Rect Bounds { get { return new System.Windows.Rect(Min.X, Min.Y, Max.X - Min.X, Max.Y - Min.Y); } } 
             public void Read(MpqFileStream stream)
             {
                 this.Min = new Vector3D(stream.ReadValueF32(), stream.ReadValueF32(), stream.ReadValueF32());
