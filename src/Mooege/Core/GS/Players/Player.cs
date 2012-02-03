@@ -455,12 +455,16 @@ namespace Mooege.Core.GS.Players
             #endregion // Attributes
 
             // unlocking assigned skills
-           /* for (int i = 0; i < this.SkillSet.ActiveSkills.Length; i++)
+			
+           for (int i = 0; i < this.SkillSet.ActiveSkills.Length; i++)
             {
                 this.Attributes[GameAttribute.Skill, this.SkillSet.ActiveSkills[i]] = 1;
                 this.Attributes[GameAttribute.Skill_Total, this.SkillSet.ActiveSkills[i]] = 1;
                 
-            }*/
+				Logger.Debug("Value inside current Active Skills {0}",this.SkillSet.ActiveSkills[i]);
+				
+            }
+		
 
             this.Inventory = new Inventory(this); // Here because it needs attributes /fasbat
         }
@@ -502,10 +506,11 @@ namespace Mooege.Core.GS.Players
 
         private void OnAssignActiveSkill(GameClient client, AssignActiveSkillMessage message)
         {
+			
             var oldSNOSkill = this.SkillSet.ActiveSkills[message.SkillIndex]; // find replaced skills SNO.
             Logger.Debug("OnAssignActiveskill {0}:", this.SkillSet.ActiveSkills[message.SkillIndex]);
             Logger.Debug("Skill Index {0}:", message.SkillIndex);
-
+			
             if (oldSNOSkill != -1)
             {
                 // if old power was socketted, pickup rune
@@ -528,13 +533,16 @@ namespace Mooege.Core.GS.Players
             this.Attributes[GameAttribute.Skill_Total, message.SNOSkill] = 1;
             this.Attributes.BroadcastChangedIfRevealed();
 
-            foreach (HotbarButtonData button in this.SkillSet.HotBarSkills.Where(button => button.SNOSkill == oldSNOSkill)) // loop through hotbar and replace the old skill with new one
+            /*foreach (HotbarButtonData button in this.SkillSet.HotBarSkills.Where(button => button.SNOSkill == oldSNOSkill)) // loop through hotbar and replace the old skill with new one
             {
                 button.SNOSkill = message.SNOSkill;
-            }
+            }*/
 
             this.SkillSet.ActiveSkills[message.SkillIndex] = message.SNOSkill;
+			this.SkillSet.UpdateAssignedSkill(message.SkillIndex,message.SNOSkill,this.Toon);
+			this.SkillSet.SwitchUpdateSkills(oldSNOSkill,message.SNOSkill,this.Toon);
             this.UpdateHeroState();
+			
         }
 
 
@@ -560,7 +568,9 @@ namespace Mooege.Core.GS.Players
         private void OnPlayerChangeHotbarButtonMessage(GameClient client, PlayerChangeHotbarButtonMessage message)
         {
             //this.SkillSet.HotBarSkills[message.BarIndex] = message.ButtonData;
-
+			
+			this.SkillSet.HotBarSkills[message.BarIndex].SNOSkill = message.ButtonData.SNOSkill;
+			
             Logger.Debug("HB Skill changed {0}", message.ButtonData.SNOSkill);
             Logger.Debug("HB Position {0}", message.BarIndex);
             Logger.Debug("Char involved on HB change {0}", this.Toon.D3EntityID.IdLow);
