@@ -111,7 +111,7 @@ namespace Mooege.Common.Versions
             /// </summary>
             public const int ProtocolHash = 0x1A64B41;
 
-            // 0x01A64B41                   // 8296
+            // 0x01A64B41                   // 8296, 8350
             // 0xBA957E6B                   // 8059, 8101
             // unchecked((int)0x208CA037)   // 7931
             // unchecked((int)0x208CA037)   // 7841

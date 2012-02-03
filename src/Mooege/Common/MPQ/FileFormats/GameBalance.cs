@@ -302,7 +302,7 @@ namespace Mooege.Common.MPQ.FileFormats
         public int I14 { get; private set; }
         public int[] I15 { get; private set; }
         public AttributeSpecifier[] Attribute { get; private set; }
-        public ItemQuality Quality { get; private set; }
+        public ItemQuality Quality { get; set; } //changed the setter to public, this seems to be the reason this field exists /HDANILO
         public int[] RecipeToGrant { get; private set; }
         public int EnhancementToGrant { get; private set; }
         public int[] LegendaryAffixFamily { get; private set; }

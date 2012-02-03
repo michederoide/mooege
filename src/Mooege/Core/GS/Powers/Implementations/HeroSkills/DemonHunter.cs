@@ -758,7 +758,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Partially Complete, No runes.
+    //No runes yet.
     #region RapidFire
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.RapidFire)]
     public class RapidFire : ChanneledSkill
@@ -768,9 +768,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelOpen()
         {
             EffectsPerSecond = 0.1f;
-            //initial hatred cost
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
-            //User.PlayEffectGroup(150049); //unknown where this could go.
             User.Attributes[GameAttribute.Projectile_Speed] = User.Attributes[GameAttribute.Projectile_Speed] * ScriptFormula(22);
             User.Attributes.BroadcastChangedIfRevealed();
         }
@@ -786,16 +784,13 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelUpdated()
         {
             User.TranslateFacing(TargetPosition);
-            // client updates target actor position
         }
 
         public override IEnumerable<TickTimer> Main()
         {
-            //projectiles
             var proj1 = new Projectile(this, 150061, User.Position);
             proj1.Position.Z += 5f;
-            //TargetPosition needs to have a general spread of fire.
-            proj1.Launch(TargetPosition, ScriptFormula(2));
+            proj1.Launch(new Vector3D(TargetPosition.X + ((float)Rand.NextDouble() * 2f), TargetPosition.Y + ((float)Rand.NextDouble() * 2f), TargetPosition.Z), ScriptFormula(2));
             UsePrimaryResource(ScriptFormula(19) * EffectsPerSecond);
             proj1.OnCollision = (hit) =>
             {
@@ -1505,9 +1500,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 WeaponDamage(GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(1)), ScriptFormula(0), DamageType.Fire);
             };
 
-
-
-            /*TickTimer timeout = WaitSeconds(2f);
+            TickTimer timeout = WaitSeconds(1f);
             Projectile[] grenades = new Projectile[4];
             for (int i = 0; i < grenades.Length; ++i)
             {
@@ -1516,19 +1509,19 @@ namespace Mooege.Core.GS.Powers.Implementations
                 grenades[i] = projectile;
             }
 
-            Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(GroundSpot.Position, RandomDirection(GroundSpot.Position, 5f), 90f, grenades.Length);
+            Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(GroundSpot.Position, RandomDirection(GroundSpot.Position, 7f), 90f, grenades.Length);
             // launch and bounce grenades
             yield return WaitTicks(1);  // helps make bounce timings more consistent
 
             float bounceOffset = 5f;
             float minHeight = ScriptFormula(24);
             float height = minHeight + ScriptFormula(25);
-            float bouncePercent = 0.3f; // ScriptFormula(23);
+            float bouncePercent = 0.3f; // ScriptFormula(26);
             while (!timeout.TimedOut)
             {
                 for (int i = 0; i < grenades.Length; ++i)
                 {
-                    grenades[i].LaunchArc(PowerMath.TranslateDirection2D(projDestinations[i], GroundSpot.Position, projDestinations[i], 5f - 0.3f * bounceOffset), height, ScriptFormula(32), ScriptFormula(34));
+                    grenades[i].LaunchArc(projDestinations[i], height, ScriptFormula(28), ScriptFormula(30));
                 }
 
                 height *= bouncePercent;
@@ -1546,8 +1539,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 attack.Targets = GetEnemiesInRadius(grenade.Position, ScriptFormula(6));
                 attack.AddWeaponDamage(ScriptFormula(5), DamageType.Fire);
                 attack.Apply();
-            }*/
-            yield break;
+            }
         }
     }
     #endregion
