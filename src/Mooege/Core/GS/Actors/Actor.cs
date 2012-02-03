@@ -131,7 +131,7 @@ namespace Mooege.Core.GS.Actors
         private Mooege.Common.MPQ.FileFormats.QuestRange _questRange;
 
         protected Mooege.Common.MPQ.FileFormats.ConversationList ConversationList;
-        public Vector3D CheckPointPosition { get; set; }
+        public Vector3D CheckPointPosition { get; private set; }
 
         /// <summary>
         /// Returns true if actor has world location.
@@ -511,11 +511,21 @@ namespace Mooege.Core.GS.Actors
             Attributes.SendMessage(player.InGameClient);
 
             // Actor group
+            int group1Hash = -1;
+            int group2Hash = -1;
+            if (Tags != null)
+            {
+                if (Tags.ContainsKey(MarkerKeys.Group1Hash))
+                    group1Hash = Tags[MarkerKeys.Group1Hash];
+                if (Tags.ContainsKey(MarkerKeys.Group2Hash))
+                    group2Hash = Tags[MarkerKeys.Group2Hash];
+            }
+
             player.InGameClient.SendMessage(new ACDGroupMessage
             {
                 ActorID = DynamicID,
-                Field1 = -1,
-                Field2 = -1,
+                Group1Hash = group1Hash,
+                Group2Hash = group2Hash,
             });
 
             // Reveal actor (creates actor and makes it visible to the player)

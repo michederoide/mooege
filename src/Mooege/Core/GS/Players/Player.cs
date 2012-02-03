@@ -197,7 +197,7 @@ namespace Mooege.Core.GS.Players
             this.NameSNOId = -1;
             this.Field10 = 0x0;
 
-            this.SkillSet = new SkillSet(this.Toon.Class);
+            this.SkillSet = new SkillSet(this.Toon.Class,this.Toon);
             this.GroundItems = new Dictionary<uint, Item>();
             this.Conversations = new ConversationManager(this, this.World.Game.Quests);
             this.ExpBonusData = new ExpBonusData(this);
@@ -341,10 +341,10 @@ namespace Mooege.Core.GS.Players
             this.Attributes[GameAttribute.Hitpoints_Cur] = this.Attributes[GameAttribute.Hitpoints_Max_Total];
 
             //Resource //TODO: Originals were 200f, this is so you can test skills.
-            this.Attributes[GameAttribute.Resource_Cur, this.ResourceID] = 400f;
-            this.Attributes[GameAttribute.Resource_Max, this.ResourceID] = 400f;
-            this.Attributes[GameAttribute.Resource_Max_Total, this.ResourceID] = 400f;
-            this.Attributes[GameAttribute.Resource_Effective_Max, this.ResourceID] = 400f;
+            this.Attributes[GameAttribute.Resource_Cur, this.ResourceID] = 300f;
+            this.Attributes[GameAttribute.Resource_Max, this.ResourceID] = 300f;
+            this.Attributes[GameAttribute.Resource_Max_Total, this.ResourceID] = 300f;
+            this.Attributes[GameAttribute.Resource_Effective_Max, this.ResourceID] = 300f;
             this.Attributes[GameAttribute.Resource_Regen_Total, this.ResourceID] = 3.051758E-05f;
             this.Attributes[GameAttribute.Resource_Type_Primary] = this.ResourceID;
 
@@ -455,11 +455,12 @@ namespace Mooege.Core.GS.Players
             #endregion // Attributes
 
             // unlocking assigned skills
-            for (int i = 0; i < this.SkillSet.ActiveSkills.Length; i++)
+           /* for (int i = 0; i < this.SkillSet.ActiveSkills.Length; i++)
             {
                 this.Attributes[GameAttribute.Skill, this.SkillSet.ActiveSkills[i]] = 1;
                 this.Attributes[GameAttribute.Skill_Total, this.SkillSet.ActiveSkills[i]] = 1;
-            }
+                
+            }*/
 
             this.Inventory = new Inventory(this); // Here because it needs attributes /fasbat
         }
@@ -502,6 +503,9 @@ namespace Mooege.Core.GS.Players
         private void OnAssignActiveSkill(GameClient client, AssignActiveSkillMessage message)
         {
             var oldSNOSkill = this.SkillSet.ActiveSkills[message.SkillIndex]; // find replaced skills SNO.
+            Logger.Debug("OnAssignActiveskill {0}:", this.SkillSet.ActiveSkills[message.SkillIndex]);
+            Logger.Debug("Skill Index {0}:", message.SkillIndex);
+
             if (oldSNOSkill != -1)
             {
                 // if old power was socketted, pickup rune
@@ -533,6 +537,7 @@ namespace Mooege.Core.GS.Players
             this.UpdateHeroState();
         }
 
+
         private void OnAssignPassiveSkill(GameClient client, AssignPassiveSkillMessage message)
         {
             var oldSNOSkill = this.SkillSet.PassiveSkills[message.SkillIndex]; // find replaced skills SNO.
@@ -554,7 +559,14 @@ namespace Mooege.Core.GS.Players
 
         private void OnPlayerChangeHotbarButtonMessage(GameClient client, PlayerChangeHotbarButtonMessage message)
         {
-            this.SkillSet.HotBarSkills[message.BarIndex] = message.ButtonData;
+            //this.SkillSet.HotBarSkills[message.BarIndex] = message.ButtonData;
+
+            Logger.Debug("HB Skill changed {0}", message.ButtonData.SNOSkill);
+            Logger.Debug("HB Position {0}", message.BarIndex);
+            Logger.Debug("Char involved on HB change {0}", this.Toon.D3EntityID.IdLow);
+
+            this.SkillSet.UpdateHotbarSkills(message.BarIndex, message.ButtonData.SNOSkill,this.Toon);
+
         }
 
         /// <summary>
@@ -900,6 +912,7 @@ namespace Mooege.Core.GS.Players
             this.InGameClient.SendMessage(new HeroStateMessage
             {
                 State = this.GetStateData()
+              
             });
         }
 
@@ -1662,7 +1675,7 @@ namespace Mooege.Core.GS.Players
                 case ToonClass.Monk:
                     break;
                 case ToonClass.WitchDoctor:
-                    GeneratePrimaryResource(1f);
+                    GeneratePrimaryResource(4f);
                     break;
                 case ToonClass.Wizard:
                     GeneratePrimaryResource(2f);

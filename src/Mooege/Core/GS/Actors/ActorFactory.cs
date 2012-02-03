@@ -161,7 +161,8 @@ namespace Mooege.Core.GS.Actors
 
                 foreach (var sno in attributes.First().SNOIds)
                 {
-                    SNOHandlers.Add(sno, type);
+                    if (!SNOHandlers.ContainsKey(sno)) 
+                        SNOHandlers.Add(sno, type);
                 }
             }
         }
