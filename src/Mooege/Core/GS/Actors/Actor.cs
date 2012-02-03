@@ -131,7 +131,7 @@ namespace Mooege.Core.GS.Actors
         private Mooege.Common.MPQ.FileFormats.QuestRange _questRange;
 
         protected Mooege.Common.MPQ.FileFormats.ConversationList ConversationList;
-        public Vector3D CheckPointPosition { get; private set; }
+        public Vector3D CheckPointPosition { get; set; }
 
         /// <summary>
         /// Returns true if actor has world location.

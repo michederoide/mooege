@@ -79,64 +79,73 @@ namespace Mooege.Core.GS.Actors
 
         public override bool Reveal(Player player)
         {
-            if (!base.Reveal(player) || Destination == null)
+            if (!base.Reveal(player) || this.Destination == null)
                 return false;
 
-            player.InGameClient.SendMessage(new PortalSpecifierMessage()
-            {
-                ActorID = this.DynamicID,
-                Destination = this.Destination
-            });
-
-
-            // Show a minimap icon
-            Mooege.Common.MPQ.Asset asset;
-            string markerName = "";
-
-            if (Mooege.Common.MPQ.MPQStorage.Data.Assets[Common.Types.SNO.SNOGroup.LevelArea].TryGetValue(this.Destination.DestLevelAreaSNO, out asset))
-                markerName = System.IO.Path.GetFileNameWithoutExtension(asset.FileName);
-
-            player.InGameClient.SendMessage(new MapMarkerInfoMessage()
-            {
-                Field0 = (int)World.NewSceneID,    // TODO What is the correct id space for mapmarkers?
-                Field1 = new WorldPlace()
+                player.InGameClient.SendMessage(new PortalSpecifierMessage()
                 {
-                    Position = this.Position,
-                    WorldID = this.World.DynamicID
-                },
-                Field2 = MinimapIcon, //   0x00018FB0,  /* Marker_DungeonEntrance.tex */          // TODO Dont mark all portals as dungeon entrances... some may be exits too (although d3 does not necesarrily use the correct markers). Also i have found no hacky way to determine whether a portal is entrance or exit - farmy
-                m_snoStringList = 0x0000CB2E, /* LevelAreaNames.stl */          // TODO Dont use hardcoded numbers
+                    ActorID = this.DynamicID,
+                    Destination = this.Destination
+                });
 
-                Field3 = StringHashHelper.HashNormal(markerName),
-                Field9 = 0,
-                Field10 = 0,
-                Field11 = 0,
-                Field5 = 0,
-                Field6 = true,
-                Field7 = false,
-                Field8 = true,
-                Field12 = 0
-            });
+                // Show a minimap icon
+                Mooege.Common.MPQ.Asset asset;
+                string markerName = "";
 
+                if (Mooege.Common.MPQ.MPQStorage.Data.Assets[Common.Types.SNO.SNOGroup.LevelArea].TryGetValue(this.Destination.DestLevelAreaSNO, out asset))
+                    markerName = System.IO.Path.GetFileNameWithoutExtension(asset.FileName);
+
+                player.InGameClient.SendMessage(new MapMarkerInfoMessage()
+                {
+                    Field0 = (int)World.NewSceneID,    // TODO What is the correct id space for mapmarkers?
+                    Field1 = new WorldPlace()
+                    {
+                        Position = this.Position,
+                        WorldID = this.World.DynamicID
+                    },
+                    Field2 = MinimapIcon, //   0x00018FB0,  /* Marker_DungeonEntrance.tex */          // TODO Dont mark all portals as dungeon entrances... some may be exits too (although d3 does not necesarrily use the correct markers). Also i have found no hacky way to determine whether a portal is entrance or exit - farmy
+                    m_snoStringList = 0x0000CB2E, /* LevelAreaNames.stl */          // TODO Dont use hardcoded numbers
+
+                    Field3 = StringHashHelper.HashNormal(markerName),
+                    Field9 = 0,
+                    Field10 = 0,
+                    Field11 = 0,
+                    Field5 = 0,
+                    Field6 = true,
+                    Field7 = false,
+                    Field8 = true,
+                    Field12 = 0
+                });
             return true;
         }
 
         public override void OnTargeted(Player player, TargetMessage message)
         {
-            var world = this.World.Game.GetWorld(this.Destination.WorldSNO);
-
-            if (world == null)
+            try
             {
-                Logger.Warn("Portal's destination world does not exist (WorldSNO = {0})", this.Destination.WorldSNO);
+                var world = this.World.Game.GetWorld(this.Destination.WorldSNO);
+
+                if (world == null)
+                    return;
+            }
+            catch
+            {
+                Logger.Warn("Portal's destination world does not exist"); //We can't call WorldSNO since it DOESNT EXIST.
                 return;
             }
 
-            var startingPoint = world.GetStartingPointById(this.Destination.StartingPointActorTag);
+            try
+            {
+                var world = this.World.Game.GetWorld(this.Destination.WorldSNO);
+                var startingPoint = world.GetStartingPointById(this.Destination.StartingPointActorTag);
 
-            if (startingPoint != null)
-                player.ChangeWorld(world, startingPoint);
-            else
+                if (startingPoint != null)
+                    player.ChangeWorld(world, startingPoint);
+            }
+            catch
+            {
                 Logger.Warn("Portal's tagged starting point does not exist (Tag = {0})", this.Destination.StartingPointActorTag);
+            }
         }
     }
 }
