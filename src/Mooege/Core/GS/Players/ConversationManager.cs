@@ -28,7 +28,12 @@ using Mooege.Net.GS;
 using Mooege.Common.MPQ.FileFormats;
 using Mooege.Net.GS.Message.Definitions.ACD;
 using Mooege.Core.GS.Common.Types.Math;
+using Mooege.Core.GS.QuestEvents;
 using Mooege.Core.GS.Games;
+
+
+using Mooege.Core.GS.QuestEvents.Implementations;
+
 
 /*
  * a few notes to the poor guy who wants to improve the conversation system:
@@ -244,6 +249,14 @@ namespace Mooege.Core.GS.Players
                 SNOConversation = asset.Header.SNOId
             });
 
+            //TODO: Handle each conversation type
+            if (this.asset.ConversationType == ConversationTypes.QuestEvent)
+            {
+                logger.Debug("Handling conversation type event for Conversation: {0}", this.SNOId);
+                if (this.manager.QuestEventDict.ContainsKey((uint)this.SNOId))
+                    this.manager.QuestEventDict[(uint)this.SNOId].Execute(this.player.World);
+            }
+
             if (ConversationEnded != null)
                 ConversationEnded(this, null);
         }
@@ -323,6 +336,8 @@ namespace Mooege.Core.GS.Players
     /// </summary>
     public class ConversationManager
     {
+        public Dictionary<uint, QuestEvent> QuestEventDict = new Dictionary<uint, QuestEvent>();
+
         Logger logger = new Logger("ConversationManager");
         internal enum Language { Invalid, Global, enUS, enGB, enSG, esES, esMX, frFR, itIT, deDE, koKR, ptBR, ruRU, zhCN, zTW, trTR, plPL, ptPT }
 
@@ -342,6 +357,12 @@ namespace Mooege.Core.GS.Players
         {
             this.player = player;
             this.quests = quests;
+            InitQuestEvents();
+        }
+
+        private void InitQuestEvents()
+        {
+            this.QuestEventDict.Add(151087, new _151087());
         }
 
         /// <summary>
