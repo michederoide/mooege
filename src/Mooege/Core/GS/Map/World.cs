@@ -68,7 +68,7 @@ namespace Mooege.Core.GS.Map
         /// List of scenes contained in the world.
         /// </summary>
         private readonly ConcurrentDictionary<uint, Scene> _scenes;
-
+        public ConcurrentDictionary<uint, Scene> Scenes { get { return _scenes; } }
         /// <summary>
         /// List of actors contained in the world.
         /// </summary>
@@ -117,7 +117,7 @@ namespace Mooege.Core.GS.Map
             this.Game = game;
             this.WorldSNO = new SNOHandle(SNOGroup.Worlds, snoId);
 
-            Environment = ((Mooege.Common.MPQ.FileFormats.World) Mooege.Common.MPQ.MPQStorage.Data.Assets[SNOGroup.Worlds][snoId].Data).Environment;
+            Environment = ((Mooege.Common.MPQ.FileFormats.World)Mooege.Common.MPQ.MPQStorage.Data.Assets[SNOGroup.Worlds][snoId].Data).Environment;
             this.Game.StartTracking(this); // start tracking the dynamicId for the world.            
             this._scenes = new ConcurrentDictionary<uint, Scene>();
             this._actors = new ConcurrentDictionary<uint, Actor>();
@@ -203,7 +203,7 @@ namespace Mooege.Core.GS.Map
         /// <param name="actor">The actor.</param>
         public void BroadcastInclusive(GameMessage message, Actor actor)
         {
-            var players=actor.GetPlayersInRange();
+            var players = actor.GetPlayersInRange();
             foreach (var player in players)
             {
                 player.InGameClient.SendMessage(message);
@@ -273,7 +273,7 @@ namespace Mooege.Core.GS.Map
                 return false;
 
             // player.InGameClient.SendMessage(new WorldDeletedMessage() { WorldID = DynamicID });/ / don't delete the old world or beta-client will be crashing! /raist.
-            player.RevealedObjects.Remove(this.DynamicID);            
+            player.RevealedObjects.Remove(this.DynamicID);
             return true;
         }
 
@@ -291,10 +291,10 @@ namespace Mooege.Core.GS.Map
             actor.OnEnter(this);
 
             // reveal actor to player's in-range.
-            foreach(var player in  actor.GetPlayersInRange())
+            foreach (var player in actor.GetPlayersInRange())
             {
                 actor.Reveal(player);
-            }            
+            }
         }
 
         /// <summary>
@@ -319,8 +319,8 @@ namespace Mooege.Core.GS.Map
             if (!(actor is Player)) return; // if the leaving actors is a player, unreveal the actors revealed to him contained in the world.
             var revealedObjects = (actor as Player).RevealedObjects.Values.ToList(); // list of revealed actors.
             foreach (var @object in revealedObjects)
-                    if(@object!=actor) // do not unreveal the player itself.
-                        @object.Unreveal(actor as Player);
+                if (@object != actor) // do not unreveal the player itself.
+                    @object.Unreveal(actor as Player);
         }
 
         #endregion
@@ -352,7 +352,8 @@ namespace Mooege.Core.GS.Map
         public void SpawnRandomItemDrop(Actor source, Player player)
         {
             var item = ItemGenerator.GenerateRandom(player);
-            if ((item is SpellRune) && (item.Attributes[GameAttribute.Rune_Rank] == 0)) {
+            if ((item is SpellRune) && (item.Attributes[GameAttribute.Rune_Rank] == 0))
+            {
                 // favor player's class in attuned runes // TODO: remove or move this
                 if (RandomHelper.NextDouble() > 0.6f)
                 {
@@ -439,7 +440,7 @@ namespace Mooege.Core.GS.Map
             lock (_flippyTimers)
             {
                 _flippyTimers.Add(new RelativeTickTimer(
-                    Game, 
+                    Game,
                     FlippyDurationInTicks,
                     (p) => item.Drop(null, item.Position)             // drop the item after FlippyDuration ticks
                     ));
@@ -455,7 +456,7 @@ namespace Mooege.Core.GS.Map
             int particleSNO = -1;
             int actorSNO = -1;
 
-            if(item.SnoFlippyParticle != null)
+            if (item.SnoFlippyParticle != null)
             {
                 particleSNO = item.SnoFlippyParticle.Id;
             }
@@ -552,7 +553,7 @@ namespace Mooege.Core.GS.Map
         {
             if (actor.DynamicID == 0 || !this._actors.ContainsKey(actor.DynamicID))
                 throw new Exception(String.Format("Object has an invalid ID or was not present (ID = {0})", actor.DynamicID));
-            
+
             Actor removedActor;
             this._actors.TryRemove(actor.DynamicID, out removedActor); // remove it from actors collection.
             this.QuadTree.Remove(actor); // remove from quad-tree too.
@@ -621,7 +622,7 @@ namespace Mooege.Core.GS.Map
         /// </summary>
         /// <typeparam name="T">Type of the actor.</typeparam>
         /// <returns>Actor</returns>
-        public T GetActorInstance<T>() where T: Actor
+        public T GetActorInstance<T>() where T : Actor
         {
             return this._actors.Values.OfType<T>().FirstOrDefault();
         }
@@ -750,30 +751,51 @@ namespace Mooege.Core.GS.Map
         public bool CheckLocationForFlag(Vector3D location, Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags flags)
         {
             // We loop Scenes as its far quicker than looking thru the QuadTree - DarkLotus
+
             foreach (Scene s in this._scenes.Values)
             {
                 if (s.Bounds.IntersectsWith(new Rect(location.X, location.Y, 1f, 1f)))
                 {
-                    // found scene intersecting with location.
-                    int x = (int)((location.X - s.Bounds.Left) / 2.5f);
-                    int y = (int)((location.Y - s.Bounds.Top) / 2.5f);
+                    /*if (s.DynamicID != QuadTree.Query<Scene>(new Common.Types.Misc.Circle(location.X, location.Y, 2f)).FirstOrDefault().DynamicID)
+                    {
+                        Logger.Debug("Quadtree");// This is here because quadtree has the same problem finding the master scene instead of subscene
+                    }*/
+                    Scene scene = s;
+                    if (s.Parent != null) { scene = s.Parent; }
+                    if (s.Subscenes.Count > 0)
+                    {
+                        foreach (var subscene in s.Subscenes)
+                        {
+                            if (subscene.Bounds.IntersectsWith(new Rect(location.X, location.Y, 1f, 1f)))
+                            {
+                                scene = subscene;
+                            }
+                        }
+                    }
+
+                    int x = (int)((location.X - scene.Bounds.Left) / 2.5f);
+                    int y = (int)((location.Y - scene.Bounds.Top) / 2.5f);
                     /*if (s.NavMesh.WalkGrid[x, y] == 1)
                     {
                         return true;
                     }*/
-                    // Should use below code as you cancheck any flag then, but my math is off or something returns bad results - DarkLotus
-                    int total = (int)((y * s.NavMesh.SquaresCountY) + x);
-                    if (total < 0 || total > s.NavMesh.NavMeshSquareCount)
+                    int total = (int)((y * scene.NavMesh.SquaresCountY) + x);
+                    if (total < 0 || total > scene.NavMesh.NavMeshSquareCount)
                     {
                         Logger.Error("DarkLotus Cant Code:( Navmesh overflow");
                         return false;
                     }
-                    if(s.NavMesh.Squares[total].Flags.HasFlag(flags))
+                    if (scene.NavMesh.Squares[total].Flags.HasFlag(flags))
                     {
                         return true;
                     }
-                    return false;
-                   
+                    else
+                    {
+                        Logger.Debug("Flags: " + scene.NavMesh.Squares[total].Flags.ToString());
+                        return false;
+                    }
+                    //return false;
+
                 }
             }
             // Location not inside a known scene - DarkLotus
