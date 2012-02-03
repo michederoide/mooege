@@ -89,6 +89,7 @@ namespace Mooege.Core.GS.AI.Brains
                     if (this.Body.GetObjectsInRange<Monster>(20f).Count != 0)
                     {
                         //System.Console.Out.WriteLine("Enemy in range, use powers");
+                        //This will only attack when you and your minions are not moving..TODO: FIX.
                         int powerToUse = PickPowerToUse();
                         if (powerToUse > 0)
                             this.CurrentAction = new PowerAction(this.Body, powerToUse);
@@ -96,6 +97,7 @@ namespace Mooege.Core.GS.AI.Brains
                     else
                     {
                         //System.Console.Out.WriteLine("No enemies in range, return to master");
+                        //TODO: Minions need to be behind Toons on either side. 1st Master 2nd 3rd
                         this.CurrentAction = new MoveToPointAction(this.Body, (this.Body as Minion).Master.Position);
                     }
                 }

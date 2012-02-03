@@ -49,7 +49,8 @@ namespace Mooege.Core.GS.Common.Types.TagMap
         public static TagKeySNO ConversationList = new TagKeySNO(526080);
         public static TagKeyFloat Scale = new TagKeyFloat(524288);
         public static TagKeySNO OnActorSpawnedScript = new TagKeySNO(524808);
-        public static TagKeyInt GroupHash = new TagKeyInt(524814);
+        public static TagKeyInt Group1Hash = new TagKeyInt(524814);
+        public static TagKeyInt Group2Hash = new TagKeyInt(524815);
 
         // Used for portal destination resolution
         public static TagKeySNO DestinationWorld = new TagKeySNO(526850);

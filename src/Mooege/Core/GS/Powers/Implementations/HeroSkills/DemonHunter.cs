@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Mooege.Common.Helpers.Math;
 using Mooege.Core.GS.Ticker;
 using Mooege.Net.GS.Message.Definitions.Effect;
 using Mooege.Core.GS.Common.Types.Math;
@@ -30,6 +31,7 @@ using Mooege.Core.GS.Actors.Movement;
 using Mooege.Net.GS.Message.Definitions.Actor;
 using Mooege.Net.GS.Message;
 using Mooege.Net.GS.Message.Definitions.ACD;
+using Mooege.Core.GS.Actors.Implementations.Minions;
 
 
 namespace Mooege.Core.GS.Powers.Implementations
@@ -450,49 +452,33 @@ namespace Mooege.Core.GS.Powers.Implementations
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
 
             var projectile = new Projectile(this, RuneSelect(129932, 154590, 154591, 154592, 154593, 154594), User.Position);
-            var target = GetEnemiesInRadius(TargetPosition, ScriptFormula(3)).GetClosestTo(TargetPosition);
-            if (target != null)
+            projectile.Position.Z += 5f;
+            projectile.Launch(TargetPosition, ScriptFormula(7));
+            projectile.OnCollision = (hit) =>
             {
-                projectile.Launch(target.Position, ScriptFormula(7));
-                projectile.OnCollision = (hit) =>
+                SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
+                WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
+                bool firsthit = true;
+                float range = ScriptFormula(3);
+                if (firsthit = false)
                 {
-                    SpawnEffect(99572, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f)); // impact effect (fix height)
-                    projectile.Destroy();
-                    WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
-                };
-            }
-            else
-            {
-                projectile.Launch(TargetPosition, ScriptFormula(7));
-                projectile.Position.Z += 5f;
-                projectile.OnCollision = (hit) =>
-                {
-                    SpawnEffect(129934, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f));
-                    projectile.Destroy();
-                    WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
-                };
-
-                for (int i = 0; i < 10; i++)
-                {
-                    var closetarget = GetEnemiesInRadius(projectile.Position, ScriptFormula(4)).GetClosestTo(projectile.Position);
-
-                    if (closetarget != null)
-                    {
-                        var projectileSeek = new Projectile(this, RuneSelect(129932, 154590, 154591, 154592, 154593, 154594), projectile.Position);
-                        projectile.Destroy();
-                        projectileSeek.Launch(closetarget.Position, ScriptFormula(7));
-                        projectileSeek.OnCollision = (hit) =>
-                        {
-                            SpawnEffect(129934, new Vector3D(hit.Position.X, hit.Position.Y, hit.Position.Z + 5f));
-                            projectileSeek.Destroy();
-                            WeaponDamage(hit, ScriptFormula(0), DamageType.Physical);
-                        };
-                        i = 10;
-                    }
-                    else
-                        yield return WaitSeconds(0.1f);
+                    range = ScriptFormula(4);
                 }
-            }
+                var remaningtargets = GetEnemiesInRadius(hit.Position, 10f);
+                int count = remaningtargets.Actors.Count();
+                var targets = (GetEnemiesInRadius(hit.Position, range));
+                double chance = RandomHelper.NextDouble();
+                targets.Actors.Remove(hit);
+                var closetarget = targets.GetClosestTo(hit.Position);
+                if (closetarget != null && chance > ScriptFormula(5))
+                {
+                    projectile.Launch(closetarget.Position, ScriptFormula(7));
+                }
+                else
+                {
+                    projectile.Destroy();
+                }
+            };
             yield break;
         }
     }
@@ -772,7 +758,7 @@ namespace Mooege.Core.GS.Powers.Implementations
     }
     #endregion
 
-    //Partially Complete, No runes.
+    //No runes yet.
     #region RapidFire
     [ImplementsPowerSNO(Skills.Skills.DemonHunter.HatredSpenders.RapidFire)]
     public class RapidFire : ChanneledSkill
@@ -782,9 +768,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelOpen()
         {
             EffectsPerSecond = 0.1f;
-            //initial hatred cost
             UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
-            //User.PlayEffectGroup(150049); //unknown where this could go.
             User.Attributes[GameAttribute.Projectile_Speed] = User.Attributes[GameAttribute.Projectile_Speed] * ScriptFormula(22);
             User.Attributes.BroadcastChangedIfRevealed();
         }
@@ -800,16 +784,13 @@ namespace Mooege.Core.GS.Powers.Implementations
         public override void OnChannelUpdated()
         {
             User.TranslateFacing(TargetPosition);
-            // client updates target actor position
         }
 
         public override IEnumerable<TickTimer> Main()
         {
-            //projectiles
             var proj1 = new Projectile(this, 150061, User.Position);
             proj1.Position.Z += 5f;
-            //TargetPosition needs to have a general spread of fire.
-            proj1.Launch(TargetPosition, ScriptFormula(2));
+            proj1.Launch(new Vector3D(TargetPosition.X + ((float)Rand.NextDouble() * 2f), TargetPosition.Y + ((float)Rand.NextDouble() * 2f), TargetPosition.Z), ScriptFormula(2));
             UsePrimaryResource(ScriptFormula(19) * EffectsPerSecond);
             proj1.OnCollision = (hit) =>
             {
@@ -1519,9 +1500,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 WeaponDamage(GetEnemiesInRadius(GroundSpot.Position, ScriptFormula(1)), ScriptFormula(0), DamageType.Fire);
             };
 
-
-
-            /*TickTimer timeout = WaitSeconds(2f);
+            TickTimer timeout = WaitSeconds(1f);
             Projectile[] grenades = new Projectile[4];
             for (int i = 0; i < grenades.Length; ++i)
             {
@@ -1530,19 +1509,19 @@ namespace Mooege.Core.GS.Powers.Implementations
                 grenades[i] = projectile;
             }
 
-            Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(GroundSpot.Position, RandomDirection(GroundSpot.Position, 5f), 90f, grenades.Length);
+            Vector3D[] projDestinations = PowerMath.GenerateSpreadPositions(GroundSpot.Position, RandomDirection(GroundSpot.Position, 7f), 90f, grenades.Length);
             // launch and bounce grenades
             yield return WaitTicks(1);  // helps make bounce timings more consistent
 
             float bounceOffset = 5f;
             float minHeight = ScriptFormula(24);
             float height = minHeight + ScriptFormula(25);
-            float bouncePercent = 0.3f; // ScriptFormula(23);
+            float bouncePercent = 0.3f; // ScriptFormula(26);
             while (!timeout.TimedOut)
             {
                 for (int i = 0; i < grenades.Length; ++i)
                 {
-                    grenades[i].LaunchArc(PowerMath.TranslateDirection2D(projDestinations[i], GroundSpot.Position, projDestinations[i], 5f - 0.3f * bounceOffset), height, ScriptFormula(32), ScriptFormula(34));
+                    grenades[i].LaunchArc(projDestinations[i], height, ScriptFormula(28), ScriptFormula(30));
                 }
 
                 height *= bouncePercent;
@@ -1560,8 +1539,7 @@ namespace Mooege.Core.GS.Powers.Implementations
                 attack.Targets = GetEnemiesInRadius(grenade.Position, ScriptFormula(6));
                 attack.AddWeaponDamage(ScriptFormula(5), DamageType.Fire);
                 attack.Apply();
-            }*/
-            yield break;
+            }
         }
     }
     #endregion
@@ -1659,6 +1637,17 @@ namespace Mooege.Core.GS.Powers.Implementations
 
         public override IEnumerable<TickTimer> Main()
         {
+            var FerretFriend = new CompanionMinion(this.World, this, 0);
+            FerretFriend.Brain.DeActivate();
+            FerretFriend.Position = RandomDirection(User.Position, 3f, 8f); //Kind of hacky until we get proper collisiondetection
+            FerretFriend.Attributes[GameAttribute.Untargetable] = true;
+            FerretFriend.EnterWorld(FerretFriend.Position);
+            yield return WaitSeconds(0.8f);
+
+            (FerretFriend as Minion).Brain.Activate();
+            FerretFriend.Attributes[GameAttribute.Untargetable] = false;
+            FerretFriend.Attributes.BroadcastChangedIfRevealed();
+
             yield break;
         }
     }

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -61,9 +61,6 @@
     <Reference Include="CrystalMpq">
       <HintPath>..\..\dep\crystalmpq\CrystalMpq.dll</HintPath>
     </Reference>
-    <Reference Include="CrystalMpq.Utility">
-      <HintPath>..\..\dep\crystalmpq\CrystalMpq.Utility.dll</HintPath>
-    </Reference>
     <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>..\..\dep\sharpziplib\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
@@ -105,9 +102,34 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
+    <Reference Include="Gibbed.IO">
+      <HintPath>..\..\dep\gibbed.io\Gibbed.IO.dll</HintPath>
+    </Reference>
+    <Reference Include="Google.ProtocolBuffers">
+      <HintPath>..\..\dep\protobuf-csharp\Google.ProtocolBuffers.dll</HintPath>
+    </Reference>
+    <Reference Include="Nini">
+      <HintPath>..\..\dep\nini\Nini.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Data.SQLite">
+      <HintPath>..\..\dep\sqlite\sqlite-mixed\System.Data.SQLite.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\GS\Actors\Actions\PowerAction.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Barricade.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Door.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\AcidCloudSlime.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\AncientKorlic.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\AncientMawdawc.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\AncientTalic.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\CompanionMinion.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\CorpseSpider.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\FetishArmyMelee.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\GargantuanMinion.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\HexMinion.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\MirrorImageMinion.cs" />
+    <Compile Include="Core\GS\Actors\Implementations\Minions\MysticAllyMinion.cs" />
     <Compile Include="Core\GS\Actors\Implementations\Monsters\Monsters.cs" />
     <Compile Include="Core\GS\Actors\Implementations\Minions\ZombieDog.cs" />
     <Compile Include="Core\GS\Actors\Minion.cs" />
@@ -184,6 +206,7 @@
     <Compile Include="Common\MPQ\FileFormats\SkillKit.cs" />
     <Compile Include="Common\MPQ\FileFormats\TreasureClass.cs" />
     <Compile Include="Common\MPQ\FileFormats\Tutorial.cs" />
+    <Compile Include="Common\MPQ\Hacks.cs" />
     <Compile Include="Common\MPQ\Asset.cs" />
     <Compile Include="Common\MPQ\DBAsset.cs" />
     <Compile Include="Common\Storage\PersistenceManager.cs" />
@@ -220,10 +243,8 @@
     <Compile Include="Core\GS\Items\HandledItem.cs" />
     <Compile Include="Core\GS\Items\HandledType.cs" />
     <Compile Include="Core\GS\Items\Implementations\Book.cs" />
-    <Compile Include="Core\GS\Items\Implementations\CauldronOfJordan.cs" />
     <Compile Include="Core\GS\Items\Implementations\Dye.cs" />
     <Compile Include="Core\GS\Items\Implementations\HealthPotion.cs" />
-    <Compile Include="Core\GS\Items\Implementations\NephalemCube.cs" />
     <Compile Include="Core\GS\Items\Implementations\Potion.cs" />
     <Compile Include="Core\GS\Items\Implementations\SpellRune.cs" />
     <Compile Include="Core\GS\Items\Implementations\StoneOfRecall.cs" />
@@ -347,7 +368,9 @@
     <Compile Include="Core\MooNet\Services\NotificationService.cs" />
     <Compile Include="Core\MooNet\Services\PresenceService.cs" />
     <Compile Include="Core\MooNet\Services\ReportService.cs" />
+    <Compile Include="Core\MooNet\Services\ResourceService.cs" />
     <Compile Include="Core\MooNet\Services\SearchService.cs" />
+    <Compile Include="Core\MooNet\Services\ServerPoolService.cs" />
     <Compile Include="Core\MooNet\Services\Service.cs" />
     <Compile Include="Core\MooNet\Services\StorageService.cs" />
     <Compile Include="Core\MooNet\Services\UserManagerService.cs" />
@@ -381,6 +404,7 @@
     <Compile Include="Net\GS\Message\Definitions\Conversation\FinishConversationMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Conversation\RequestCloseConversationWindowMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Conversation\UpdateConvAutoAdvanceMessage.cs" />
+    <Compile Include="Net\GS\Message\Definitions\Inventory\InventoryRequestQuickMoveMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Misc\ShrineActivatedMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Misc\NephalemAltarWindowClosedMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Misc\PlayerBannerMessage.cs" />
@@ -394,8 +418,6 @@
     <Compile Include="Net\GS\Message\Definitions\Misc\VoteKickMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\NPC\NPCSelectConversationMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Pet\PetDetachMessage.cs" />
-    <Compile Include="Net\GS\Message\Definitions\Inventory\RequestUseCauldronOfJordanMessage.cs" />
-    <Compile Include="Net\GS\Message\Definitions\Inventory\RequestUseNephalemCubeMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Inventory\InventoryDropItemMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Player\RequestUsePowerMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Quest\QuestStepCompleteMessage.cs" />
@@ -659,6 +681,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
+    <None Include="..\..\assets\tagid_names.txt">
+      <Link>Assets\tagid_names.txt</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="..\..\assets\account.db">
       <Link>Assets\account.db</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -720,5 +746,4 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
 </Project>
