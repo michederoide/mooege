@@ -389,48 +389,15 @@ namespace Mooege.Core.GS.Items
             return item;
         }
 
-        public static Item CreateGlobe(Player player, int gb_id)
+        public static Item CreateGlobe(Player player, int amount)
         {
-            try
-            {
-                ItemTable definition = Items[gb_id];
-                Type type = GetItemClass(definition);
+            if (amount > 10)
+                amount = 10 + ((amount - 10) * 5);
 
-                var item = (Item)Activator.CreateInstance(type, new object[] { player.World, definition });
-                float result;
-                bool isValid = float.TryParse(definition.Name.Substring(definition.Name.Count() - 3, 3), out result);
-                if (isValid)
-                {
-                    item.Attributes[GameAttribute.Health_Globe_Bonus_Health] = result;
-                }
-                else
-                {
-                    isValid = float.TryParse(definition.Name.Substring(definition.Name.Count() - 2, 2), out result);
-                    if (isValid)
-                    {
-                        item.Attributes[GameAttribute.Health_Globe_Bonus_Health] = result;
-                    }
-                    else
-                    {
-                        isValid = float.TryParse(definition.Name.Substring(definition.Name.Count() - 1, 1), out result);
-                        if (isValid)
-                        {
-                            Logger.Info("result3 = " + result);
-                            item.Attributes[GameAttribute.Health_Globe_Bonus_Health] = result;
-                        }
-                    }
-                }
-                return item;
-            }
-            catch (Exception itemEx)
-            {
-                //TODO: Fix me!..Temporary FIX for dictiorany key not found in the items dictionary. We create a random item instead, this will allow Mooege to keep running instead of crashing.
-                //Seems like this is happening when trying to drop healths globes.
-                Logger.ErrorException(itemEx, "Drop Item Fix Hack Was Enabled to prevent Mooege from crashing with Exception:");
-                //Since we were unable to load the correct item, we return some random crap.
-                var item = ItemGenerator.GenerateRandom(player);
-                return item;
-            }
+            var item = Cook(player, "HealthGlobe" + amount);
+            item.Attributes[GameAttribute.Health_Globe_Bonus_Health] = amount;
+
+            return item;
         }
 
         public static bool IsValidItem(string name)
