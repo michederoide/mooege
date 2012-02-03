@@ -44,7 +44,7 @@ namespace Mooege.Core.GS.Actors.Actions
         private ActorMover _ownerMover;
         private TickTimer _pathUpdateTimer;
 
-        private List<Vector3D> _path = new List<Vector3D>();
+        private List<Vector3D> _path;
         private AI.Pather.PathRequestTask _pathRequestTask;
 
         public PowerAction(Actor owner, int powerSNO)
@@ -107,21 +107,21 @@ namespace Mooege.Core.GS.Actors.Actions
                 }
                 else
                 {
-                    
-                    if (_ownerMover.Arrived)
+                    if (_pathRequestTask == null)
+                        _pathRequestTask = Owner.World.Game.Pathfinder.GetPath(Owner, Owner.Position, _target.Position); // called once to create task
+                    if (!_pathRequestTask.PathFound)
+                        return;
+
+                    // No path found, so end Action.
+                    if (_pathRequestTask.Path.Count < 1)
+                        return;
+                    if(_path == null)
+                    _path = _pathRequestTask.Path;
+
+                    if (_pathUpdateTimer == null || _pathUpdateTimer.TimedOut)
                     {
-                        if (_pathRequestTask == null)
-                            _pathRequestTask = Owner.World.Game.Pathfinder.GetPath(Owner, Owner.Position, _target.Position); // called once to create task
-
-                        if (!_pathRequestTask.PathFound)
-                            return;
-
-                        // No path found, so end Action.
-                        if (_pathRequestTask.Path.Count < 1)
-                            return;
-                        _path = _pathRequestTask.Path;
-                        _pathRequestTask = null;
-                        _pathUpdateTimer = new SecondsTickTimer(this.Owner.World.Game, PathUpdateDelay);
+                        _pathUpdateTimer = new SecondsTickTimer(this.Owner.World.Game, PathUpdateDelay);     
+                        //_pathRequestTask = null;
                         Vector3D movePos = PowerMath.TranslateDirection2D(this.Owner.Position, _path[0], this.Owner.Position,
                             this.Owner.WalkSpeed * (_pathUpdateTimer.TimeoutTick - this.Owner.World.Game.TickCounter));
                         this.Owner.TranslateFacing(movePos, false);
@@ -130,7 +130,16 @@ namespace Mooege.Core.GS.Actors.Actions
                             TurnImmediately = false,
                             AnimationTag = this.Owner.AnimationSet == null ? 0 : this.Owner.AnimationSet.GetAnimationTag(Mooege.Common.MPQ.FileFormats.AnimationTags.Walk)
                         });
-                        _path.Clear();
+                        _path.RemoveAt(0);
+                        if (_path.Count == 0)
+                        {
+                            _pathRequestTask = null;
+                            _path = null;
+                            return;
+                        }
+
+                        
+                        //_path.Clear();
                     }
 
 
@@ -238,9 +247,10 @@ namespace Mooege.Core.GS.Actors.Actions
                     }*/
                     else
                     {
+                        if(_ownerMover.Velocity != null)
                         _ownerMover.Update();
-                        if (_ownerMover.Arrived)
-                            _ownerMover = new ActorMover(this.Owner);
+                        //if (_ownerMover.Arrived)
+                          //  _ownerMover = new ActorMover(this.Owner);
                     }
                 }
             }

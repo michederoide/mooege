@@ -68,7 +68,7 @@ namespace Mooege.Core.GS.Map
         /// List of scenes contained in the world.
         /// </summary>
         private readonly ConcurrentDictionary<uint, Scene> _scenes;
-
+        public ConcurrentDictionary<uint, Scene> Scenes { get { return _scenes; } }
         /// <summary>
         /// List of actors contained in the world.
         /// </summary>
@@ -750,29 +750,48 @@ namespace Mooege.Core.GS.Map
         public bool CheckLocationForFlag(Vector3D location, Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags flags)
         {
             // We loop Scenes as its far quicker than looking thru the QuadTree - DarkLotus
+            
             foreach (Scene s in this._scenes.Values)
             {
                 if (s.Bounds.IntersectsWith(new Rect(location.X, location.Y, 1f, 1f)))
                 {
-                    // found scene intersecting with location.
-                    int x = (int)((location.X - s.Bounds.Left) / 2.5f);
-                    int y = (int)((location.Y - s.Bounds.Top) / 2.5f);
+                    /*if (s.DynamicID != QuadTree.Query<Scene>(new Common.Types.Misc.Circle(location.X, location.Y, 2f)).FirstOrDefault().DynamicID)
+                    {
+                        Logger.Debug("Quadtree");// This is here because quadtree has the same problem finding the master scene instead of subscene
+                    }*/
+                    Scene scene = s;
+                    if (s.Parent != null) { scene = s.Parent; }
+                    if (s.Subscenes.Count > 0) 
+                    {
+                        foreach (var subscene in s.Subscenes)
+                        {
+                            if (subscene.Bounds.IntersectsWith(new Rect(location.X, location.Y, 1f, 1f)))
+                            {
+                                scene = subscene;
+                            }
+                        }
+                    }
+                        
+                    int x = (int)((location.X - scene.Bounds.Left) / 2.5f);
+                    int y = (int)((location.Y - scene.Bounds.Top) / 2.5f);
                     /*if (s.NavMesh.WalkGrid[x, y] == 1)
                     {
                         return true;
-                    }*/
-                    // Should use below code as you cancheck any flag then, but my math is off or something returns bad results - DarkLotus
-                    int total = (int)((y * s.NavMesh.SquaresCountY) + x);
-                    if (total < 0 || total > s.NavMesh.NavMeshSquareCount)
+                    }*/                    
+                    int total = (int)((y * scene.NavMesh.SquaresCountY) + x);
+                    if (total < 0 || total > scene.NavMesh.NavMeshSquareCount)
                     {
                         Logger.Error("DarkLotus Cant Code:( Navmesh overflow");
                         return false;
                     }
-                    if(s.NavMesh.Squares[total].Flags.HasFlag(flags))
+                    if (scene.NavMesh.Squares[total].Flags.HasFlag(flags))
                     {
                         return true;
                     }
-                    return false;
+                    else {
+                        Logger.Debug("Flags: " + scene.NavMesh.Squares[total].Flags.ToString());
+                        return false; }
+                    //return false;
                    
                 }
             }
