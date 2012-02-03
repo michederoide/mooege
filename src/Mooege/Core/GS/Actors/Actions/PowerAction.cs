@@ -117,7 +117,7 @@ namespace Mooege.Core.GS.Actors.Actions
                             return;
 
                         // No path found, so end Action.
-                        if (_pathRequestTask.Path.Count < 4)
+                        if (_pathRequestTask.Path.Count < 1)
                             return;
                         _path = _pathRequestTask.Path;
                         _pathRequestTask = null;

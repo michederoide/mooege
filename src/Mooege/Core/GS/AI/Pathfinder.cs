@@ -259,11 +259,16 @@ namespace Mooege.Core.GS.AI
             private List<Vector3D> PullPathString(List<Vector3D> Path)
             {
                 //List<Vector3D> path = new List<Vector3D>();
+                if (Path == null)
+                    return Path;
+                if (Path.Count < 4)
+                    return Path;
+                Path.RemoveAt(0);
                 Logger.Debug("Path Length before cull " + Path.Count);
                 for (int i = Path.Count - 1; i > 2; i--)
                 {
                 //if direction from square 1 to 2 is same as 2 to 3 remove 2
-                    if (i < Path.Count || i > 0)
+                    if (i < Path.Count - 1 || i > 0)
                     {
                         if (Angle(Path[i].X, Path[i].Y, Path[i - 2].X, Path[i - 2].Y) == Angle(Path[i].X, Path[i].Y, Path[i - 1].X, Path[i - 1].Y))
                         {
