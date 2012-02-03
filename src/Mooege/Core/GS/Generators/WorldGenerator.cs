@@ -654,9 +654,9 @@ namespace Mooege.Core.GS.Generators
             // Each monster are created in Mooege.Core.GS.Actors.Implementations.Monsters
             // By Poluxxx
             //int[] aSNO = new int[] { 
-            //       // 6652      // Zombie
+                   // 6652      // Zombie
             //         6443      // Ravenous
-            //        //, 136943    // Ghost
+                    //, 136943    // Ghost
             //};
 
             foreach (int la in levelAreas.Keys)

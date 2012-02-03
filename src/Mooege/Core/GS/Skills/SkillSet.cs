@@ -52,7 +52,7 @@ namespace Mooege.Core.GS.Skills
 
 			//30592 base attack
 
-            if (!reader.HasRows)
+            if (!reader.HasRows)  //this is just in case something goes wrong on  public void SaveToDB() -> we need to change this name ...
             {
                 var query_first_insert = string.Format("INSERT INTO  active_skills (id_toon,skill_0,skill_1,skill_2,skill_3,skill_4,skill_5) VALUES ({0},{1},{2},{3},{4},{5},{6} )", toon.D3EntityID.IdLow, this.CurrentActiveSkills[0], 30592, Skills.None, Skills.None, Skills.None, Skills.None, Skills.None);
                 var cmd_first_insert = new SQLiteCommand(query_first_insert, DBManager.Connection);
@@ -174,43 +174,37 @@ namespace Mooege.Core.GS.Skills
 					Logger.Debug("UpdateAssignedSkill: index 0 {0}", SNOSkill);
 				    var query_0 = string.Format("UPDATE current_active_skills SET a_skill0={1} WHERE id_toon={0} ", toon.D3EntityID.IdLow, SNOSkill);
                     var cmd_0 = new SQLiteCommand(query_0, DBManager.Connection);
-                    var reader_0 = cmd_0.ExecuteReader();	
-					//this.CurrentActiveSkills[0] = (int)reader_0["a_skill0"];
+                    cmd_0.ExecuteReader();	
 					break;
 				case 1:
                     Logger.Debug("UpdateAssignedSkill: index 1 {0}", SNOSkill);
                     var query_1 = string.Format("UPDATE current_active_skills SET a_skill1={1} WHERE id_toon={0} ", toon.D3EntityID.IdLow, SNOSkill);
                     var cmd_1 = new SQLiteCommand(query_1, DBManager.Connection);
-                    var reader_1 = cmd_1.ExecuteReader();
-					//this.CurrentActiveSkills[1] = (int)reader_1["a_skill1"];
+                    cmd_1.ExecuteReader();
                     break;
                 case 2:
                     Logger.Debug("UpdateAssignedSkill: index 2 {0}", SNOSkill);
                     var query_2 = string.Format("UPDATE current_active_skills SET a_skill2={1} WHERE id_toon={0} ", toon.D3EntityID.IdLow, SNOSkill);
                     var cmd_2 = new SQLiteCommand(query_2, DBManager.Connection);
-                    var reader_2 = cmd_2.ExecuteReader();
-					//this.CurrentActiveSkills[2] = (int)reader_2["a_skill2"];
+                    cmd_2.ExecuteReader();
                     break;
                 case 3:
                     Logger.Debug("UpdateAssignedSkill: index 3 {0}", SNOSkill);
                     var query_3 = string.Format("UPDATE current_active_skills SET a_skill3={1} WHERE id_toon={0} ", toon.D3EntityID.IdLow, SNOSkill);
                     var cmd_3 = new SQLiteCommand(query_3, DBManager.Connection);
-                    var reader_3 = cmd_3.ExecuteReader();
-					//this.CurrentActiveSkills[3] = (int)reader_3["a_skill3"];
+                    cmd_3.ExecuteReader();
                     break;
                 case 4:
                     Logger.Debug("UpdateAssignedSkill: index 4 {0}", SNOSkill);
                     var query_4 = string.Format("UPDATE current_active_skills SET a_skill4={1} WHERE id_toon={0} ", toon.D3EntityID.IdLow, SNOSkill);
                     var cmd_4 = new SQLiteCommand(query_4, DBManager.Connection);
-                    var reader_4 = cmd_4.ExecuteReader();
-					//this.CurrentActiveSkills[4] = (int)reader_4["a_skill4"];
+                    cmd_4.ExecuteReader();
                     break;
                 case 5:
                     Logger.Debug("UpdateAssignedSkill: index 5 {0}", SNOSkill);
                     var query_5 = string.Format("UPDATE current_active_skills SET a_skill5={1} WHERE id_toon={0} ", toon.D3EntityID.IdLow, SNOSkill);
                     var cmd_5 = new SQLiteCommand(query_5, DBManager.Connection);
-                    var reader_5 = cmd_5.ExecuteReader();
-					//this.CurrentActiveSkills[5] = (int)reader_5["a_skill5"];
+                    cmd_5.ExecuteReader();
                     break;
 			}
 			
