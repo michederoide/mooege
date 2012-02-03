@@ -372,7 +372,7 @@ namespace Mooege.Core.GS.Map
         public void SpawnGold(Actor source, Player player)
         {
             // TODO: Gold should be spawned for all players in range. /raist.
-            var item = ItemGenerator.CreateGold(player, RandomHelper.Next(1000, 3000)); // somehow the actual ammount is not shown on ground /raist.
+            var item = ItemGenerator.DropGold(player); // somehow the actual ammount is not shown on ground /raist.
             DropItem(source, player, item);
         }
 
@@ -384,6 +384,8 @@ namespace Mooege.Core.GS.Map
         public void SpawnHealthGlobe(Actor source, Player player, Vector3D position)
         {
             // TODO: Health-globe should be spawned for all players in range. /raist.
+            //position.X = position.X + RandomHelper.Next(-5, 5);
+            //position.Y = position.Y + RandomHelper.Next(-5, 5);
             var item = ItemGenerator.CreateGlobe(player, RandomHelper.Next(1, 28)); // somehow the actual ammount is not shown on ground /raist.
             DropItem(source, player, item);
         }
