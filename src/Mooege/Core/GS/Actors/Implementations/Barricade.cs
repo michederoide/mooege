@@ -35,12 +35,14 @@ namespace Mooege.Core.GS.Actors.Implementations
     /// Class that implements behaviour for killable gizmos.
     /// Play die animation on click, then set idle animation, drop loot and remove from server
     /// </summary>
-    class Barricade : Gizmo
+    class Barricade : Monster
     {
         public Barricade(World world, int snoId, TagMap tags)
             : base(world, snoId, tags)
         {
-
+            base.Attributes[GameAttribute.Experience_Granted] = 0;
+            base.Attributes[GameAttribute.DropsNoLoot] = true;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 1;
         }
 
 

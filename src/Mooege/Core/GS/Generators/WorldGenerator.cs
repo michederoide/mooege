@@ -174,19 +174,19 @@ namespace Mooege.Core.GS.Generators
                 scene.LoadMarkers();
 
                 // add scene to level area dictionary
-                //foreach (var levelArea in scene.Specification.SNOLevelAreas)
-                //{
-                //    if (levelArea != -1)
-                //    {
-                //        if (!levelAreas.ContainsKey(levelArea))
-                //            levelAreas.Add(levelArea, new List<Scene>());
+                foreach (var levelArea in scene.Specification.SNOLevelAreas)
+                {
+                    if (levelArea != -1)
+                    {
+                        if (!levelAreas.ContainsKey(levelArea))
+                            levelAreas.Add(levelArea, new List<Scene>());
 
-                //        levelAreas[levelArea].Add(scene);
-                //    }
-                //}
+                        levelAreas[levelArea].Add(scene);
+                    }
+                }
             }
 
-            //loadLevelAreas(levelAreas, world);
+            loadLevelAreas(levelAreas, world);
 
             return world;
         }
@@ -857,7 +857,7 @@ namespace Mooege.Core.GS.Generators
             {
                 if (actorHandle.Id != -1)
                     Logger.Warn("ActorFactory did not load actor {0}", actorHandle);
-                return actor.DynamicID;
+                return 0;
             }
 
             actor.RotationW = location.Quaternion.W;
