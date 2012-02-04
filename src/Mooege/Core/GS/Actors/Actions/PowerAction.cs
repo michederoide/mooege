@@ -120,6 +120,8 @@ namespace Mooege.Core.GS.Actors.Actions
 
                     if (_pathUpdateTimer == null || _pathUpdateTimer.TimedOut)
                     {
+                        if (_ownerMover.Arrived)
+                        { 
                         _pathUpdateTimer = new SecondsTickTimer(this.Owner.World.Game, PathUpdateDelay);     
                         //_pathRequestTask = null;
                         Vector3D movePos = PowerMath.TranslateDirection2D(this.Owner.Position, _path[0], this.Owner.Position,
@@ -130,6 +132,7 @@ namespace Mooege.Core.GS.Actors.Actions
                             TurnImmediately = false,
                             AnimationTag = this.Owner.AnimationSet == null ? 0 : this.Owner.AnimationSet.GetAnimationTag(Mooege.Common.MPQ.FileFormats.AnimationTags.Walk)
                         });
+                            if(PowerMath.Distance2D(movePos,_path[0]) < 5f)
                         _path.RemoveAt(0);
                         if (_path.Count == 0)
                         {
@@ -137,7 +140,7 @@ namespace Mooege.Core.GS.Actors.Actions
                             _path = null;
                             return;
                         }
-
+                        }
                         
                         //_path.Clear();
                     }

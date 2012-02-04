@@ -96,7 +96,7 @@ namespace Mooege.Core.GS.AI
             // Checks if our path start location is inside current scene, if it isnt, we reset curScene and set mPathfinder to the corrent grid.
             if (!_curScene.Bounds.IntersectsWith(new System.Windows.Rect(Start.X, Start.Y, 1, 1)))
             { 
-                _curScene = actor.CurrentScene;
+                _curScene = actor.CurrentScene;// TODO- THIS CAN RETURN PARENT RATHER THAN SUBSCENE - DarkLotus
                 if (!listOfPathFinderInstances.TryGetValue(_curScene.SceneSNO.Id, out mPathFinder))
                 {
                     mPathFinder = new PathFinderFast(_curScene.NavMesh.WalkGrid);
@@ -143,6 +143,9 @@ namespace Mooege.Core.GS.AI
                 // TODO Objectpool maybe?
                 vectorPathList.Insert(0, new Vector3D(nodePathList[i].X * 2.5f + _baseX, nodePathList[i].Y * 2.5f + _baseY, 0));
             }
+            new System.Threading.Thread(c => System.Windows.Forms.Application.Run(new PatherDebug.PatherDebug(actor, vectorPathList))).Start();
+            
+           
             return vectorPathList;
         }
 
@@ -152,9 +155,9 @@ namespace Mooege.Core.GS.AI
             mPathFinder.Formula = HeuristicFormula.Custom1;
             mPathFinder.Diagonals = true; // Looks better, they can cut corners with this set to true - DarkLotus
             mPathFinder.ReopenCloseNodes = true;
-            mPathFinder.HeavyDiagonals = true;
+            mPathFinder.HeavyDiagonals = false;
             mPathFinder.HeuristicEstimate = 1;
-            mPathFinder.PunishChangeDirection = true;
+            mPathFinder.PunishChangeDirection = false;
             mPathFinder.TieBreaker = true; ;
             mPathFinder.SearchLimit = 75000;
             mPathFinder.DebugProgress = false;
