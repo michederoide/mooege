@@ -98,6 +98,7 @@ namespace Mooege.Core.MooNet.Toons
             }
 
             if (toon.DeleteFromDB()) Toons.Remove(toon.PersistentID);
+			Logger.Debug("Deleting toon {0}",toon.PersistentID);
         }
 
         private static void LoadToons()
@@ -116,8 +117,7 @@ namespace Mooege.Core.MooNet.Toons
                 //add visual equipment
                 //TODO: Load all visualEquipment at once
                 D3.Hero.VisualItem[] visualItems = new D3.Hero.VisualItem[8];
-                var itemQuery =
-                    string.Format("SELECT * from inventory WHERE toon_id = {0}", databaseId);
+                var itemQuery = string.Format("SELECT * from inventory WHERE toon_id = {0}", databaseId);
                 var itemCmd = new SQLiteCommand(itemQuery, DBManager.Connection);
                 var itemReader = itemCmd.ExecuteReader();
                 if (itemReader.HasRows)
