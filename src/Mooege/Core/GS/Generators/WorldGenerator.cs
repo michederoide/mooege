@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 mooege project
  *
  * This program is free software; you can redistribute it and/or modify
@@ -174,19 +174,19 @@ namespace Mooege.Core.GS.Generators
                 scene.LoadMarkers();
 
                 // add scene to level area dictionary
-                foreach (var levelArea in scene.Specification.SNOLevelAreas)
-                {
-                    if (levelArea != -1)
-                    {
-                        if (!levelAreas.ContainsKey(levelArea))
-                            levelAreas.Add(levelArea, new List<Scene>());
+                //foreach (var levelArea in scene.Specification.SNOLevelAreas)
+                //{
+                //    if (levelArea != -1)
+                //    {
+                //        if (!levelAreas.ContainsKey(levelArea))
+                //            levelAreas.Add(levelArea, new List<Scene>());
 
-                        levelAreas[levelArea].Add(scene);
-                    }
-                }
+                //        levelAreas[levelArea].Add(scene);
+                //    }
+                //}
             }
 
-            loadLevelAreas(levelAreas, world);
+            //loadLevelAreas(levelAreas, world);
 
             return world;
         }
@@ -658,7 +658,7 @@ namespace Mooege.Core.GS.Generators
             //         6443      // Ravenous
             //        //, 136943    // Ghost
             //};
-
+            Dictionary<PRTransform, Mooege.Common.MPQ.FileFormats.Actor> dict = new Dictionary<PRTransform, Mooege.Common.MPQ.FileFormats.Actor>();
             foreach (int la in levelAreas.Keys)
             {
                 SNOHandle levelAreaHandle = new SNOHandle(SNOGroup.LevelArea, la);
@@ -669,6 +669,22 @@ namespace Mooege.Core.GS.Generators
                 }
                 var levelArea = levelAreaHandle.Target as LevelArea;
 
+
+                //foreach (var scene in levelAreas[la])
+                //{
+                //    //Load Actors
+                //    Logger.Debug("Load actors");
+                //    //load actors if requiered
+                //    if (scene.HasActors)
+                //    {
+                //        foreach (var actor in scene.Actors)
+                //        {
+                //            //loadActor(new SNOHandle(actor.ActorSNO.Id), actor.ACDWorldPositionMessage.WorldLocation.Transform, world, actor.Tags);
+                //            dict.Add(actor.ACDWorldPositionMessage.WorldLocation.Transform, );
+                //        }
+                //    }
+                //}
+
                 for (int i = 0; i < 26; i++)
                 {
                     // Merge the gizmo starting locations from all scenes and
@@ -678,12 +694,16 @@ namespace Mooege.Core.GS.Generators
                     {
                         if (scene.GizmoSpawningLocations[i] != null)
                             gizmoLocations.AddRange(scene.GizmoSpawningLocations[i]);
+
                         foreach (Scene subScene in scene.Subscenes)
                         {
                             if (subScene.GizmoSpawningLocations[i] != null)
                                 gizmoLocations.AddRange(subScene.GizmoSpawningLocations[i]);
                         }
+
+
                     }
+
 
                     // Load all spawns that are defined for that location group 
                     foreach (GizmoLocSpawnEntry spawnEntry in levelArea.LocSet.SpawnType[i].SpawnEntry)
@@ -828,8 +848,8 @@ namespace Mooege.Core.GS.Generators
             }
         }
 
-
-        private static void loadActor(SNOHandle actorHandle, PRTransform location, World world, TagMap tagMap)
+        //TODO: Move this out as loading actors can happen even after world was generated
+        public static uint loadActor(SNOHandle actorHandle, PRTransform location, World world, TagMap tagMap)
         {
             var actor = Mooege.Core.GS.Actors.ActorFactory.Create(world, actorHandle.Id, tagMap);
 
@@ -837,12 +857,13 @@ namespace Mooege.Core.GS.Generators
             {
                 if (actorHandle.Id != -1)
                     Logger.Warn("ActorFactory did not load actor {0}", actorHandle);
-                return;
+                return actor.DynamicID;
             }
 
             actor.RotationW = location.Quaternion.W;
             actor.RotationAxis = location.Quaternion.Vector3D;
             actor.EnterWorld(location.Vector3D);
+            return actor.DynamicID;
         }
 
 
