@@ -48,6 +48,7 @@ namespace Mooege.Core.GS.Actors.Implementations
                 TreasureClass = (TreasureClass)ActorData.TagMap[ActorKeys.LootTreasureClass].Target;
             base.Attributes[GameAttribute.Experience_Granted] = 0;
             this.Attributes[GameAttribute.Hitpoints_Cur] = 1;
+            base.Attributes[GameAttribute.DropsNoLoot] = true;
         }
 
         public void ReceiveDamage(Actor source, float damage /* critical, type */)
@@ -106,6 +107,5 @@ namespace Mooege.Core.GS.Actors.Implementations
         {
             ReceiveDamage(player, 100);
         }
-
     }
 }
