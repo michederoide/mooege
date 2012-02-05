@@ -12,7 +12,7 @@ namespace Mooege.Core.GS.Actors.Implementations
     {
         public CaptainRumford(World world, int snoID, TagMap tags)
             : base(world, snoID, tags)
-        {
+        {           
         }
 
         // One of the rumfords is not tagged with a conversation list, although his conversation list is available.
@@ -26,8 +26,5 @@ namespace Mooege.Core.GS.Actors.Implementations
 
             base.ReadTags();
         }
-
-
-
     }
 }

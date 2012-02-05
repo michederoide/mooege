@@ -167,7 +167,9 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
     #region Zombie
     //No Uniques Added
     [HandledSNO(6652, 6653, 6654, 204256, //Zombies
-        6644, 6646, 6647, 6651)] //ZombieSkinny
+        6644, 6646, 6647, 6651, 218339, //ZombieSkinny
+        218367)] //Torso
+
     public class Zombie : Monster
     {
         public Zombie(World world, int snoId, TagMap tags)

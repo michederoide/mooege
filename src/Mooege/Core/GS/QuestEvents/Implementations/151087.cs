@@ -7,260 +7,112 @@ using Mooege.Net.GS.Message.Definitions.ACD;
 using Mooege.Net.GS.Message.Definitions.Animation;
 using Mooege.Core.GS.Common.Types.Math;
 using Mooege.Core.GS.Generators;
-
+using Mooege.Common.Logging;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Mooege.Core.GS.QuestEvents.Implementations
 {
-    class _151087 :QuestEvent
+    class _151087 : QuestEvent
     {
+        
+        private static readonly Logger Logger = LogManager.CreateLogger();
+
         public _151087()
             : base(151087)
         {
         }
 
+        public List<uint> monstersAlive = new List<uint> { }; //We use this for the killeventlistener.
         public override void Execute(Map.World world)
         {
-            #region ZombieSkinny_Custom_A #1
-            //ActorID: 0x796400CA
-            //Script code comes here
-            //Scale 1.35
-            var actorSNOHandle = new Common.Types.SNO.SNOHandle(0x000354E3);
-            var actor = actorSNOHandle.Target as Actor; 
-            var PRTransform = new PRTransform()
+            //The spawning positions for each monster in its wave. Basically, you add here the "number" of mobs, accoring to each vector LaunchWave() will spawn every mob in its position.
+            Vector3D[] FirstSkinnyWaveCoords = { new Vector3D(2846.162f, 2962.202f, 24.10213f), new Vector3D(2847.069f, 2975.214f, 24.43476f), new Vector3D(2822.784f, 2956.344f, 23.94533f) };
+            Vector3D[] TorsoWaveCoords = { new Vector3D(2820.969f, 2960.441f, 24.04534f), new Vector3D(2837.987f, 2974.384f, 24.29964f), new Vector3D(2855.945f, 2966.754f, 24.78838f), new Vector3D(2881.435f, 2968.71f, 27.64387f) };
+            Vector3D[] SecondSkinnyWaveCoords = { new Vector3D(2891.899f, 2953.503f, 27.09192f), new Vector3D(2876.486f, 2969.06f, 27.63562f), new Vector3D(2877.566f, 2955.966f, 26.1463f) };
+
+            //Launch first wave.
+            var firstWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(FirstSkinnyWaveCoords, world, 0x000354E3));
+
+            //Hack conversation.
+            foreach (var player in world.Players) 	
+            { 	
+               player.Value.Conversations.StartConversation(198199); 	
+            }
+
+            firstWaveTask.Wait(); //We need to wait in order for the listener to grab the Monster counting, if this runs asyn with the spawn procedure listener will grab a value of 0 mobs.
+            //Run Kill Event Listener
+            var ListenerFirstWaveTask = Task<bool>.Factory.StartNew(() => KillEventListener(monstersAlive,world));
+            //Wait for the mobs to be killed.
+            ListenerFirstWaveTask.ContinueWith(delegate //Once killed:
             {
-                Quaternion = new Quaternion()
+                //Wave two: Torsos.
+                var torsoWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(TorsoWaveCoords, world, 0x000354FF));
+                torsoWaveTask.Wait(); //We need to wait in order for the listener to grab the Monster counting, if this runs asyn with the spawn procedure listener will grab a value of 0 mobs.
+                var ListenerSecondWaveTask = Task<bool>.Factory.StartNew(() => KillEventListener(monstersAlive, world));
+                ListenerSecondWaveTask.ContinueWith(delegate //Once killed:
                 {
-                    W = 0.7063466f,
-                    Vector3D = new Vector3D(0, 0, -0.7078662f)
-                },
-                Vector3D = new Vector3D(2846.162f, 2962.202f, 24.10213f)
-            };
+                    //Wave three: Skinnies
+                    var thirdWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(TorsoWaveCoords, world, 0x000354E3));
+                    thirdWaveTask.Wait(); //We need to wait in order for the listener to grab the Monster counting, if this runs asyn with the spawn procedure listener will grab a value of 0 mobs.
+                    var ListenerThirdWaveTask = Task<bool>.Factory.StartNew(() => KillEventListener(monstersAlive, world));
+                    ListenerThirdWaveTask.Wait();
+                    //Event done we advance the quest.
+                    world.Game.Quests.Advance(87700);
+                    Logger.Debug("Event finished");
+                });
+            });          
+        }
 
-            var actorID = WorldGenerator.loadActor(actorSNOHandle, PRTransform, world, actor.TagMap);
-
-            //Send message to all players
-            foreach (var player in world.Players)
+        //This is the way we Listen for mob killing events.
+        private bool KillEventListener(List<uint> monstersAlive, Map.World world)
+        {
+            Int32 monstersKilled = 0;
+            var monsterCount = monstersAlive.Count; //Since we are removing values while iterating, this is set at the first real read of the mob counting.
+            while (monstersKilled != monsterCount)
             {
-                world.BroadcastIfRevealed(new ACDTranslateNormalMessage
-                    {
-                        Angle = 3.37346f,
-                        ActorId = (int)actorID,
-                        AnimationTag = 0x00011070,
-                        Position = new Vector3D(2844.901f, 2961.904f, 24.24138f)
-                    }, player.Value);
-
-                world.BroadcastIfRevealed(new PlayAnimationMessage
+                //Iterate through monstersAlive List, if found dead we start to remove em till all of em are dead and removed.
+                for (int i = monstersAlive.Count - 1; i >= 0; i--)
                 {
-                    ActorID = actorID,
-                    Field1 = 3,
-                    Field2 = 0,
-                    tAnim = new Net.GS.Message.Fields.PlayAnimationMessageSpec[]
-                {
-                    new Net.GS.Message.Fields.PlayAnimationMessageSpec()
+                    if (world.HasMonster(monstersAlive[i]))
                     {
-                        Duration = 0x00000083,
-                        AnimationSNO = 0x00002D03,
-                        PermutationIndex = 0x00000000,
-                        Speed = 1.938229f
+                        //Alive: Nothing.
+                    }
+                    else
+                    {
+                        //If dead we remove it from the list and keep iterating.
+                        Logger.Debug(monstersAlive[i] + " has been killed");
+                        monstersAlive.RemoveAt(i);
+                        monstersKilled++;
                     }
                 }
-
-                }, player.Value);
             }
-            #endregion
-            #region ZombieSkinny_Custom_A #2
-            //Script code comes here
-            //ActorID: 0x796500B7  
-            //Scale 1.35
-            var actorSNOHandle2 = new Common.Types.SNO.SNOHandle(0x000354E3);
-            var actor2 = actorSNOHandle.Target as Actor;
-            var PRTransform2 = new PRTransform()
+            return true;
+        }
+
+        //We use this function to launch/spawn new mobs.
+        private bool LaunchWave(Vector3D[] Coordinates, Map.World world, Int32 SnoId)
+        {
+            var counter = 0;
+            var monsterSNOHandle = new Common.Types.SNO.SNOHandle(SnoId);
+            var monsterActor = monsterSNOHandle.Target as Actor;
+
+            foreach (Vector3D coords in Coordinates)
             {
-                Quaternion = new Quaternion()
+                var PRTransform = new PRTransform()
                 {
-                    W = 0.6130235f,
-                    Vector3D = new Vector3D(0, 0, -0.7900648f)
-                },
-                Vector3D = new Vector3D(2847.069f, 2975.214f, 24.43476f)
-            };
-
-            var actorID2 = WorldGenerator.loadActor(actorSNOHandle2, PRTransform2, world, actor2.TagMap);
-
-            //Send message to all players
-            foreach (var player in world.Players)
-            {
-                world.BroadcastIfRevealed(new ACDTranslateNormalMessage
-                {
-                    Angle = 0f,
-                    ActorId = (int)actorID2,
-                    AnimationTag = 0x00011070,
-                    Position = new Vector3D(2848.365f, 2975.214f, 24.69485f)
-                }, player.Value);
-
-                world.BroadcastIfRevealed(new PlayAnimationMessage
-                {
-                    ActorID = actorID2,
-                    Field1 = 3,
-                    Field2 = 0,
-                    tAnim = new Net.GS.Message.Fields.PlayAnimationMessageSpec[]
-                {
-                    new Net.GS.Message.Fields.PlayAnimationMessageSpec()
+                    Quaternion = new Quaternion()
                     {
-                        Duration = 0x00000097,
-                        AnimationSNO = 0x00002D03,
-                        PermutationIndex = 0x00000000,
-                        Speed = 1.673818f
-                    }
-                }
-
-                }, player.Value);
+                        W = 0.7063466f,
+                        Vector3D = new Vector3D(0, 0, 0)
+                    },
+                    Vector3D = Coordinates[counter]
+                };
+                var actor = WorldGenerator.loadActor(monsterSNOHandle, PRTransform, world, monsterActor.TagMap);
+                monstersAlive.Add(actor);
+                counter++;
             }
-            #endregion
-            #region ZombieSkinny_Custom_A #3
-            //Script code comes here
-            //ActorID: 0x79660031
-            //Scale 1.35
-            var actorSNOHandle3 = new Common.Types.SNO.SNOHandle(0x000354E3);
-            var actor3 = actorSNOHandle.Target as Actor;
-            var PRTransform3 = new PRTransform()
-            {
-                Quaternion = new Quaternion()
-                {
-                    W = 0.8882556f,
-                    Vector3D = new Vector3D(0, 0, -0.4593496f)
-                },
-                Vector3D = new Vector3D(2822.784f, 2956.344f, 23.94533f)
-            };
-
-            var actorID3 = WorldGenerator.loadActor(actorSNOHandle3, PRTransform3, world, actor3.TagMap);
-
-            foreach (var player in world.Players)
-            {
-                world.BroadcastIfRevealed(new ACDTranslateNormalMessage
-                {
-                    Angle = 5.028199f,
-                    ActorId = (int)actorID3,
-                    AnimationTag = 0x00011070,
-                    Position = new Vector3D(2823.187f, 2955.112f, 24.04533f)
-                }, player.Value);
-
-                world.BroadcastIfRevealed(new PlayAnimationMessage
-                {
-                    ActorID = actorID3,
-                    Field1 = 3,
-                    Field2 = 0,
-                    tAnim = new Net.GS.Message.Fields.PlayAnimationMessageSpec[]
-                {
-                    new Net.GS.Message.Fields.PlayAnimationMessageSpec()
-                    {
-                        Duration = 0x00000091,
-                        AnimationSNO = 0x00002D03,
-                        PermutationIndex = 0x00000000,
-                        Speed = 1.744957f
-                    }
-                }
-
-                }, player.Value);
-            }
-            #endregion
-
-
-            #region ZombieCrawlerBarricade #1
-            //ActorID: 0x798500CA  
-            //Scale: 1.6
-            //Script code comes here
-            var actorSNOHandle4 = new Common.Types.SNO.SNOHandle(0x000354FF);
-            var actor4 = actorSNOHandle.Target as Actor;
-            var PRTransform4 = new PRTransform()
-            {
-                Quaternion = new Quaternion()
-                {
-                    W = 0.826175f,
-                    Vector3D = new Vector3D(0, 0, -0.5634137f)
-                },
-                Vector3D = new Vector3D(2833.75f, 2978.75f, 24.07898f)
-            };
-
-            var actorID4 = WorldGenerator.loadActor(actorSNOHandle4, PRTransform4, world, actor4.TagMap);
-
-            //Send message to all players
-            foreach (var player in world.Players)
-            {
-                world.BroadcastIfRevealed(new ACDTranslateNormalMessage
-                {
-                    Angle = 5.086197f,
-                    ActorId = (int)actorID4,
-                    AnimationTag = 0x00011084,
-                    Position = new Vector3D(2833.75f, 2978.75f, 24.07898f)
-                }, player.Value);
-            }
-
-            world.GetActorByDynamicId(actorID4).Move(new Vector3D(2839.43f, 2964.272f, 24.19856f), 5.086219f);
-            #endregion
-            #region ZombieCrawlerBarricade #2
-            //ActorID: 0x798600B9   
-            //Scale: 1.6
-            //Script code comes here
-            var actorSNOHandle5 = new Common.Types.SNO.SNOHandle(0x000354FF);
-            var actor5 = actorSNOHandle.Target as Actor;
-            var PRTransform5 = new PRTransform()
-            {
-                Quaternion = new Quaternion()
-                {
-                    W = 0.7449269f,
-                    Vector3D = new Vector3D(0, 0, -0.6671461f)
-                },
-                Vector3D = new Vector3D(2848.75f, 2983.75f, 24.59938f)
-            };
-
-            var actorID5 = WorldGenerator.loadActor(actorSNOHandle5, PRTransform5, world, actor5.TagMap);
-
-            //Send message to all players
-            foreach (var player in world.Players)
-            {
-                world.BroadcastIfRevealed(new ACDTranslateNormalMessage
-                {
-                    Angle = 4.822382f,
-                    ActorId = (int)actorID5,
-                    AnimationTag = 0x00011084,
-                    Position = new Vector3D(2848.75f, 2983.75f, 24.59938f)
-                }, player.Value);
-            }
-
-            world.GetActorByDynamicId(actorID5).Move(new Vector3D(2847.27f, 2964.801f, 24.36039f), 4.634396f);
-            #endregion
-            #region ZombieCrawlerBarricade #3
-            //ActorID: 0x79870031
-            //Scale: 1.6
-            //Script code comes here
-            var actorSNOHandle6 = new Common.Types.SNO.SNOHandle(0x000354FF);
-            var actor6 = actorSNOHandle.Target as Actor;
-            var PRTransform6 = new PRTransform()
-            {
-                Quaternion = new Quaternion()
-                {
-                    W = 0.5914196f,
-                    Vector3D = new Vector3D(0, 0, -0.8063639f)
-                },
-                Vector3D = new Vector3D(2871.25f, 2978.75f, 26.76203f)
-            };
-
-            var actorID6 = WorldGenerator.loadActor(actorSNOHandle6, PRTransform6, world, actor6.TagMap);
-
-            //Send message to all players
-            foreach (var player in world.Players)
-            {
-                world.BroadcastIfRevealed(new ACDTranslateNormalMessage
-                {
-                    Angle = 4.40722f,
-                    ActorId = (int)actorID6,
-                    AnimationTag = 0x00011070,
-                    Position = new Vector3D(2871.25f, 2978.75f, 26.76203f)
-                }, player.Value);
-            }
-
-            world.GetActorByDynamicId(actorID6).Move(new Vector3D(2845.463f, 2970.245f, 24.45933f), 3.540084f);
-            #endregion*/
+            return true;
         }
     }
 }
