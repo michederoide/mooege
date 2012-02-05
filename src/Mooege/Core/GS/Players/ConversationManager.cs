@@ -311,7 +311,8 @@ namespace Mooege.Core.GS.Players
                     Field1 = 0x00000000,
                     Field2 = false,
                     Field3 = true,
-                    Field4 = true,
+                    //Field4 was set to true, Rumford's text was red. True = original text color. Unknown what this really does.
+                    Field4 = false,
                     LineID = currentLineNode.LineID,
                     Speaker = currentLineNode.Speaker1,
                     Field7 = -1,
