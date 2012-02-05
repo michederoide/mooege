@@ -27,6 +27,7 @@ using Mooege.Core.MooNet.Helpers;
 using Mooege.Core.MooNet.Objects;
 using Mooege.Net.MooNet;
 using Mooege.Core.GS.Players;
+using Mooege.Core.GS.Skills;
 
 
 namespace Mooege.Core.MooNet.Toons
@@ -358,7 +359,59 @@ namespace Mooege.Core.MooNet.Toons
                             this.PersistentID, this.HeroNameField.Value, this.HashCode, (byte)this.Class, (byte)this.Gender, this.HeroLevelField.Value, this.TimePlayed, this.GameAccount.PersistentID, this.GoldAmount);
                     var cmd = new SQLiteCommand(query, DBManager.Connection);
                     cmd.ExecuteNonQuery();
+					Logger.Debug("Create Toon for the first time in DB {0}",this.PersistentID);
+					
 
+					/*
+					 * Set initial skill on hotbar, when the hero is created for the first time
+					 */ 
+				
+					
+					switch (this.Class)
+                	{
+                    	case ToonClass.Barbarian:
+							var barbQuery = string.Format(
+											"INSERT INTO  active_skills (id_toon,skill_0,skill_1,skill_2,skill_3,skill_4,skill_5) VALUES ({0},{1},{2},{3},{4},{5},{6} )", 
+											 this.PersistentID, (int)Skills.Barbarian.FuryGenerators.Bash, 30592, -1, -1, -1, -1, -1);
+                			var barbCmd = new SQLiteCommand(barbQuery, DBManager.Connection);
+                			barbCmd.ExecuteReader();
+							Logger.Debug("Created a Barbarian");
+                        	break;
+	                    case ToonClass.DemonHunter:
+							var dhQuery = string.Format(
+											"INSERT INTO  active_skills (id_toon,skill_0,skill_1,skill_2,skill_3,skill_4,skill_5) VALUES ({0},{1},{2},{3},{4},{5},{6} )", 
+											 this.PersistentID, (int)Skills.DemonHunter.HatredGenerators.HungeringArrow, 30592, -1, -1, -1, -1, -1);
+                			var dhCmd = new SQLiteCommand(dhQuery, DBManager.Connection);
+                			dhCmd.ExecuteReader();
+							Logger.Debug("Created a Daemon hunter");
+	                        break;
+	                    case ToonClass.Monk:
+							var monkQuery = string.Format(
+											"INSERT INTO  active_skills (id_toon,skill_0,skill_1,skill_2,skill_3,skill_4,skill_5) VALUES ({0},{1},{2},{3},{4},{5},{6} )", 
+											 this.PersistentID, (int)Skills.Monk.SpiritGenerator.FistsOfThunder, 30592, -1, -1, -1, -1, -1);
+                			var monkCmd = new SQLiteCommand(monkQuery, DBManager.Connection);
+                			monkCmd.ExecuteReader();						
+							Logger.Debug("Created a Monk");
+	                        break;
+	                    case ToonClass.WitchDoctor:
+							var wdQuery = string.Format(
+											"INSERT INTO  active_skills (id_toon,skill_0,skill_1,skill_2,skill_3,skill_4,skill_5) VALUES ({0},{1},{2},{3},{4},{5},{6} )", 
+											 this.PersistentID, (int)Skills.WitchDoctor.PhysicalRealm.PoisonDart, 30592, -1, -1, -1, -1, -1);
+                			var wdCmd = new SQLiteCommand(wdQuery, DBManager.Connection);
+                			wdCmd.ExecuteReader();						
+							Logger.Debug("Created a WD");
+	                        break;
+	                    case ToonClass.Wizard:
+							var wizQuery = string.Format(
+											"INSERT INTO  active_skills (id_toon,skill_0,skill_1,skill_2,skill_3,skill_4,skill_5) VALUES ({0},{1},{2},{3},{4},{5},{6} )", 
+											 this.PersistentID, (int)Skills.Wizard.Signature.MagicMissile, 30592, -1, -1, -1, -1, -1);
+                			var wizCmd = new SQLiteCommand(wizQuery, DBManager.Connection);
+                			wizCmd.ExecuteReader();						
+							Logger.Debug("Created a Wizard");
+	                        break;
+					
+                	}
+					
                 }
 
                 //save main gear
@@ -414,6 +467,18 @@ namespace Mooege.Core.MooNet.Toons
                 var query = string.Format("DELETE FROM toons WHERE id={0}", this.PersistentID);
                 var cmd = new SQLiteCommand(query, DBManager.Connection);
                 cmd.ExecuteNonQuery();
+				
+				//delete entry fron active_skills table
+				var asSkillquery = string.Format("DELETE FROM active_skills WHERE id_toon={0}", this.PersistentID);
+                var asCmd = new SQLiteCommand(asSkillquery, DBManager.Connection);
+                asCmd.ExecuteNonQuery();
+				
+				//delete entry from current_active_skills_entry
+				var casSkillquery = string.Format("DELETE FROM current_active_skills WHERE id_toon={0}", this.PersistentID);
+                var casCmd = new SQLiteCommand(casSkillquery, DBManager.Connection);
+                casCmd.ExecuteNonQuery();
+				
+				Logger.Debug("Deleting toon {0}",this.PersistentID);
                 return true;
             }
             catch (Exception e)

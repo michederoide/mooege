@@ -46,7 +46,7 @@ namespace Mooege.Net.GS.Message.Fields
         public int Field1;          // have not seen != 0
         public bool Field2;         // have not seen true
         public bool Field3;
-        public bool Field4;
+        public bool Field4;         // does nothing?
 
         /// <summary>
         /// Identifier of the line (within the conversation) to play
@@ -58,7 +58,7 @@ namespace Mooege.Net.GS.Message.Fields
         /// maybe there are some lines with more than one speaker but i have not seen that yet - farmy)
         /// </summary>
         public Speaker Speaker;
-        public int Field5;          // have not seen != -1
+        public int Field7;          // have not seen != -1
 
         /// <summary>
         /// Class to identify which text to show when Speaker == Speaker.Player or -1 if an npc is talking
@@ -85,7 +85,7 @@ namespace Mooege.Net.GS.Message.Fields
         /// </summary>
         public string Name;
 
-        public int Field11;
+        public int Field13;
 
         /// <summary>
         /// Animation of the Speaker
@@ -101,7 +101,7 @@ namespace Mooege.Net.GS.Message.Fields
         /// Identifier of this PlayLine. Used to reference this line in later messages like AutoAdvance and StopConvLine
         /// </summary>
         public int Id;
-        public int Field15;
+        public int Field17;
 
         public void Parse(GameBitBuffer buffer)
         {
@@ -112,17 +112,17 @@ namespace Mooege.Net.GS.Message.Fields
             Field4 = buffer.ReadBool();
             LineID = buffer.ReadInt(32);
             Speaker = (Speaker)buffer.ReadInt(32);
-            Field5 = buffer.ReadInt(32);
+            Field7 = buffer.ReadInt(32);
+            AudioClass = (Class)buffer.ReadInt(32);
+            Gender = (VoiceGender)buffer.ReadInt(32);
             TextClass = (Class)buffer.ReadInt(32);
             SNOSpeakerActor = buffer.ReadInt(32);
-            Gender = (VoiceGender)buffer.ReadInt(32);
-            AudioClass = (Class)buffer.ReadInt(32);
             Name = buffer.ReadCharArray(49);
-            Field11 = buffer.ReadInt(32);
+            Field13 = buffer.ReadInt(32);
             AnimationTag = buffer.ReadInt(32);
             Duration = buffer.ReadInt(32);
             Id = buffer.ReadInt(32);
-            Field15 = buffer.ReadInt(32);
+            Field17 = buffer.ReadInt(32);
         }
 
         public void Encode(GameBitBuffer buffer)
@@ -134,17 +134,17 @@ namespace Mooege.Net.GS.Message.Fields
             buffer.WriteBool(Field4);
             buffer.WriteInt(32, LineID);
             buffer.WriteInt(32, (int)Speaker);
-            buffer.WriteInt(32, Field5);
+            buffer.WriteInt(32, Field7);
+            buffer.WriteInt(32, (int)AudioClass);
+            buffer.WriteInt(32, (int)Gender);
             buffer.WriteInt(32, (int)TextClass);
             buffer.WriteInt(32, SNOSpeakerActor);
-            buffer.WriteInt(32, (int)Gender);
-            buffer.WriteInt(32, (int)AudioClass);
             buffer.WriteCharArray(49, Name);
-            buffer.WriteInt(32, Field11);
+            buffer.WriteInt(32, Field13);
             buffer.WriteInt(32, AnimationTag);
             buffer.WriteInt(32, Duration);
             buffer.WriteInt(32, Id);
-            buffer.WriteInt(32, Field15);
+            buffer.WriteInt(32, Field17);
         }
 
         public void AsText(StringBuilder b, int pad)
@@ -168,7 +168,7 @@ namespace Mooege.Net.GS.Message.Fields
             b.Append(' ', pad);
             b.AppendLine("Speaker: 0x" + ((int)Speaker).ToString("X8") + " (" + Speaker + ")");
             b.Append(' ', pad);
-            b.AppendLine("Field5: 0x" + Field5.ToString("X8") + " (" + Field5 + ")");
+            b.AppendLine("Field7: 0x" + Field7.ToString("X8") + " (" + Field7 + ")");
             b.Append(' ', pad);
             b.AppendLine("TextClass: 0x" + ((int)TextClass).ToString("X8") + " (" + TextClass + ")");
             b.Append(' ', pad);
@@ -180,7 +180,7 @@ namespace Mooege.Net.GS.Message.Fields
             b.Append(' ', pad);
             b.AppendLine("Name: \"" + Name + "\"");
             b.Append(' ', pad);
-            b.AppendLine("Field11: 0x" + Field11.ToString("X8") + " (" + Field11 + ")");
+            b.AppendLine("Field13: 0x" + Field13.ToString("X8") + " (" + Field13 + ")");
             b.Append(' ', pad);
             b.AppendLine("AnimationTag: 0x" + AnimationTag.ToString("X8") + " (" + AnimationTag + ")");
             b.Append(' ', pad);
@@ -188,7 +188,7 @@ namespace Mooege.Net.GS.Message.Fields
             b.Append(' ', pad);
             b.AppendLine("Id: 0x" + Id.ToString("X8") + " (" + Id + ")");
             b.Append(' ', pad);
-            b.AppendLine("Field15: 0x" + Field15.ToString("X8") + " (" + Field15 + ")");
+            b.AppendLine("Field17: 0x" + Field17.ToString("X8") + " (" + Field17 + ")");
             b.Append(' ', --pad);
             b.AppendLine("}");
         }

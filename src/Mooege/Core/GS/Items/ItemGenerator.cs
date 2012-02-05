@@ -389,35 +389,14 @@ namespace Mooege.Core.GS.Items
             return item;
         }
 
-        public static Item CreateGlobe(Player player, int gb_id)
+        public static Item CreateGlobe(Player player, int amount)
         {
-            ItemTable definition = Items[gb_id];
-            Type type = GetItemClass(definition);
+            if (amount > 10)
+                amount = 10 + ((amount - 10) * 5);
 
-            var item = (Item)Activator.CreateInstance(type, new object[] { player.World, definition });
-            float result;
-            bool isValid = float.TryParse(definition.Name.Substring(definition.Name.Count() - 3, 3), out result);
-            if (isValid)
-            {
-                item.Attributes[GameAttribute.Health_Globe_Bonus_Health] = result;
-            }
-            else
-            {
-                isValid = float.TryParse(definition.Name.Substring(definition.Name.Count() - 2, 2), out result);
-                if (isValid)
-                {
-                    item.Attributes[GameAttribute.Health_Globe_Bonus_Health] = result;
-                }
-                else
-                {
-                    isValid = float.TryParse(definition.Name.Substring(definition.Name.Count() - 1, 1), out result);
-                    if (isValid)
-                    {
-                        Logger.Info("result3 = " + result);
-                        item.Attributes[GameAttribute.Health_Globe_Bonus_Health] = result;
-                    }
-                }
-            }
+            var item = Cook(player, "HealthGlobe" + amount);
+            item.Attributes[GameAttribute.Health_Globe_Bonus_Health] = amount;
+
             return item;
         }
 

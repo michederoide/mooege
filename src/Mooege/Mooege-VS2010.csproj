@@ -134,12 +134,6 @@
     <Compile Include="Core\GS\Actors\Implementations\Minions\ZombieDog.cs" />
     <Compile Include="Core\GS\Actors\Minion.cs" />
     <Compile Include="Core\GS\AI\Brains\MinionBrain.cs" />
-    <Compile Include="Core\GS\AI\PatherDebug\PatherDebug.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Core\GS\AI\PatherDebug\PatherDebug.Designer.cs">
-      <DependentUpon>PatherDebug.cs</DependentUpon>
-    </Compile>
     <Compile Include="Core\GS\Powers\ActionTimedSkill.cs" />
     <Compile Include="Core\GS\Powers\ActorMover.cs" />
     <Compile Include="Core\GS\Powers\ComboSkill.cs" />
@@ -317,6 +311,8 @@
     <Compile Include="Core\GS\Players\Equipment.cs" />
     <Compile Include="Core\GS\Powers\Skill.cs" />
     <Compile Include="Core\GS\Powers\TargetList.cs" />
+    <Compile Include="Core\GS\QuestEvents\Implementations\151087.cs" />
+    <Compile Include="Core\GS\QuestEvents\QuestEvent.cs" />
     <Compile Include="Core\GS\Ticker\SteppedTickTimer.cs" />
     <Compile Include="Core\GS\Ticker\TickTimer.cs" />
     <Compile Include="Core\GS\Web\GSWebService.cs" />
@@ -752,4 +748,5 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
 </Project>

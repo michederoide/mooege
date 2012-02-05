@@ -28,7 +28,12 @@ using Mooege.Net.GS;
 using Mooege.Common.MPQ.FileFormats;
 using Mooege.Net.GS.Message.Definitions.ACD;
 using Mooege.Core.GS.Common.Types.Math;
+using Mooege.Core.GS.QuestEvents;
 using Mooege.Core.GS.Games;
+
+
+using Mooege.Core.GS.QuestEvents.Implementations;
+
 
 /*
  * a few notes to the poor guy who wants to improve the conversation system:
@@ -122,7 +127,7 @@ namespace Mooege.Core.GS.Players
         {
             var actors = (from a in player.RevealedObjects.Values where a is Mooege.Core.GS.Actors.Actor && (a as Mooege.Core.GS.Actors.Actor).ActorSNO.Id == sno select a);
             if (actors.Count() > 1)
-                logger.Warn("Found more than one actors in range");
+                logger.Warn(String.Format("More than one actor: {0}",sno));
             if (actors.Count() == 0)
             {
                 logger.Warn("Actor not found, using player actor instead");
@@ -244,6 +249,14 @@ namespace Mooege.Core.GS.Players
                 SNOConversation = asset.Header.SNOId
             });
 
+            //TODO: Handle each conversation type
+            if (this.asset.ConversationType == ConversationTypes.QuestEvent)
+            {
+                logger.Debug("Handling conversation type event for Conversation: {0}", this.SNOId);
+                if (this.manager.QuestEventDict.ContainsKey((uint)this.SNOId))
+                    this.manager.QuestEventDict[(uint)this.SNOId].Execute(this.player.World);
+            }
+
             if (ConversationEnded != null)
                 ConversationEnded(this, null);
         }
@@ -298,19 +311,21 @@ namespace Mooege.Core.GS.Players
                     Field1 = 0x00000000,
                     Field2 = false,
                     Field3 = true,
+                    //Field4 was set to true, Rumford's text was red. True = original text color. Unknown what this really does.
+                    Field4 = false,
                     LineID = currentLineNode.LineID,
                     Speaker = currentLineNode.Speaker1,
-                    Field5 = -1,
-                    TextClass = currentLineNode.Speaker1 == Speaker.Player ? (Class)player.Toon.VoiceClassID : Class.None,
-                    Gender = (player.Toon.Gender == 0) ? VoiceGender.Male : VoiceGender.Female,
+                    Field7 = -1,
                     AudioClass = (Class)player.Toon.VoiceClassID,
+                    Gender = (player.Toon.Gender == 0) ? VoiceGender.Male : VoiceGender.Female,
+                    TextClass = currentLineNode.Speaker1 == Speaker.Player ? (Class)player.Toon.VoiceClassID : Class.None,
                     SNOSpeakerActor = GetSpeaker(currentLineNode.Speaker1).ActorSNO.Id,
                     Name = player.Toon.HeroNameField.Value,
-                    Field11 = 0x00000000,  // is this field I1? and if...what does it do?? 2 for level up -farmy
+                    Field13 = 0x00000000,  // is this field I1? and if...what does it do?? 2 for level up -farmy
                     AnimationTag = currentLineNode.AnimationTag,
                     Duration = duration,
                     Id = currentUniqueLineID,
-                    Field15 = 0x00000000        // dont know, 0x32 for level up
+                    Field17 = 0x00000000        // dont know, 0x32 for level up
                 },
                 Duration = duration,
             }, true);
@@ -323,6 +338,8 @@ namespace Mooege.Core.GS.Players
     /// </summary>
     public class ConversationManager
     {
+        public Dictionary<uint, QuestEvent> QuestEventDict = new Dictionary<uint, QuestEvent>();
+
         Logger logger = new Logger("ConversationManager");
         internal enum Language { Invalid, Global, enUS, enGB, enSG, esES, esMX, frFR, itIT, deDE, koKR, ptBR, ruRU, zhCN, zTW, trTR, plPL, ptPT }
 
@@ -342,6 +359,12 @@ namespace Mooege.Core.GS.Players
         {
             this.player = player;
             this.quests = quests;
+            InitQuestEvents();
+        }
+
+        private void InitQuestEvents()
+        {
+            this.QuestEventDict.Add(151087, new _151087());
         }
 
         /// <summary>
@@ -440,6 +463,12 @@ namespace Mooege.Core.GS.Players
                         conversation.Interrupt();
                 }
 
+    //          Requires some check if openConversations[tmpMessage.SNOConversaion] exists before preceeding.
+    //          Error occured when forcing conversaion closed. (Pressing 'x' in convo)
+    //             [03.02.2012 23:50:26.462] [Debug] [Game]: Unhandled exception caught: - [Exception] System.Collections.Generic.KeyNotFoundException: The given key was not present in the dictionary.
+    //               at System.Collections.Generic.Dictionary`2.get_Item(TKey key)
+    //               at Mooege.Core.GS.Players.ConversationManager.Consume(GameClient client, GameMessage message) in C:\Users\James\Documents\Visual Studio 2010\Projects\mooege\src\Mooege\Core\GS\Players\ConversationManager.cs:line 468
+    //               at Mooege.Core.GS.Games.Game.Route(GameClient client, GameMessage message) in C:\Users\James\Documents\Visual Studio 2010\Projects\mooege\src\Mooege\Core\GS\Games\Game.cs:line 215
                 if (message is UpdateConvAutoAdvanceMessage)
                 {
                     UpdateConvAutoAdvanceMessage tmpMessage = (UpdateConvAutoAdvanceMessage)message;
