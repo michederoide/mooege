@@ -261,6 +261,11 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
 
             world.GetActorByDynamicId(actorID6).Move(new Vector3D(2845.463f, 2970.245f, 24.45933f), 3.540084f);
             #endregion*/
+
+            foreach (var player in world.Players) 
+            { 
+                player.Value.Conversations.StartConversation(198199); 
+            }
         }
     }
 }
