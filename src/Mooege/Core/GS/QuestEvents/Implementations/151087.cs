@@ -20,6 +20,12 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
 
         public override void Execute(Map.World world)
         {
+
+            foreach (var player in world.Players)
+            {
+                player.Value.Conversations.StartConversation(198199);
+            }
+
             #region ZombieSkinny_Custom_A #1
             //ActorID: 0x796400CA
             //Script code comes here
@@ -164,7 +170,7 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
             }
             #endregion
 
-
+            //this should happen after first 3 skinnies are killed.
             #region ZombieCrawlerBarricade #1
             //ActorID: 0x798500CA  
             //Scale: 1.6
@@ -262,9 +268,9 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
             world.GetActorByDynamicId(actorID6).Move(new Vector3D(2845.463f, 2970.245f, 24.45933f), 3.540084f);
             #endregion*/
 
-            foreach (var player in world.Players) 
-            { 
-                player.Value.Conversations.StartConversation(198199); 
+            foreach (var player in world.Players)
+            {
+                player.Value.Conversations.StartConversation(80088);
             }
         }
     }

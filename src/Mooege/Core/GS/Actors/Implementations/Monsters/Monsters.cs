@@ -189,7 +189,7 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
     #endregion
     #region Skeleton
     //No Uniques Added
-    [HandledSNO(5393, 87012, 5395, 5397, 80652, 5407, 5408, 5411, 434)]
+    [HandledSNO(5393, 87012, 5395, 5397, 80652, 5407, 5408, 5411, 434, 218339, 218367)]
     public class Skeleton : Monster
     {
         public Skeleton(World world, int snoId, TagMap tags)
