@@ -25,6 +25,8 @@ namespace Mooege.Core.GS.Actors.Implementations
                 Tags.Add(MarkerKeys.ConversationList, new TagMapEntry(MarkerKeys.ConversationList.ID, 108832, 2));
 
             base.ReadTags();
+            this.Brain = new AI.Brains.AggressiveNPCBrain(this);
+            (Brain as AI.Brains.AggressiveNPCBrain).PresetPowers.Add(0x00007780);// change to melle_instant
         }
 
 

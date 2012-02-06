@@ -143,7 +143,7 @@ namespace Mooege.Core.GS.AI
                 // TODO Objectpool maybe?
                 vectorPathList.Insert(0, new Vector3D(nodePathList[i].X * 2.5f + _baseX, nodePathList[i].Y * 2.5f + _baseY, 0));
             }
-            new System.Threading.Thread(c => System.Windows.Forms.Application.Run(new PatherDebug.PatherDebug(actor, vectorPathList))).Start();
+            //new System.Threading.Thread(c => System.Windows.Forms.Application.Run(new PatherDebug.PatherDebug(actor, vectorPathList))).Start();
             
            
             return vectorPathList;
