@@ -875,6 +875,7 @@ namespace Mooege.Core.GS.Players
             });
 
             this.Inventory.SendVisualInventory(player);
+            this.Inventory.CreateItems();
 
             if (this == player) // only send this to player itself. Warning: don't remove this check or you'll make the game start crashing! /raist.
             {

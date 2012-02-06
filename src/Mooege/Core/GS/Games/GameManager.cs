@@ -74,6 +74,7 @@ namespace Mooege.Core.GS.Games
                 // Generate Update for Client
                 gameClient.BnetClient.Account.CurrentGameAccount.NotifyUpdate();
                 //save hero to db after player data was updated in toon
+                toon.Items = p.Inventory.GetInventoryGrid().Items;
                 toon.SaveToDB();
             }
 
