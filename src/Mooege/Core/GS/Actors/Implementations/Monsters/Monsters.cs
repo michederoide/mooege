@@ -340,7 +340,7 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
         }
     }
     #endregion
-        #region Wretched Mothers
+    #region Wretched Mothers
     [HandledSNO(108444, 219725)]
     public class WretchedMother : Monster
     {
@@ -362,5 +362,5 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
             this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 6f;
         }
     }
-    #endregion
+   #endregion
 }
