@@ -321,7 +321,7 @@ namespace Mooege.Common.MPQ
 
         public static void OnMPQLoaded()
         {
-            DumpPowerFormulas(true);
+            //DumpPowerFormulas(true);
 
             Logger.Debug("OnMPQLoaded() finished!");
         }

@@ -41,25 +41,13 @@ namespace Mooege.Core.GS.AI.Brains
             : base(body)
         {
             this.PresetPowers = new List<int>();
-
-            // build list of powers defined in monster mpq data
-            if (body.ActorData.MonsterSNO > 0)
-            {
-                var monsterData = (Mooege.Common.MPQ.FileFormats.Monster)MPQStorage.Data.Assets[SNOGroup.Monster][body.ActorData.MonsterSNO].Data;
-                foreach (var monsterSkill in monsterData.SkillDeclarations)
-                {
-                    if (monsterSkill.SNOPower > 0)
-                    {
-                        this.PresetPowers.Add(monsterSkill.SNOPower);
-                    }
-                }
-            }
+            AddPresetPower(0x00007780);
         }
 
         public override void Think(int tickCounter)
         {
             // this needed? /mdz
-            if (this.Body is NPC) return;
+            //if (this.Body is NPC) return;
 
             // check if in disabled state, if so cancel any action then do nothing
             if (this.Body.Attributes[GameAttribute.Frozen] ||
@@ -86,7 +74,7 @@ namespace Mooege.Core.GS.AI.Brains
 
                 if (_powerDelay.TimedOut)
                 {
-
+                    
                     if (this.Body.GetObjectsInRange<Monster>(40f).Count != 0)
                     {
                         _target = this.Body.GetObjectsInRange<Monster>(40f)[0];
@@ -94,7 +82,7 @@ namespace Mooege.Core.GS.AI.Brains
                         //This will only attack when you and your minions are not moving..TODO: FIX.
                         int powerToUse = PickPowerToUse();
                         if (powerToUse > 0)
-                            this.CurrentAction = new PowerAction(this.Body, powerToUse, _target);
+                            this.CurrentAction = new PowerAction(this.Body, powerToUse,_target);
                     }
                     else
                     {

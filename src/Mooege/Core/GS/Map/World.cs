@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 mooege project
  *
  * This program is free software; you can redistribute it and/or modify
@@ -575,7 +575,7 @@ namespace Mooege.Core.GS.Map
             return actor;
         }
 
-        /// <summary>         
+        /// <summary>
         /// Returns the first actor found with a given sno id         
         /// </summary>         
         /// <param name="sno"></param>         

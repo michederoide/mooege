@@ -96,7 +96,7 @@ namespace Mooege.Core.GS.AI
             // Checks if our path start location is inside current scene, if it isnt, we reset curScene and set mPathfinder to the corrent grid.
             if (!_curScene.Bounds.IntersectsWith(new System.Windows.Rect(Start.X, Start.Y, 1, 1)))
             { 
-                _curScene = actor.CurrentScene;
+                _curScene = actor.CurrentScene;// TODO- THIS CAN RETURN PARENT RATHER THAN SUBSCENE - DarkLotus
                 if (!listOfPathFinderInstances.TryGetValue(_curScene.SceneSNO.Id, out mPathFinder))
                 {
                     mPathFinder = new PathFinderFast(_curScene.NavMesh.WalkGrid);
@@ -143,6 +143,9 @@ namespace Mooege.Core.GS.AI
                 // TODO Objectpool maybe?
                 vectorPathList.Insert(0, new Vector3D(nodePathList[i].X * 2.5f + _baseX, nodePathList[i].Y * 2.5f + _baseY, 0));
             }
+            //new System.Threading.Thread(c => System.Windows.Forms.Application.Run(new PatherDebug.PatherDebug(actor, vectorPathList))).Start();
+            
+           
             return vectorPathList;
         }
 
@@ -154,7 +157,7 @@ namespace Mooege.Core.GS.AI
             mPathFinder.ReopenCloseNodes = true;
             mPathFinder.HeavyDiagonals = false;
             mPathFinder.HeuristicEstimate = 1;
-            mPathFinder.PunishChangeDirection = true;
+            mPathFinder.PunishChangeDirection = false;
             mPathFinder.TieBreaker = true; ;
             mPathFinder.SearchLimit = 75000;
             mPathFinder.DebugProgress = false;
@@ -163,6 +166,7 @@ namespace Mooege.Core.GS.AI
         }
 
         // Builds a 2x2 grid containing the start/dest location hopefully. If start/dest are further apart the grid will not contain both.
+        // This does not take into account subscenes - needs to be fixed - DarkLotus
         private byte[,] BuildOutOfSceneGrid(Scene s1, Scene s2, ref float basex, ref float basey)
         {
             // This really isnt optimal but its worked in my test cases, only alternative i could think was loading the entire world into a grid, but thats 4k x 4k and would require duplicating as each world is random - DarkLotus
@@ -250,9 +254,71 @@ namespace Mooege.Core.GS.AI
             public List<Vector3D> GetPath()
             {
                 Path.AddRange(_pathfinder.FindPath(_actor, _start, _destination));
+                Path = PullPathString(Path);
                 PathFound = true;
                
                 return Path;
+            }
+
+            private List<Vector3D> PullPathString(List<Vector3D> Path)
+            {
+                //List<Vector3D> path = new List<Vector3D>();
+                if (Path == null)
+                    return Path;
+                if (Path.Count < 4)
+                    return Path;
+                Path.RemoveAt(0);
+                //Logger.Debug("Path Length before cull " + Path.Count);
+                for (int i = Path.Count - 1; i > 2; i--)
+                {
+                //if direction from square 1 to 2 is same as 2 to 3 remove 2
+                    if (i < Path.Count - 1 || i > 0)
+                    {
+                        if (Angle(Path[i].X, Path[i].Y, Path[i - 2].X, Path[i - 2].Y) == Angle(Path[i].X, Path[i].Y, Path[i - 1].X, Path[i - 1].Y))
+                        {
+                            Path.RemoveAt(i - 1);
+                        }
+                    }
+                    
+                }
+                //Logger.Debug("Path Length after cull " + Path.Count);
+                return Path;
+            }
+
+
+            public double Angle(double px1, double py1, double px2, double py2)
+            {
+                // Negate X and Y values
+                double pxRes = px2 - px1;
+                double pyRes = py2 - py1;
+                double angle = 0.0;
+                // Calculate the angle
+                if (pxRes == 0.0)
+                {
+                    if (pxRes == 0.0)
+                        angle = 0.0;
+                    else if (pyRes > 0.0) angle = System.Math.PI / 2.0;
+                    else
+                        angle = System.Math.PI * 3.0 / 2.0;
+                }
+                else if (pyRes == 0.0)
+                {
+                    if (pxRes > 0.0)
+                        angle = 0.0;
+                    else
+                        angle = System.Math.PI;
+                }
+                else
+                {
+                    if (pxRes < 0.0)
+                        angle = System.Math.Atan(pyRes / pxRes) + System.Math.PI;
+                    else if (pyRes < 0.0) angle = System.Math.Atan(pyRes / pxRes) + (2 * System.Math.PI);
+                    else
+                        angle = System.Math.Atan(pyRes / pxRes);
+                }
+                // Convert to degrees
+                angle = angle * 180 / System.Math.PI; return angle;
+
             }
         }
 

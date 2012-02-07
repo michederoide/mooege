@@ -160,4 +160,34 @@ namespace Mooege.Core.GS.Powers.Implementations
             return Launch();
         }
     }
+   [ImplementsPowerSNO(110518)]  // ZombieFemale_Projectile.pow
+    public class WretchedMother : SingleProjectileSkill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            SetProjectile(this, 120957, User.Position, 1.10f, (hit) =>
+            {
+                hit.PlayEffectGroup(142797);
+                WeaponDamage(hit, 1.00f, DamageType.Poison);
+                projectile.Destroy();
+            });
+            projectile.Position.Z += 5f;
+            return Launch();
+        }
+    }
+    [ImplementsPowerSNO(94734)]  // Summon_Zombie_Vomit.pow
+    public class WretchedMotherVomit : SingleProjectileSkill
+    {
+        public override IEnumerable<TickTimer> Main()
+        {
+            SetProjectile(this, 121909, User.Position, 1.70f, (hit) =>
+            {
+                hit.PlayEffectGroup(142797);
+                WeaponDamage(hit, 5.00f, DamageType.Poison);
+                projectile.Destroy();
+            });
+            projectile.Position.Z += 0f;
+            return Launch();
+        }
+    }
 }

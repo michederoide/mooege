@@ -135,6 +135,7 @@
     <Compile Include="Core\GS\Actors\Minion.cs" />
     <Compile Include="Core\GS\AI\Brains\AggressiveNPCBrain.cs" />
     <Compile Include="Core\GS\AI\Brains\MinionBrain.cs" />
+    <Compile Include="Core\GS\AI\Pathfinder.cs" />
     <Compile Include="Core\GS\Powers\ActionTimedSkill.cs" />
     <Compile Include="Core\GS\Powers\ActorMover.cs" />
     <Compile Include="Core\GS\Powers\ComboSkill.cs" />
@@ -223,7 +224,6 @@
     <Compile Include="Core\GS\Actors\Implementations\Shrine.cs" />
     <Compile Include="Core\GS\Actors\Movement\MoveToPointWithPathfindAction.cs" />
     <Compile Include="Core\GS\Actors\ServerProp.cs" />
-    <Compile Include="Core\GS\AI\Pathfinder.cs" />
     <Compile Include="Core\GS\Common\Types\TagMap\ActorKeys.cs" />
     <Compile Include="Core\GS\Common\Types\TagMap\AnimationSetKeys.cs" />
     <Compile Include="Core\GS\Common\Types\TagMap\MarkerKeys.cs" />
