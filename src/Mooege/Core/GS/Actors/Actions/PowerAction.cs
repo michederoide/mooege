@@ -57,7 +57,6 @@ namespace Mooege.Core.GS.Actors.Actions
             _baseAttackRadius = this.Owner.ActorData.Cylinder.Ax2 + _power.EvalTag(PowerKeys.AttackRadius) + 1.5f;
             _ownerMover = new ActorMover(owner);
         }
-
         public PowerAction(Actor owner, int powerSNO, Actor target)
             : base(owner)
         {
@@ -69,7 +68,6 @@ namespace Mooege.Core.GS.Actors.Actions
             _ownerMover = new ActorMover(owner);
             _target = target;
         }
-
         public override void Start(int tickCounter)
         {
             this.Started = true;
@@ -86,15 +84,15 @@ namespace Mooege.Core.GS.Actors.Actions
 
                 return;
             }
-
+            
             // try to get nearest target if no target yet acquired
             if (_target == null)
             {
                 _target = this.Owner.GetPlayersInRange(MaxTargetRange).OrderBy(
                     (player) => PowerMath.Distance2D(player.Position, this.Owner.Position))
                     .FirstOrDefault();
-                //.FirstOrDefault(x => x.Attributes[GameAttribute.Untargetable] == false);
-                // If target is marked untargetable then we shouldnt consider him for targeting - DarkLotus
+                    //.FirstOrDefault(x => x.Attributes[GameAttribute.Untargetable] == false);
+                    // If target is marked untargetable then we shouldnt consider him for targeting - DarkLotus
             }
 
             if (_target != null)
@@ -127,21 +125,24 @@ namespace Mooege.Core.GS.Actors.Actions
                     // No path found, so end Action.
                     if (_pathRequestTask.Path.Count < 1)
                         return;
-                    if (_path == null)
-                        _path = _pathRequestTask.Path;
+                    if(_path == null)
+                    _path = _pathRequestTask.Path;
 
-                    if (_pathUpdateTimer == null || _pathUpdateTimer.TimedOut)
+                    if (_ownerMover.ArrivalTime == null || _ownerMover.Arrived)
                     {
-                        _pathUpdateTimer = new SecondsTickTimer(this.Owner.World.Game, PathUpdateDelay);
+                        //if (_ownerMover.Arrived)
+                        //{ 
+                        _pathUpdateTimer = new SecondsTickTimer(this.Owner.World.Game, PathUpdateDelay);     
                         //_pathRequestTask = null;
-                        Vector3D movePos = PowerMath.TranslateDirection2D(this.Owner.Position, _path[0], this.Owner.Position,
-                            this.Owner.WalkSpeed * (_pathUpdateTimer.TimeoutTick - this.Owner.World.Game.TickCounter));
+                        Vector3D movePos = _path[0];// PowerMath.TranslateDirection2D(this.Owner.Position, _path[0], this.Owner.Position,
+                             //this.Owner.WalkSpeed * (_pathUpdateTimer.TimeoutTick - this.Owner.World.Game.TickCounter));
                         this.Owner.TranslateFacing(movePos, false);
                         _ownerMover.Move(movePos, this.Owner.WalkSpeed, new Net.GS.Message.Definitions.ACD.ACDTranslateNormalMessage
                         {
                             TurnImmediately = false,
                             AnimationTag = this.Owner.AnimationSet == null ? 0 : this.Owner.AnimationSet.GetAnimationTag(Mooege.Common.MPQ.FileFormats.AnimationTags.Walk)
                         });
+                            //if(PowerMath.Distance2D(movePos,_path[0]) < 5f)
                         _path.RemoveAt(0);
                         if (_path.Count == 0)
                         {
@@ -149,8 +150,8 @@ namespace Mooege.Core.GS.Actors.Actions
                             _path = null;
                             return;
                         }
-
-
+                        //}
+                        
                         //_path.Clear();
                     }
 
@@ -259,10 +260,10 @@ namespace Mooege.Core.GS.Actors.Actions
                     }*/
                     else
                     {
-                        if (_ownerMover.Velocity != null)
-                            _ownerMover.Update();
+                        if(_ownerMover.Velocity != null)
+                        _ownerMover.Update();
                         //if (_ownerMover.Arrived)
-                        //  _ownerMover = new ActorMover(this.Owner);
+                          //  _ownerMover = new ActorMover(this.Owner);
                     }
                 }
             }
@@ -287,16 +288,16 @@ namespace Mooege.Core.GS.Actors.Actions
             }
             return null;
         }
-        public Vector3D GetwalkableVector(Vector3D oldloc, Vector3D destloc)
+        public Vector3D GetwalkableVector(Vector3D oldloc,Vector3D destloc)
         {
             Mooege.Core.GS.Map.Scene startscene = GetSceneAt(oldloc);
             Mooege.Core.GS.Map.Scene destscene = GetSceneAt(destloc);
-
+            
             if (startscene.DynamicID == destscene.DynamicID)
             {
                 foreach (var mesh in startscene.NavZone.NavCells)
                 {
-
+                    
                     /*if (mesh.Bounds.Contains(oldloc.AsPoint()) && mesh.Bounds.Contains(destloc.AsPoint()))
                         return destloc;
                     else if (mesh.Bounds.Contains(oldloc.AsPoint()))

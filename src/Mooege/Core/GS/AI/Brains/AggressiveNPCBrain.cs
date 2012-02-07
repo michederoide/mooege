@@ -59,7 +59,7 @@ namespace Mooege.Core.GS.AI.Brains
         public override void Think(int tickCounter)
         {
             // this needed? /mdz
-            if (this.Body is NPC) return;
+            //if (this.Body is NPC) return;
 
             // check if in disabled state, if so cancel any action then do nothing
             if (this.Body.Attributes[GameAttribute.Frozen] ||
@@ -86,7 +86,7 @@ namespace Mooege.Core.GS.AI.Brains
 
                 if (_powerDelay.TimedOut)
                 {
-
+                    
                     if (this.Body.GetObjectsInRange<Monster>(40f).Count != 0)
                     {
                         _target = this.Body.GetObjectsInRange<Monster>(40f)[0];
@@ -94,7 +94,7 @@ namespace Mooege.Core.GS.AI.Brains
                         //This will only attack when you and your minions are not moving..TODO: FIX.
                         int powerToUse = PickPowerToUse();
                         if (powerToUse > 0)
-                            this.CurrentAction = new PowerAction(this.Body, powerToUse, _target);
+                            this.CurrentAction = new PowerAction(this.Body, powerToUse,_target);
                     }
                     else
                     {
