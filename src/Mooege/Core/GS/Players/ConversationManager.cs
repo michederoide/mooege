@@ -30,8 +30,6 @@ using Mooege.Net.GS.Message.Definitions.ACD;
 using Mooege.Core.GS.Common.Types.Math;
 using Mooege.Core.GS.QuestEvents;
 using Mooege.Core.GS.Games;
-
-
 using Mooege.Core.GS.QuestEvents.Implementations;
 
 
@@ -70,7 +68,7 @@ namespace Mooege.Core.GS.Players
     /// <summary>
     /// Wraps a conversation asset and manages the whole conversation
     /// </summary>
-    class Conversation
+    public class Conversation
     {
         Logger logger = new Logger("Conversation");
         public event EventHandler ConversationEnded;
@@ -364,6 +362,7 @@ namespace Mooege.Core.GS.Players
         private void InitQuestEvents()
         {
             this.QuestEventDict.Add(151087, new _151087());
+            this.QuestEventDict.Add(151123, new _151123());
         }
 
         /// <summary>

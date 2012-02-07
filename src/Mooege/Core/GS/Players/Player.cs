@@ -674,11 +674,20 @@ namespace Mooege.Core.GS.Players
             // so we can have a basic precaution for hacks & exploits /raist.
             if (message.Position != null)
             {
-                if (!client.Player.World.CheckLocationForFlag(message.Position,Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.AllowWalk))
+                if (!client.Player.World.CheckLocationForFlag(message.Position, Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.AllowWalk))
+                {
+                    Logger.Info("Account: " + client.BnetClient.Account.Name + " Attempted to move to an unwalkable location");
+                    return;
+                }
+                else
+                {
+                    var ActorsInRange = GetActorsInRange(3f);
+                    foreach (var actor in ActorsInRange)
                     {
-                        Logger.Info("Account: " + client.BnetClient.Account.Name + " Attempted to move to an unwalkable location");
-                        return;
+                        Logger.Debug(actor.ToString());
                     }
+                    Logger.Info("Current Position: {0}", this.Position);
+                }
                 this.Position = message.Position;
             }
                 
