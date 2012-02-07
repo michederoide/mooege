@@ -363,6 +363,7 @@ namespace Mooege.Core.GS.Players
         {
             this.QuestEventDict.Add(151087, new _151087());
             this.QuestEventDict.Add(151123, new _151123());
+            this.QuestEventDict.Add(198503, new _198503());
         }
 
         /// <summary>
