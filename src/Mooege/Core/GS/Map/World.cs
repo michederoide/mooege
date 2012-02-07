@@ -575,6 +575,20 @@ namespace Mooege.Core.GS.Map
             return actor;
         }
 
+        /// <summary>         
+        /// Returns the first actor found with a given sno id         
+        /// </summary>         
+        /// <param name="sno"></param>         
+        /// <returns></returns>         
+        public Actor GetActorBySNO(int sno) 
+        { 
+            foreach (var actor in this._actors.Values) 
+            { 
+                if (actor.ActorSNO.Id == sno) 
+                    return actor; 
+            } return null;        
+        }
+
         /// <summary>
         /// Returns the actor with given dynamicId.
         /// </summary>

@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using Mooege.Core.GS.Map;
 using Mooege.Core.GS.Common.Types.TagMap;
+using Mooege.Net.GS.Message;
+using Mooege.Core.GS.AI.Brains;
 
 namespace Mooege.Core.GS.Actors.Implementations
 {
@@ -25,9 +27,15 @@ namespace Mooege.Core.GS.Actors.Implementations
                 Tags.Add(MarkerKeys.ConversationList, new TagMapEntry(MarkerKeys.ConversationList.ID, 108832, 2));
 
             base.ReadTags();
+            base.Brain = new AI.Brains.AggressiveNPCBrain(this);
+            (Brain as AI.Brains.AggressiveNPCBrain).PresetPowers.Add(0x00007780);// change to melle_instant
+            base.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
+            base.Attributes[GameAttribute.Hitpoints_Max] = 5f;
+            base.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            base.Attributes[GameAttribute.Hitpoints_Cur] = 5f;
+            base.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            base.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
+            base.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
         }
-
-
-
     }
 }
