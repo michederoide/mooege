@@ -128,21 +128,21 @@ namespace Mooege.Core.GS.Actors.Actions
                     if(_path == null)
                     _path = _pathRequestTask.Path;
 
-                    if (_pathUpdateTimer == null || _pathUpdateTimer.TimedOut)
+                    if (_ownerMover.ArrivalTime == null || _ownerMover.Arrived)
                     {
-                        if (_ownerMover.Arrived)
-                        { 
+                        //if (_ownerMover.Arrived)
+                        //{ 
                         _pathUpdateTimer = new SecondsTickTimer(this.Owner.World.Game, PathUpdateDelay);     
                         //_pathRequestTask = null;
-                        Vector3D movePos = PowerMath.TranslateDirection2D(this.Owner.Position, _path[0], this.Owner.Position,
-                            this.Owner.WalkSpeed * (_pathUpdateTimer.TimeoutTick - this.Owner.World.Game.TickCounter));
+                        Vector3D movePos = _path[0];// PowerMath.TranslateDirection2D(this.Owner.Position, _path[0], this.Owner.Position,
+                             //this.Owner.WalkSpeed * (_pathUpdateTimer.TimeoutTick - this.Owner.World.Game.TickCounter));
                         this.Owner.TranslateFacing(movePos, false);
                         _ownerMover.Move(movePos, this.Owner.WalkSpeed, new Net.GS.Message.Definitions.ACD.ACDTranslateNormalMessage
                         {
                             TurnImmediately = false,
                             AnimationTag = this.Owner.AnimationSet == null ? 0 : this.Owner.AnimationSet.GetAnimationTag(Mooege.Common.MPQ.FileFormats.AnimationTags.Walk)
                         });
-                            if(PowerMath.Distance2D(movePos,_path[0]) < 5f)
+                            //if(PowerMath.Distance2D(movePos,_path[0]) < 5f)
                         _path.RemoveAt(0);
                         if (_path.Count == 0)
                         {
@@ -150,7 +150,7 @@ namespace Mooege.Core.GS.Actors.Actions
                             _path = null;
                             return;
                         }
-                        }
+                        //}
                         
                         //_path.Clear();
                     }

@@ -166,6 +166,7 @@ namespace Mooege.Core.GS.AI
         }
 
         // Builds a 2x2 grid containing the start/dest location hopefully. If start/dest are further apart the grid will not contain both.
+        // This does not take into account subscenes - needs to be fixed - DarkLotus
         private byte[,] BuildOutOfSceneGrid(Scene s1, Scene s2, ref float basex, ref float basey)
         {
             // This really isnt optimal but its worked in my test cases, only alternative i could think was loading the entire world into a grid, but thats 4k x 4k and would require duplicating as each world is random - DarkLotus

@@ -59,7 +59,7 @@ namespace Mooege.Core.GS.AI.Brains
         public override void Think(int tickCounter)
         {
             // this needed? /mdz
-            if (this.Body is NPC) return;
+            //if (this.Body is NPC) return;
 
             // check if in disabled state, if so cancel any action then do nothing
             if (this.Body.Attributes[GameAttribute.Frozen] ||

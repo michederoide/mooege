@@ -35,7 +35,7 @@ namespace Mooege.Core.GS.Powers
 
         public Vector3D Velocity { get; private set; }
         public TickTimer ArrivalTime { get; private set; }
-        public bool Arrived { get { if (ArrivalTime != null) { return ArrivalTime.TimedOut; };return true; } }
+        public bool Arrived { get { if (ArrivalTime != null) { return ArrivalTime.TimedOut; };return false; } }
 
         private Vector3D _startPosition;
         private Vector3D _endPosition;
