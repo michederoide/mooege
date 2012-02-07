@@ -679,7 +679,7 @@ namespace Mooege.Core.GS.Players
                     Logger.Info("Account: " + client.BnetClient.Account.Name + " Attempted to move to an unwalkable location");
                     return;
                 }
-                else
+                /*else
                 {
                     var ActorsInRange = GetActorsInRange(3f);
                     foreach (var actor in ActorsInRange)
@@ -687,7 +687,7 @@ namespace Mooege.Core.GS.Players
                         Logger.Debug(actor.ToString());
                     }
                     Logger.Info("Current Position: {0}", this.Position);
-                }
+                }*/
                 this.Position = message.Position;
             }
                 
