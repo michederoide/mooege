@@ -40,7 +40,5 @@ namespace Mooege.Core.GS.QuestEvents
         }
 
         public abstract void Execute(Map.World world);
-
-
     }
 }

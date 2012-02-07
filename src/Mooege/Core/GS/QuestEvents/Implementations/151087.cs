@@ -38,7 +38,7 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
             //Start the conversation between RumFord & Guard.
             StartConversation(world, 198199);
             //Launch first wave.
-            var firstWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(FirstSkinnyWaveCoords, world, 0x000354E3));
+            var firstWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(FirstSkinnyWaveCoords, world, 218339));
 
             firstWaveTask.Wait(); //We need to wait in order for the listener to grab the Monster counting, if this runs asyn with the spawn procedure listener will grab a value of 0 mobs.
             //Run Kill Event Listener
@@ -47,14 +47,14 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
             ListenerFirstWaveTask.ContinueWith(delegate //Once killed:
             {
                 //Wave two: Torsos.
-                var torsoWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(TorsoWaveCoords, world, 0x000354FF));
+                var torsoWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(TorsoWaveCoords, world, 218367));
                 torsoWaveTask.Wait(); //We need to wait in order for the listener to grab the Monster counting, if this runs asyn with the spawn procedure listener will grab a value of 0 mobs.
                 var ListenerSecondWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(monstersAlive, world));
                 ListenerSecondWaveTask.ContinueWith(delegate //Once killed:
                 {
                     //Wave three: Skinnies + RumFord conversation #2
                     StartConversation(world, 80088);
-                    var thirdWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(SecondSkinnyWaveCoords, world, 0x000354E3));
+                    var thirdWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(SecondSkinnyWaveCoords, world, 218339));
                     thirdWaveTask.Wait(); //We need to wait in order for the listener to grab the Monster counting, if this runs asyn with the spawn procedure listener will grab a value of 0 mobs.
                     var ListenerThirdWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(monstersAlive, world));
                     ListenerThirdWaveTask.Wait();

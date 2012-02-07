@@ -14,6 +14,10 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
 {
     class _151123 : QuestEvent
     {
+        //ActorID: 0x7A3100DD  
+        //ZombieSkinny_A_LeahInn.acr (2050031837)
+        //ActorSNOId: 0x00031971:ZombieSkinny_A_LeahInn.acr
+
         private static readonly Logger Logger = LogManager.CreateLogger();
 
         public _151123()
@@ -26,12 +30,11 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
 
         public override void Execute(Map.World world)
         {
-            //setActorOperable(world, 3739);
             StartConversation(world, 204113);
 
             var transformActors = Task<bool>.Factory.StartNew(() => HoudiniVsZombies(world, 204605));
             transformActors.Wait();
-            var zombieWave = Task<bool>.Factory.StartNew(() => LaunchWave(ActorsVector3D, world, 0x000354E3));
+            var zombieWave = Task<bool>.Factory.StartNew(() => LaunchWave(ActorsVector3D, world, 203121));
             zombieWave.Wait();
             var ListenerZombie = Task<bool>.Factory.StartNew(() => OnKillListener(monstersAlive, world));
             ListenerZombie.ContinueWith(delegate //Once killed:
@@ -80,7 +83,7 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
                     {
                         Quaternion = new Quaternion()
                         {
-                            W = 0.7063466f,
+                            W = 0.590017f,
                             Vector3D = new Vector3D(0, 0, 0)
                         },
                         Vector3D = Coordinates[counter]
@@ -95,7 +98,7 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
                     world.BroadcastIfRevealed(new PlayAnimationMessage
                     {
                         ActorID = actor,
-                        Field1 = 6,
+                        Field1 = 9,
                         Field2 = 0,
                         tAnim = new Net.GS.Message.Fields.PlayAnimationMessageSpec[]
                         {
