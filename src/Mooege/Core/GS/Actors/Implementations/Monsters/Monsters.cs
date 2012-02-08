@@ -422,7 +422,7 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
     #endregion
     #region Wretched Mothers
 
-    [HandledSNO(219725, 108444)] // ZombieFemale_A_TristramQuest_Unique.acr 
+    [HandledSNO(219725, 108444, 176889 /*the queen*/)] // ZombieFemale_A_TristramQuest_Unique.acr 
     public class WretchedMother : Monster
     {
         public WretchedMother(World world, int snoId, TagMap tags)
@@ -430,7 +430,7 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
         {
             this.Brain = new MonsterBrain(this);
             (Brain as MonsterBrain).AddPresetPower(110518); //spit
-            (Brain as MonsterBrain).AddPresetPower(94734); // Vommit Without the Spawns
+            (Brain as MonsterBrain).AddPresetPower(94734); // Vomit Without the Spawns
             (Brain as MonsterBrain).AddPresetPower(30592); //Instant Wep
             this.Attributes[GameAttribute.Hitpoints_Max_Total] = 13.38281f;
             this.Attributes[GameAttribute.Hitpoints_Max] = 13.38281f;
@@ -438,8 +438,7 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
             this.Attributes[GameAttribute.Hitpoints_Cur] = 13.38281f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
             this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 4f;
-            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 6f;
-            this.WalkSpeed = 0f; //We hardcode this so RumFord doesnt kill her before u even grab the quest...
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 6f;  
         }
     }
    #endregion
