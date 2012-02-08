@@ -112,6 +112,10 @@ namespace Mooege.Core.GS.Common.Types.TagMap
             {
                 _tagMapEntries[key.ID].Int = value;
             }
+            set
+            {
+                _tagMapEntries[key.ID].Int = value;
+            }
         }
 
         public float this[TagKeyFloat key]

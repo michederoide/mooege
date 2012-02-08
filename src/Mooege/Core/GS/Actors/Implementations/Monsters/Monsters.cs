@@ -236,11 +236,20 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
             (Brain as MonsterBrain).AddPresetPower(79486); //UninterruptibleDuringBuff.pow
             (Brain as MonsterBrain).AddPresetPower(30582); //UntargetableDuringBuff.pow 
             (Brain as MonsterBrain).AddPresetPower(225599); //CannotDieDuringBuff.pow 
-            this.Attributes[GameAttribute.Buff_Active,488] = true;
-            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 3.6875f;
-            this.Attributes[GameAttribute.Hitpoints_Max] = 3.6875f;
-            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 3.051758f;
-            this.Attributes[GameAttribute.Hitpoints_Cur] = 1.602539f;
+            //this.Attributes[GameAttribute.Buff_Active,488] = true; //Can we handle buffs?.
+            //Below are the actual stats from the beta packets, still, if used that stats for the zombies are not correct,
+            //So theres probably something wrong in some formula. - Wesko
+            //this.Attributes[GameAttribute.Hitpoints_Max_Total] = 3.6875f;
+            //this.Attributes[GameAttribute.Hitpoints_Max] = 3.6875f;
+            //this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 3.051758f;
+            //this.Attributes[GameAttribute.Hitpoints_Cur] = 1.602539f;
+            //this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            //this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 4f;
+            //this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 4f;
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 4.132813f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 4.132813f;
+            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 4.132813f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
             this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 4f; //HardCoded, this information aint contained in the packets.. it seems.
             this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 4f; //HardCoded, this information aint contained in the packets.. it seems.
@@ -402,26 +411,26 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
     }
     #endregion
     #region Wretched Mothers
-    [HandledSNO(108444, 219725)]
+
+    [HandledSNO(219725, 108444)] // ZombieFemale_A_TristramQuest_Unique.acr 
     public class WretchedMother : Monster
     {
-
         public WretchedMother(World world, int snoId, TagMap tags)
             : base(world, snoId, tags)
         {
-
             this.Brain = new MonsterBrain(this);
             (Brain as MonsterBrain).AddPresetPower(110518); //spit
             (Brain as MonsterBrain).AddPresetPower(94734); // Vommit Without the Spawns
             (Brain as MonsterBrain).AddPresetPower(30592); //Instant Wep
-            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 6f;
-            this.Attributes[GameAttribute.Hitpoints_Max] = 6f;
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 13.38281f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 13.38281f;
             this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
-            this.Attributes[GameAttribute.Hitpoints_Cur] = 6f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 13.38281f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
             this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 4f;
             this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 6f;
+            this.WalkSpeed = 0f; //We hardcode this so RumFord doesnt kill her before u even grab the quest...
         }
     }
-   #endregion
+    #endregion
 }

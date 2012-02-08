@@ -38,9 +38,9 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
             //Wait for wtretchedmother to be killed.
             ListenerFirstWaveTask.ContinueWith(delegate //Once killed:
             {
-                    world.Game.Quests.Advance(87700);
-                    Logger.Debug("Event finished");
-                    StartConversation(world, 156223);
+                world.Game.Quests.Advance(87700);
+                Logger.Debug("Event finished");
+                StartConversation(world, 156223);
             });
         }
 
@@ -68,7 +68,7 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
                 }
             }
             return true;
-        }     
+        }
 
         //Launch Conversations.
         private bool StartConversation(Map.World world, Int32 conversationId)
