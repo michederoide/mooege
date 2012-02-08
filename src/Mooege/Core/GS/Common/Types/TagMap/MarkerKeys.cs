@@ -51,8 +51,9 @@ namespace Mooege.Core.GS.Common.Types.TagMap
         public static TagKeySNO OnActorSpawnedScript = new TagKeySNO(524808);
         public static TagKeyInt Group1Hash = new TagKeyInt(524814);
         public static TagKeyInt Group2Hash = new TagKeyInt(524815);
+        public static TagKeySNO SpawnActor = new TagKeySNO(532496);
 
-        // Used for portal destination resolution
+                // Used for portal destination resolution
         public static TagKeySNO DestinationWorld = new TagKeySNO(526850);
         public static TagKeyInt DestinationActorTag = new TagKeyInt(526851);
         public static TagKeyInt ActorTag = new TagKeyInt(526852);

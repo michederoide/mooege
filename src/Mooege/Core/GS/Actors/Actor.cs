@@ -251,8 +251,57 @@ namespace Mooege.Core.GS.Actors
 
             this.Position = position;
             this.CheckPointPosition = position;
+
             if (this.World != null) // if actor got into a new world.
                 this.World.Enter(this); // let him enter first.
+            
+        }
+
+
+        public void Spawn()
+        {
+            if (Tags != null)
+            {
+                if (Tags.ContainsKey(MarkerKeys.SpawnActor))
+                {
+                    var ActorSNO = Tags[MarkerKeys.SpawnActor];
+                    var location = new PRTransform()
+                        {
+                            Quaternion = new Quaternion
+                                {
+                                    W = this.RotationW,
+                                    Vector3D = this.RotationAxis
+                                },
+                            Vector3D = this.Position
+                        };
+                    //make spawn part of same group
+                    if (Tags != null)
+                    {
+                        if (Tags.ContainsKey(MarkerKeys.Group1Hash) && !((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap.ContainsKey(MarkerKeys.Group1Hash))
+                        {
+                            ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap.Add(MarkerKeys.Group1Hash, new TagMapEntry(MarkerKeys.Group1Hash.ID, Tags[MarkerKeys.Group1Hash], 5));
+                            Logger.Trace("Spawned Mob with group: {0}", ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap[MarkerKeys.Group1Hash]);
+                        }
+                        else
+                            Logger.Trace("Spawned Mob with existing group: {0}", ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap[MarkerKeys.Group1Hash]);
+                    }
+
+
+   
+                    Mooege.Core.GS.Generators.WorldGenerator.loadActor(ActorSNO, location, this.World, ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap);
+                   //if ( ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap != null)
+                   // {
+                   //     if (((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap.ContainsKey(MarkerKeys.Group1Hash))
+                   //         // ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap.Add(MarkerKeys.Group1Hash, new TagMapEntry(MarkerKeys.Group1Hash.ID, Tags[MarkerKeys.Group1Hash], 5));
+                   //         Logger.Trace("Spawned Mob with group: {0}", ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap[MarkerKeys.Group1Hash]);
+                   //     else
+                   //         Logger.Trace("Spawned Mob with no group");
+                   // }
+
+                    //once target spawned this can be destroyed
+                    this.Destroy();
+                }
+            }
         }
 
         public virtual void BeforeChangeWorld()
@@ -489,6 +538,13 @@ namespace Mooege.Core.GS.Actors
         /// <returns>true if the actor was revealed or false if the actor was already revealed.</returns>
         public override bool Reveal(Player player)
         {
+            //Do not reveal spawner gizmos
+            if (Tags != null)
+            {
+                if (Tags.ContainsKey(MarkerKeys.SpawnActor))
+                    return false;
+            }
+
             if (player.RevealedObjects.ContainsKey(this.DynamicID)) return false; // already revealed
             player.RevealedObjects.Add(this.DynamicID, this);
 
@@ -536,6 +592,16 @@ namespace Mooege.Core.GS.Actors
             {
                 Name = this.ActorSNO
             });
+
+            //Play spawn animation
+            if (AnimationSet != null)
+            {
+                if (this.AnimationSet.GetAnimationTag(Mooege.Common.MPQ.FileFormats.AnimationTags.Spawn) != -1)
+                {
+                    this.PlayActionAnimation(this.AnimationSet.Animations[(int)Mooege.Common.MPQ.FileFormats.AnimationTags.Spawn], 1f, 131);
+                }
+
+            }
 
             return true;
         }

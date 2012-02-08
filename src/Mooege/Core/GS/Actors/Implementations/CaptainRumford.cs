@@ -15,15 +15,14 @@ namespace Mooege.Core.GS.Actors.Implementations
             : base(world, snoID, tags)
         {
             this.Brain = new AI.Brains.AggressiveNPCBrain(this);
-            (Brain as AI.Brains.AggressiveNPCBrain).PresetPowers.Add(0x00007780);// melee_instant
+            (Brain as AI.Brains.AggressiveNPCBrain).PresetPowers.Add(0x00007780);// change to melle_instant
             this.Attributes[GameAttribute.Hitpoints_Max_Total] = 50f;
             this.Attributes[GameAttribute.Hitpoints_Max] = 50f;
             this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
             this.Attributes[GameAttribute.Hitpoints_Cur] = 50f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
-            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 7f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
             this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
-            this.WalkSpeed = 0.34f;
         }
 
         // One of the rumfords is not tagged with a conversation list, although his conversation list is available.

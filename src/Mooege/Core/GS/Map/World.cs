@@ -590,6 +590,41 @@ namespace Mooege.Core.GS.Map
         }
 
         /// <summary>
+        /// Returns true if any actors exist under a well defined group
+        /// </summary>
+        /// <param name="group"></param>
+        /// <returns></returns>
+        public bool HasActorsInGroup(string group)
+        {
+            var groupHash = Mooege.Common.Helpers.Hash.StringHashHelper.HashItemName(group);
+            foreach (var actor in this._actors.Values)
+            {
+                if (actor.Tags != null)
+                    if (actor.Tags.ContainsKey(MarkerKeys.Group1Hash))
+                        if (actor.Tags[MarkerKeys.Group1Hash] == groupHash) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Returns all actors matching a group
+        /// </summary>
+        /// <param name="group"></param>
+        /// <returns></returns>
+        public List<Actor> GetActorsInGroup(string group)
+        {
+            List<Actor> matchingActors = new List<Actor>();
+            var groupHash = Mooege.Common.Helpers.Hash.StringHashHelper.HashItemName(group);
+            foreach (var actor in this._actors.Values)
+            {
+                if (actor.Tags != null)
+                    if (actor.Tags.ContainsKey(MarkerKeys.Group1Hash))
+                        if (actor.Tags[MarkerKeys.Group1Hash] == groupHash) matchingActors.Add(actor);
+            }
+            return matchingActors;
+        }
+
+        /// <summary>
         /// Returns the actor with given dynamicId.
         /// </summary>
         /// <param name="dynamicID">The dynamicId of the actor.</param>
