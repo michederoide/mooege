@@ -312,6 +312,7 @@
     <Compile Include="Core\GS\Players\Equipment.cs" />
     <Compile Include="Core\GS\Powers\Skill.cs" />
     <Compile Include="Core\GS\Powers\TargetList.cs" />
+    <Compile Include="Core\GS\QuestEvents\Implementations\198503.cs" />
     <Compile Include="Core\GS\QuestEvents\Implementations\151087.cs" />
     <Compile Include="Core\GS\QuestEvents\Implementations\151123.cs" />
     <Compile Include="Core\GS\QuestEvents\QuestEvent.cs" />

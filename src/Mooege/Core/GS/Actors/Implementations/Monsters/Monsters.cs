@@ -227,7 +227,7 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
             this.Attributes[GameAttribute.Hitpoints_Cur] = 4.132813f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
             this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 4f; //HardCoded, this information aint contained in the packets.. it seems.
-            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 4f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 4f; //HardCoded, this information aint contained in the packets.. it seems.
         }
     }
 
