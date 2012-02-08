@@ -443,4 +443,29 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
         }
     }
    #endregion
+ #region Scavenger
+    [HandledSNO(5235, 5236)]
+    public class Scavenger : Monster
+    {
+
+        public Scavenger(World world, int snoId, TagMap tags)
+            : base(world, snoId, tags)
+        {   
+            Scale = 0.85f;
+            WalkSpeed = 0.30f;       
+            this.Brain = new MonsterBrain(this);
+           (Brain as MonsterBrain).AddPresetPower(30592);
+           (Brain as MonsterBrain).AddPresetPower(1752); // Leap ; They leap even without this power here.
+           (Brain as MonsterBrain).AddPresetPower(30450); //Burrow In - Not implemented.
+           (Brain as MonsterBrain).AddPresetPower(30451);  //Burrow Out - Not implemented.
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 12f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 12f;
+            this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 2f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 12f;
+            this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 4f;
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 6f; 
+        }
+    }
+    #endregion
 }
