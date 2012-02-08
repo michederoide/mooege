@@ -214,13 +214,20 @@ namespace Mooege.Core.GS.Actors.Implementations.Monsters
         {
             this.Brain = new MonsterBrain(this);
             (Brain as MonsterBrain).AddPresetPower(7789); //Weapon_Ranged_Wand.pow?
-            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
-            this.Attributes[GameAttribute.Hitpoints_Max] = 1.602539f;
+            //this.Attributes[GameAttribute.Hitpoints_Max_Total] = 5f;
+            //this.Attributes[GameAttribute.Hitpoints_Max] = 1.602539f;
+            //this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
+            //this.Attributes[GameAttribute.Hitpoints_Cur] = 1.602539f;
+            //this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
+            //this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 4f; //HardCoded, this information aint contained in the packets.. it seems.
+            //this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 4f; //HardCoded, this information aint contained in the packets.. it seems.
+            this.Attributes[GameAttribute.Hitpoints_Max_Total] = 4.132813f;
+            this.Attributes[GameAttribute.Hitpoints_Max] = 4.132813f;
             this.Attributes[GameAttribute.Hitpoints_Total_From_Level] = 0f;
-            this.Attributes[GameAttribute.Hitpoints_Cur] = 1.602539f;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 4.132813f;
             this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
             this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 4f; //HardCoded, this information aint contained in the packets.. it seems.
-            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 4f; //HardCoded, this information aint contained in the packets.. it seems.
+            this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 4f;
         }
     }
 

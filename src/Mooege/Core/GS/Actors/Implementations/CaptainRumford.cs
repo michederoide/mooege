@@ -23,7 +23,6 @@ namespace Mooege.Core.GS.Actors.Implementations
             this.Attributes[GameAttribute.Attacks_Per_Second_Total] = 1.0f;
             this.Attributes[GameAttribute.Damage_Weapon_Min_Total, 0] = 5f;
             this.Attributes[GameAttribute.Damage_Weapon_Delta_Total, 0] = 7f;
-            this.WalkSpeed = 0.34f;
         }
 
         // One of the rumfords is not tagged with a conversation list, although his conversation list is available.

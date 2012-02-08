@@ -1686,18 +1686,23 @@ namespace Mooege.Core.GS.Players
             {
                 case ToonClass.Barbarian:
                     UsePrimaryResource(0.1f);
+                    AddPercentageHP(1); //Testing Purposes until All Healthglobes get fixed.
                     break;
                 case ToonClass.DemonHunter:
                     GeneratePrimaryResource(3f);
                     GenerateSecondaryResource(0.3f);
+                    AddPercentageHP(1); //Testing Purposes until All Healthglobes get fixed.
                     break;
                 case ToonClass.Monk:
+                    AddPercentageHP(1); //Testing Purposes until All Healthglobes get fixed.
                     break;
                 case ToonClass.WitchDoctor:
                     GeneratePrimaryResource(4f);
+                    AddPercentageHP(1); //Testing Purposes until All Healthglobes get fixed.
                     break;
                 case ToonClass.Wizard:
                     GeneratePrimaryResource(2f);
+                    AddPercentageHP(1); //Testing Purposes until All Healthglobes get fixed.
                     break;
             }
         }

@@ -268,7 +268,7 @@ namespace Mooege.Core.GS.AI
                 if (Path.Count < 4)
                     return Path;
                 Path.RemoveAt(0);
-                //Logger.Debug("Path Length before cull " + Path.Count);
+                Logger.Debug("Path Length before cull " + Path.Count);
                 for (int i = Path.Count - 1; i > 2; i--)
                 {
                 //if direction from square 1 to 2 is same as 2 to 3 remove 2
@@ -281,7 +281,7 @@ namespace Mooege.Core.GS.AI
                     }
                     
                 }
-                //Logger.Debug("Path Length after cull " + Path.Count);
+                Logger.Debug("Path Length after cull " + Path.Count);
                 return Path;
             }
 

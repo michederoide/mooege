@@ -51,12 +51,12 @@ namespace Mooege.Core.GS.Actors.Movement
             (tick) =>
             {
                 this.Owner.Position = MovementHelpers.GetMovementPosition(this.Owner.Position, this.Owner.WalkSpeed, facingAngle, 6);                
-                //Logger.Trace("Step: " + this.Owner.Position);
+                Logger.Trace("Step: " + this.Owner.Position);
             },
             (tick) =>
             {
                 this.Owner.Position = Heading;
-                //Logger.Trace("Completed: " + this.Owner.Position);
+                Logger.Trace("Completed: " + this.Owner.Position);
                 this.Done = true;
             });
 

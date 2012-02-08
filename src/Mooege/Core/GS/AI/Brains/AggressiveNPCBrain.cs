@@ -41,7 +41,19 @@ namespace Mooege.Core.GS.AI.Brains
             : base(body)
         {
             this.PresetPowers = new List<int>();
-            AddPresetPower(0x00007780);
+
+            // build list of powers defined in monster mpq data
+            if (body.ActorData.MonsterSNO > 0)
+            {
+                var monsterData = (Mooege.Common.MPQ.FileFormats.Monster)MPQStorage.Data.Assets[SNOGroup.Monster][body.ActorData.MonsterSNO].Data;
+                foreach (var monsterSkill in monsterData.SkillDeclarations)
+                {
+                    if (monsterSkill.SNOPower > 0)
+                    {
+                        this.PresetPowers.Add(monsterSkill.SNOPower);
+                    }
+                }
+            }
         }
 
         public override void Think(int tickCounter)
