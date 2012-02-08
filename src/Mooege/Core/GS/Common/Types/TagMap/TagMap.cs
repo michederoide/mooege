@@ -108,6 +108,10 @@ namespace Mooege.Core.GS.Common.Types.TagMap
             {
                 return key.GetValue(_tagMapEntries[key.ID]);
             }
+            set
+            {
+                _tagMapEntries[key.ID].Int = value;
+            }
         }
 
         public float this[TagKeyFloat key]
@@ -172,7 +176,7 @@ namespace Mooege.Core.GS.Common.Types.TagMap
 
     public abstract class TagKey
     {
-        public int ID { get; private set; }
+        public int ID { get; set; }
         public string Name { get; set; }
 
         public TagKey(int id) { ID = id; }
@@ -187,19 +191,19 @@ namespace Mooege.Core.GS.Common.Types.TagMap
     public class TagMapEntry
     {
         [PersistentProperty("Type")]
-        public int Type { get; private set; }
+        public int Type { get; set; }
 
         [PersistentProperty("TagID")]
-        public int TagID { get; private set; }
+        public int TagID { get; set; }
 
         [PersistentProperty("ScriptFormula")]
-        public ScriptFormula ScriptFormula { get; private set; }
+        public ScriptFormula ScriptFormula { get; set; }
 
         [PersistentProperty("Int")]
-        public int Int { get; private set; }
+        public int Int { get; set; }
 
         [PersistentProperty("Float")]
-        public float Float { get; private set; }
+        public float Float { get; set; }
 
         public TagMapEntry() { }
 

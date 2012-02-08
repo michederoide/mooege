@@ -48,7 +48,7 @@ namespace Mooege.Common.MPQ.FileFormats
         public AxialCylinder Cylinder { get; private set; }
         public Sphere Sphere { get; private set; }
         public AABB AABBBounds { get; private set; }
-        public TagMap TagMap { get; private set; }
+        public TagMap TagMap { get; set; }
 
         /// <summary>
         /// SNO for actor's animset.
