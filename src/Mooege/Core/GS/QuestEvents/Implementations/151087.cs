@@ -28,7 +28,7 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
         List<uint> monstersAlive = new List<uint> { }; //We use this for the killeventlistener.
         public override void Execute(Map.World world)
         {
-            var WaitConversationTask = Task<bool>.Factory.StartNew(() => WaitConversation(world));
+            /*var WaitConversationTask = Task<bool>.Factory.StartNew(() => WaitConversation(world));
             //Disable RumFord so he doesn't offer the quest. Somehow, hes supposed to mark it as readed and not offer it while theres no other quest available but he does,
             //so you can trigger the event multiple times while the event is already running, therefor, we disable his interaction till the event is done.-Wesko
 
@@ -70,7 +70,7 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
                 Logger.Debug("Event finished");
                 StartConversation(world, 151102);
                 setActorOperable(world, 3739, true);
-            });
+            });*/
         }
 
         //This is the way we Listen for mob killing events.
