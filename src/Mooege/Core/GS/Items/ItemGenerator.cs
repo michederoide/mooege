@@ -289,6 +289,8 @@ namespace Mooege.Core.GS.Items
                 if (itemDefinition.Name.ToLower().Contains("unique")) continue;
                 if (itemDefinition.Name.ToLower().Contains("crafted")) continue;
                 if (itemDefinition.Name.ToLower().Contains("debug")) continue;
+                if (itemDefinition.Name.ToLower().Contains("missing")) continue; //I believe I've seen a missing item before, may have been affix though. //Wetwlly
+                if (itemDefinition.Name.ToLower().Contains("dye")) continue; //TODO: Fix these from crashing in-game when hovering over icon //Wetwlly
                 if ((itemDefinition.ItemType1 == StringHashHelper.HashItemName("Book")) && (itemDefinition.BaseGoldValue == 0)) continue; // i hope it catches all lore with npc spawned /xsochor
 
                 if (!GBIDHandlers.ContainsKey(itemDefinition.Hash) &&

@@ -56,6 +56,7 @@ namespace Mooege.Net.MooNet
 
             if (!this.Listen(Config.Instance.BindIP, Config.Instance.Port)) return;
             Logger.Info("MooNet-Server is listening on {0}:{1}...", Config.Instance.BindIP, Config.Instance.Port);
+            Logger.Debug("Mooege has completed loading!" + " You can log in now.");
         }
     }
 }
