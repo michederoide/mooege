@@ -125,7 +125,7 @@ namespace Mooege.Core.GS.Players
         {
             var actors = (from a in player.RevealedObjects.Values where a is Mooege.Core.GS.Actors.Actor && (a as Mooege.Core.GS.Actors.Actor).ActorSNO.Id == sno select a);
             if (actors.Count() > 1)
-                logger.Warn(String.Format("More than one actor: {0}",sno));
+                logger.Warn(String.Format("More than one actor: {0}", sno));
             if (actors.Count() == 0)
             {
                 logger.Warn("Actor not found, using player actor instead");
@@ -196,7 +196,7 @@ namespace Mooege.Core.GS.Players
                 {
                     Mooege.Core.GS.Actors.Actor speaker1 = GetSpeaker(currentLineNode.Speaker1);
                     Mooege.Core.GS.Actors.Actor speaker2 = GetSpeaker(currentLineNode.Speaker2);
-                    
+
                     Vector3D translation = speaker2.Position - speaker1.Position;
                     Vector2F flatTranslation = new Vector2F(translation.X, translation.Y);
 
@@ -383,7 +383,6 @@ namespace Mooege.Core.GS.Players
                 conversation.Stop();
         }
 
-
         /// <summary>
         /// Starts and plays a conversation
         /// </summary>
@@ -401,7 +400,7 @@ namespace Mooege.Core.GS.Players
                 Conversation newConversation = new Conversation(snoConversation, player, this);
                 newConversation.Start();
                 newConversation.ConversationEnded += new EventHandler(ConversationEnded);
-
+ 
                 lock (openConversations)
                 {
                     openConversations.Add(snoConversation, newConversation);
@@ -425,6 +424,19 @@ namespace Mooege.Core.GS.Players
 
             if (conversation.ConvPiggyBack != -1)
                 StartConversation(conversation.ConvPiggyBack);
+
+            _conversationTrigger = true;
+        }
+
+        /// <summary>
+        /// Returns true when the conversation playing finishes.
+        /// </summary>
+        private bool _conversationTrigger = false;
+        public bool ConversationRunning()
+        {
+            var status = _conversationTrigger;
+            _conversationTrigger = false;
+            return status;
         }
 
         /// <summary>
@@ -462,12 +474,12 @@ namespace Mooege.Core.GS.Players
                         conversation.Interrupt();
                 }
 
-    //          Requires some check if openConversations[tmpMessage.SNOConversaion] exists before preceeding.
-    //          Error occured when forcing conversaion closed. (Pressing 'x' in convo)
-    //             [03.02.2012 23:50:26.462] [Debug] [Game]: Unhandled exception caught: - [Exception] System.Collections.Generic.KeyNotFoundException: The given key was not present in the dictionary.
-    //               at System.Collections.Generic.Dictionary`2.get_Item(TKey key)
-    //               at Mooege.Core.GS.Players.ConversationManager.Consume(GameClient client, GameMessage message) in C:\Users\James\Documents\Visual Studio 2010\Projects\mooege\src\Mooege\Core\GS\Players\ConversationManager.cs:line 468
-    //               at Mooege.Core.GS.Games.Game.Route(GameClient client, GameMessage message) in C:\Users\James\Documents\Visual Studio 2010\Projects\mooege\src\Mooege\Core\GS\Games\Game.cs:line 215
+                //          Requires some check if openConversations[tmpMessage.SNOConversaion] exists before preceeding.
+                //          Error occured when forcing conversaion closed. (Pressing 'x' in convo)
+                //             [03.02.2012 23:50:26.462] [Debug] [Game]: Unhandled exception caught: - [Exception] System.Collections.Generic.KeyNotFoundException: The given key was not present in the dictionary.
+                //               at System.Collections.Generic.Dictionary`2.get_Item(TKey key)
+                //               at Mooege.Core.GS.Players.ConversationManager.Consume(GameClient client, GameMessage message) in C:\Users\James\Documents\Visual Studio 2010\Projects\mooege\src\Mooege\Core\GS\Players\ConversationManager.cs:line 468
+                //               at Mooege.Core.GS.Games.Game.Route(GameClient client, GameMessage message) in C:\Users\James\Documents\Visual Studio 2010\Projects\mooege\src\Mooege\Core\GS\Games\Game.cs:line 215
                 if (message is UpdateConvAutoAdvanceMessage)
                 {
                     UpdateConvAutoAdvanceMessage tmpMessage = (UpdateConvAutoAdvanceMessage)message;
