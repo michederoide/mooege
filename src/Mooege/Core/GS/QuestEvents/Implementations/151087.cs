@@ -28,51 +28,48 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
         List<uint> monstersAlive = new List<uint> { }; //We use this for the killeventlistener.
         public override void Execute(Map.World world)
         {
+            var WaitConversationTask = Task<bool>.Factory.StartNew(() => WaitConversation(world));
+            //Disable RumFord so he doesn't offer the quest. Somehow, hes supposed to mark it as readed and not offer it while theres no other quest available but he does,
+            //so you can trigger the event multiple times while the event is already running, therefor, we disable his interaction till the event is done.-Wesko
 
-            //Disable RumFord so he doesn't offer the quest.
             setActorOperable(world, 3739, false);
-            //Start the conversation between RumFord & Guard.
-            StartConversation(world, 198199);
-            //Launch first wave.
-            var wave1Actors = world.GetActorsInGroup("GizmoGroup1");
-            foreach (var actor in wave1Actors)
-            {                
-                actor.Spawn();                
-            }
-
-            //var firstWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(FirstSkinnyWaveCoords, world, 218339, "GizmoGroup0"));
-
-            //firstWaveTask.Wait(); //We need to wait in order for the listener to grab the Monster counting, if this runs asyn with the spawn procedure listener will grab a value of 0 mobs.
-            //Run Kill Event Listener
-            var ListenerFirstWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup1"));
-            //ListenerFirstWaveTask.Wait();
-            //Wait for the mobs to be killed.
-            ListenerFirstWaveTask.ContinueWith(delegate //Once killed:
+            WaitConversationTask.ContinueWith(delegate
             {
-                //Wave two: Torsos.
-                //var torsoWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(TorsoWaveCoords, world, 218367, "GizmoGroup1"));
-                //torsoWaveTask.Wait(); //We need to wait in order for the listener to grab the Monster counting, if this runs asyn with the spawn procedure listener will grab a value of 0 mobs.
-                //var ListenerSecondWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup1"));
-                //ListenerSecondWaveTask.ContinueWith(delegate //Once killed:
-                //{
-                    //Wave three: Skinnies + RumFord conversation #2
-                    StartConversation(world, 80088);
-                    var wave2Actors = world.GetActorsInGroup("GizmoGroup2");
-                    foreach (var actor in wave2Actors)
+                //Start the conversation between RumFord & Guard.
+                StartConversation(world, 198199);
+                var WaitConversationTask2 = Task<bool>.Factory.StartNew(() => WaitConversation(world));
+                //After Conversations ends!.
+                WaitConversationTask2.ContinueWith(delegate
+                {
+                    var wave1Actors = world.GetActorsInGroup("GizmoGroup1");
+
+                    foreach (var actor in wave1Actors)
                     {
                         actor.Spawn();
                     }
-                    //var thirdWaveTask = Task<bool>.Factory.StartNew(() => LaunchWave(SecondSkinnyWaveCoords, world, 218339, "GizmoGroup2"));
-                    //thirdWaveTask.Wait(); //We need to wait in order for the listener to grab the Monster counting, if this runs asyn with the spawn procedure listener will grab a value of 0 mobs.
-                    var ListenerThirdWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup2"));
-                    ListenerThirdWaveTask.Wait();
-                    Task.WaitAll();
-                    //Event done we advance the quest and play last conversation #3.
-                    world.Game.Quests.Advance(87700);
-                    Logger.Debug("Event finished");
-                    StartConversation(world, 151102);
-                    setActorOperable(world, 3739, true);
-                //});
+                });
+            });
+            //Run Kill Event Listener
+            var ListenerFirstWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup1"));
+            ListenerFirstWaveTask.ContinueWith(delegate //Once killed:
+            {
+                //Wave three: Skinnies + RumFord conversation #2 "They Keep Comming!".
+                StartConversation(world, 80088);
+                var wave2Actors = world.GetActorsInGroup("GizmoGroup2");
+                foreach (var actor in wave2Actors)
+                {
+                    actor.Spawn();
+                }
+
+                var ListenerThirdWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup2"));
+                ListenerThirdWaveTask.Wait();
+                Task.WaitAll();
+
+                //Event done we advance the quest and play last conversation #3.
+                world.Game.Quests.Advance(87700);
+                Logger.Debug("Event finished");
+                StartConversation(world, 151102);
+                setActorOperable(world, 3739, true);
             });
         }
 
@@ -85,6 +82,29 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
             return true;
         }
 
+        //HACK!,This is the way we wait if we need to trigger something after a conversation ends.
+        private bool _status = false;
+        private bool WaitConversation(Map.World world)
+        {
+            var players = world.Players;
+            while (!_status)
+            {
+                foreach (var player in players)
+                {
+                    if (player.Value.Conversations.ConversationRunning() == true)
+                    {
+                        Logger.Debug("Conversation Finished");
+                        _status = false;
+                        return true;
+                    }
+                    else
+                    {
+                        //Logger.Debug("Waiting");
+                    }
+                }
+            }
+            return true;
+        }
 
         //Launch Conversations.
         private bool StartConversation(Map.World world, Int32 conversationId)
