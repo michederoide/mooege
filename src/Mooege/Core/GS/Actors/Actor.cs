@@ -44,7 +44,7 @@ namespace Mooege.Core.GS.Actors
 {
     public abstract class Actor : WorldObject
     {
-        private static readonly Logger Logger = LogManager.CreateLogger();
+        protected static readonly Logger Logger = LogManager.CreateLogger();
 
         /// <summary>
         /// ActorSNO.
@@ -217,6 +217,7 @@ namespace Mooege.Core.GS.Actors
             foreach (var quest in World.Game.Quests)
                 if (_questRange != null)
                     quest.OnQuestProgress += new Games.Quest.QuestProgressDelegate(quest_OnQuestProgress);
+            //TODO: This should not be called for spawner gizmo
             UpdateQuestRangeVisbility();
         }
 
@@ -663,7 +664,7 @@ namespace Mooege.Core.GS.Actors
 
         #region events
 
-        private void quest_OnQuestProgress(Quest quest)
+        protected virtual void quest_OnQuestProgress(Quest quest)
         {
             UpdateQuestRangeVisbility();
         }
