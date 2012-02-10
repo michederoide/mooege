@@ -128,7 +128,7 @@ namespace Mooege.Core.GS.Actors
         /// <summary>
         /// The QuestRange specifies the visibility of an actor, depending on quest progress
         /// </summary>
-        private Mooege.Common.MPQ.FileFormats.QuestRange _questRange;
+        protected Mooege.Common.MPQ.FileFormats.QuestRange _questRange;
 
         protected Mooege.Common.MPQ.FileFormats.ConversationList ConversationList;
         public Vector3D CheckPointPosition { get; set; }
@@ -203,7 +203,7 @@ namespace Mooege.Core.GS.Actors
             this.NameSNOId = snoId;
             this.Quality = 0;
 
-            if(ActorData.TagMap.ContainsKey(ActorKeys.TeamID))
+            if (ActorData.TagMap.ContainsKey(ActorKeys.TeamID))
                 this.Attributes[GameAttribute.TeamID] = ActorData.TagMap[ActorKeys.TeamID];
             this.Spawned = false;
             this.Size = new Size(1, 1);
@@ -214,8 +214,8 @@ namespace Mooege.Core.GS.Actors
             this.ReadTags();
 
             // Listen for quest progress if the actor has a QuestRange attached to it
-            foreach(var quest in World.Game.Quests)
-                if(_questRange != null)
+            foreach (var quest in World.Game.Quests)
+                if (_questRange != null)
                     quest.OnQuestProgress += new Games.Quest.QuestProgressDelegate(quest_OnQuestProgress);
             UpdateQuestRangeVisbility();
         }
@@ -237,7 +237,7 @@ namespace Mooege.Core.GS.Actors
             if (_questRange != null)
                 foreach (var quest in World.Game.Quests)
                     quest.OnQuestProgress -= quest_OnQuestProgress;
-   
+
             base.Destroy();
         }
 
@@ -254,54 +254,7 @@ namespace Mooege.Core.GS.Actors
 
             if (this.World != null) // if actor got into a new world.
                 this.World.Enter(this); // let him enter first.
-            
-        }
 
-
-        public void Spawn()
-        {
-            if (Tags != null)
-            {
-                if (Tags.ContainsKey(MarkerKeys.SpawnActor))
-                {
-                    var ActorSNO = Tags[MarkerKeys.SpawnActor];
-                    var location = new PRTransform()
-                        {
-                            Quaternion = new Quaternion
-                                {
-                                    W = this.RotationW,
-                                    Vector3D = this.RotationAxis
-                                },
-                            Vector3D = this.Position
-                        };
-                    //make spawn part of same group
-                    if (Tags != null)
-                    {
-                        if (Tags.ContainsKey(MarkerKeys.Group1Hash) && !((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap.ContainsKey(MarkerKeys.Group1Hash))
-                        {
-                            ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap.Add(MarkerKeys.Group1Hash, new TagMapEntry(MarkerKeys.Group1Hash.ID, Tags[MarkerKeys.Group1Hash], 5));
-                            Logger.Trace("Spawned Mob with group: {0}", ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap[MarkerKeys.Group1Hash]);
-                        }
-                        else
-                            Logger.Trace("Spawned Mob with existing group: {0}", ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap[MarkerKeys.Group1Hash]);
-                    }
-
-
-   
-                    Mooege.Core.GS.Generators.WorldGenerator.loadActor(ActorSNO, location, this.World, ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap);
-                   //if ( ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap != null)
-                   // {
-                   //     if (((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap.ContainsKey(MarkerKeys.Group1Hash))
-                   //         // ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap.Add(MarkerKeys.Group1Hash, new TagMapEntry(MarkerKeys.Group1Hash.ID, Tags[MarkerKeys.Group1Hash], 5));
-                   //         Logger.Trace("Spawned Mob with group: {0}", ((Mooege.Common.MPQ.FileFormats.Actor)ActorSNO.Target).TagMap[MarkerKeys.Group1Hash]);
-                   //     else
-                   //         Logger.Trace("Spawned Mob with no group");
-                   // }
-
-                    //once target spawned this can be destroyed
-                    this.Destroy();
-                }
-            }
         }
 
         public virtual void BeforeChangeWorld()
@@ -352,7 +305,7 @@ namespace Mooege.Core.GS.Actors
         }
 
         #endregion
-        
+
         #region Movement/Translation
 
         public void TranslateFacing(Vector3D target, bool immediately = false)
@@ -496,6 +449,7 @@ namespace Mooege.Core.GS.Actors
         private void UpdateQuestRangeVisbility()
         {
             if (_questRange != null)
+
                 Visible = World.Game.Quests.IsInQuestRange(_questRange);
             else
                 Visible = true;
@@ -518,7 +472,7 @@ namespace Mooege.Core.GS.Actors
                 ActorID = this.DynamicID,
                 ActorSNOId = this.ActorSNO.Id,
                 Field2 = this.Field2,
-                Field3 =  this.HasWorldLocation ? 0 : 1,
+                Field3 = this.HasWorldLocation ? 0 : 1,
                 WorldLocation = this.HasWorldLocation ? this.WorldLocationMessage : null,
                 InventoryLocation = this.HasWorldLocation ? null : this.InventoryLocationMessage,
                 GBHandle = this.GBHandle,
@@ -538,13 +492,6 @@ namespace Mooege.Core.GS.Actors
         /// <returns>true if the actor was revealed or false if the actor was already revealed.</returns>
         public override bool Reveal(Player player)
         {
-            //Do not reveal spawner gizmos
-            if (Tags != null)
-            {
-                if (Tags.ContainsKey(MarkerKeys.SpawnActor))
-                    return false;
-            }
-
             if (player.RevealedObjects.ContainsKey(this.DynamicID)) return false; // already revealed
             player.RevealedObjects.Add(this.DynamicID, this);
 
@@ -743,7 +690,7 @@ namespace Mooege.Core.GS.Actors
 
         public virtual void OnTeleport()
         {
-            
+
         }
 
         /// <summary>
@@ -802,7 +749,7 @@ namespace Mooege.Core.GS.Actors
 
             // load scale from actor data and override it with marker tags if one is set
             this.Scale = ActorData.TagMap.ContainsKey(ActorKeys.Scale) ? ActorData.TagMap[ActorKeys.Scale] : 1;
-            this.Scale = Tags.ContainsKey(MarkerKeys.Scale) ? Tags[MarkerKeys.Scale] : this.Scale ;
+            this.Scale = Tags.ContainsKey(MarkerKeys.Scale) ? Tags[MarkerKeys.Scale] : this.Scale;
 
 
             if (Tags.ContainsKey(MarkerKeys.QuestRange))

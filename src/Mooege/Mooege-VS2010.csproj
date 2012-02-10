@@ -133,6 +133,7 @@
     <Compile Include="Core\GS\Actors\Implementations\Monsters\Monsters.cs" />
     <Compile Include="Core\GS\Actors\Implementations\Minions\ZombieDog.cs" />
     <Compile Include="Core\GS\Actors\Minion.cs" />
+    <Compile Include="Core\GS\Actors\Spawner.cs" />
     <Compile Include="Core\GS\AI\Brains\AggressiveNPCBrain.cs" />
     <Compile Include="Core\GS\AI\Brains\MinionBrain.cs" />
     <Compile Include="Core\GS\AI\Pathfinder.cs" />
