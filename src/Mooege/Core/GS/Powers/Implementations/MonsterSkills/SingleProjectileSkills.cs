@@ -167,7 +167,7 @@ namespace Mooege.Core.GS.Powers.Implementations
         {
             SetProjectile(this, 120957, User.Position, 1.10f, (hit) =>
             {
-                hit.PlayEffectGroup(142797);
+                hit.PlayEffectGroup(142812);
                 WeaponDamage(hit, 1.00f, DamageType.Poison);
                 projectile.Destroy();
             });
