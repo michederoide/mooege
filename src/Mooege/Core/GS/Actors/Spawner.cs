@@ -41,12 +41,9 @@ namespace Mooege.Core.GS.Actors
         protected override void quest_OnQuestProgress(Quest quest)
         {
             //Spawn if this is spawner
-            if (World.Game.Quests.IsInQuestRange(_questRange) && this.Tags != null)
+            if (World.Game.Quests.IsInQuestRange(_questRange))
             {
-                if (Tags.ContainsKey(MarkerKeys.SpawnActor))
-                {
-                    this.Spawn();
-                }
+                this.Spawn();
             }
         }
 
@@ -63,11 +60,16 @@ namespace Mooege.Core.GS.Actors
         /// </summary>
         public void Spawn()
         {
-        if (this.ActorToSpawnSNO == null)
-        {
-            Logger.Debug("Triggered spawner with no ActorToSpawnSNO found.");
-            return;
-        }
+            if (this.ActorToSpawnSNO == null)
+            {
+                Logger.Debug("Triggered spawner with no ActorToSpawnSNO found.");
+                //Try revealing this
+                foreach (var player in this.World.Players.Values)
+                {
+                    base.Reveal(player);
+                }
+                return;
+            }
             var location = new PRTransform()
             {
                 Quaternion = new Quaternion
