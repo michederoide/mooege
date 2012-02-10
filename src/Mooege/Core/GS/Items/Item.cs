@@ -67,7 +67,7 @@ namespace Mooege.Core.GS.Items
         public ItemState CurrentState { get; set; }
 
         public int EquipmentSlot { get; private set; }
-        public Vector2D InventoryLocation { get; private set; } // Column, row; NOTE: Call SetInventoryLocation() instead of setting fields on this
+        public Vector2D InventoryLocation { get; set; } // Column, row; NOTE: Call SetInventoryLocation() instead of setting fields on this
 
         public override int Quality
         {
@@ -384,6 +384,11 @@ namespace Mooege.Core.GS.Items
                     player.InGameClient.SendMessage(this.ACDInventoryPositionMessage);
                 }
             }
+        }
+
+        public Vector2D GetInventoryLocation()
+        {
+            return this.InventoryLocation;
         }
 
         public void SetNewWorld(World world)

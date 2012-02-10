@@ -674,11 +674,11 @@ namespace Mooege.Core.GS.Players
             // so we can have a basic precaution for hacks & exploits /raist.
             if (message.Position != null)
             {
-                if (!client.Player.World.CheckLocationForFlag(message.Position, Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.AllowWalk))
-                {
-                    Logger.Info("Account: " + client.BnetClient.Account.Name + " Attempted to move to an unwalkable location");
-                    return;
-                }
+                if (!client.Player.World.CheckLocationForFlag(message.Position,Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.AllowWalk))
+                    {
+                        Logger.Info("Account: " + client.BnetClient.Account.Name + " Attempted to move to an unwalkable location");
+                        return;
+                    }
                 /*else
                 {
                     var ActorsInRange = GetActorsInRange(3f);
@@ -884,6 +884,7 @@ namespace Mooege.Core.GS.Players
             });
 
             this.Inventory.SendVisualInventory(player);
+            this.Inventory.CreateItems();
 
             if (this == player) // only send this to player itself. Warning: don't remove this check or you'll make the game start crashing! /raist.
             {
