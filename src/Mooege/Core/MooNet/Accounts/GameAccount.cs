@@ -351,7 +351,7 @@ namespace Mooege.Core.MooNet.Accounts
                             if (this.LoggedInClient.CurrentChannel != null)
                             {
                                 returnField.SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetMessageValue(Google.ProtocolBuffers.ByteString.Empty).Build());
-                                Logger.Warn("Emtpy-field: {0}, {1}, {2}", field.Key.Program, field.Key.Group, field.Key.Field);
+                                Logger.Warn("Empty-field: {0}, {1}, {2}", field.Key.Program, field.Key.Group, field.Key.Field);
                             }
                         }
                     }

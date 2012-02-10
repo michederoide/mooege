@@ -11,15 +11,15 @@ namespace Mooege.Core.GS.Actors
     {
 
         /// <summary>
-        /// What converation gizmo will trigger
+        /// What conversation gizmo will trigger
         /// </summary>
-        public SNOHandle TrigerredConversation { get; private set; }
+        public SNOHandle TriggeredConversation { get; private set; }
 
 
         /// <summary>
-        /// What converation gizmo will trigger
+        /// What conversation gizmo will trigger
         /// </summary>
-        public SNOHandle TrigerredConversation1 { get; private set; }
+        public SNOHandle TriggeredConversation1 { get; private set; }
 
 
         public override ActorType ActorType
@@ -42,7 +42,7 @@ namespace Mooege.Core.GS.Actors
             //    [1]: {TriggeredConversation = [Conversation] 176999 - Fol_Manor}
             //    [2]: {OnActorSpawnedScript = [] 194655 - Invalid handle}
             if (Tags.ContainsKey(MarkerKeys.TriggeredConversation))
-                this.TrigerredConversation = Tags[MarkerKeys.TriggeredConversation];
+                this.TriggeredConversation = Tags[MarkerKeys.TriggeredConversation];
 
                 //            Trigger:
                 //this.ActorData.TagMap.TagMapEntries
@@ -72,7 +72,7 @@ namespace Mooege.Core.GS.Actors
                 //    [1]: {528129 = 140617}
 
             if (Tags.ContainsKey(MarkerKeys.TriggeredConversation1))
-                this.TrigerredConversation = Tags[MarkerKeys.TriggeredConversation1];
+                this.TriggeredConversation = Tags[MarkerKeys.TriggeredConversation1];
 
         }
 
@@ -94,15 +94,15 @@ namespace Mooege.Core.GS.Actors
         public override bool Reveal(Players.Player player)
         {
             //Start triggered conversation
-            if (this.TrigerredConversation != null)
+            if (this.TriggeredConversation != null)
             {
-                StartConversation(this.World, this.TrigerredConversation.Id);
-                Logger.Debug("triggered conversation: {0}", this.TrigerredConversation.Id);
+                StartConversation(this.World, this.TriggeredConversation.Id);
+                Logger.Debug("triggered conversation: {0}", this.TriggeredConversation.Id);
             }
-            if (this.TrigerredConversation1 != null)
+            if (this.TriggeredConversation1 != null)
             {
-                StartConversation(this.World, this.TrigerredConversation1.Id);
-                Logger.Debug("triggered conversation: {0}", this.TrigerredConversation1.Id);
+                StartConversation(this.World, this.TriggeredConversation1.Id);
+                Logger.Debug("triggered conversation: {0}", this.TriggeredConversation1.Id);
             }
 
             
