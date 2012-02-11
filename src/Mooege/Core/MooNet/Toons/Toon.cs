@@ -537,7 +537,8 @@ namespace Mooege.Core.MooNet.Toons
                 var gbid = i.GBHandle.GBID;
                 ItemTable it = ItemGenerator.GetItemDefinition(gbid);
                 Vector2D v2d = new Vector2D(x, y);
-                ItemsTable.Add((uint)gbid, new KeyValuePair<ItemTable, Vector2D>(it, v2d));
+                if (!ItemsTable.ContainsKey((uint)gbid))
+                    ItemsTable.Add((uint)gbid, new KeyValuePair<ItemTable, Vector2D>(it, v2d));
             }
             this.ItemsTable = ItemsTable;
         }
