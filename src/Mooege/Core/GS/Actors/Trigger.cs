@@ -11,16 +11,20 @@ namespace Mooege.Core.GS.Actors
     {
 
         /// <summary>
-        /// What conversation gizmo will trigger
+        /// What converation gizmo will trigger
         /// </summary>
-        public SNOHandle TriggeredConversation { get; private set; }
+        public SNOHandle TrigerredConversation { get; private set; }
 
 
         /// <summary>
-        /// What conversation gizmo will trigger
+        /// What converation gizmo will trigger
         /// </summary>
-        public SNOHandle TriggeredConversation1 { get; private set; }
+        public SNOHandle TrigerredConversation1 { get; private set; }
 
+        /// <summary>
+        /// What actor this gizmo will trigger
+        /// </summary>
+        public SNOHandle TriggeredActor { get; private set; }
 
         public override ActorType ActorType
         {
@@ -42,37 +46,40 @@ namespace Mooege.Core.GS.Actors
             //    [1]: {TriggeredConversation = [Conversation] 176999 - Fol_Manor}
             //    [2]: {OnActorSpawnedScript = [] 194655 - Invalid handle}
             if (Tags.ContainsKey(MarkerKeys.TriggeredConversation))
-                this.TriggeredConversation = Tags[MarkerKeys.TriggeredConversation];
+                this.TrigerredConversation = Tags[MarkerKeys.TriggeredConversation];
 
-                //            Trigger:
-                //this.ActorData.TagMap.TagMapEntries
-                //Count = 19
-                //    [0]: {65597 = 0}
-                //    [1]: {65840 = 0}
-                //    [2]: {65544 = 0}
-                //    [3]: {65689 = 1}
-                //    [4]: {65868 = 0}
-                //    [5]: {TeamID = 1}
-                //    [6]: {Script = [] 138348 - Invalid handle}
-                //    [7]: {68673 = 0}
-                //    [8]: {65822 = 900}
-                //    [9]: {Scale = 10}
-                //    [10]: {GizmoGroup = Trigger}
-                //    [11]: {65839 = 0}
-                //    [12]: {65696 = 1}
-                //    [13]: {65823 = 1}
-                //    [14]: {67858 = 3}
-                //    [15]: {229376 = 0}
-                //    [16]: {65650 = 1}
-                //    [17]: {65817 = 30}
-                //    [18]: {65571 = 14}
-                //this.Tags.TagMapEntries
-                //Count = 2
-                //    [0]: {548869 = 15}
-                //    [1]: {528129 = 140617}
+            //            Trigger:
+            //this.ActorData.TagMap.TagMapEntries
+            //Count = 19
+            //    [0]: {65597 = 0}
+            //    [1]: {65840 = 0}
+            //    [2]: {65544 = 0}
+            //    [3]: {65689 = 1}
+            //    [4]: {65868 = 0}
+            //    [5]: {TeamID = 1}
+            //    [6]: {Script = [] 138348 - Invalid handle}
+            //    [7]: {68673 = 0}
+            //    [8]: {65822 = 900}
+            //    [9]: {Scale = 10}
+            //    [10]: {GizmoGroup = Trigger}
+            //    [11]: {65839 = 0}
+            //    [12]: {65696 = 1}
+            //    [13]: {65823 = 1}
+            //    [14]: {67858 = 3}
+            //    [15]: {229376 = 0}
+            //    [16]: {65650 = 1}
+            //    [17]: {65817 = 30}
+            //    [18]: {65571 = 14}
+            //this.Tags.TagMapEntries
+            //Count = 2
+            //    [0]: {548869 = 15}
+            //    [1]: {528129 = 140617}
 
             if (Tags.ContainsKey(MarkerKeys.TriggeredConversation1))
-                this.TriggeredConversation = Tags[MarkerKeys.TriggeredConversation1];
+                this.TrigerredConversation1 = Tags[MarkerKeys.TriggeredConversation1];
+
+            if (Tags.ContainsKey(MarkerKeys.TriggeredActor))
+                this.TriggeredActor = Tags[MarkerKeys.TriggeredActor];
 
         }
 
@@ -93,20 +100,25 @@ namespace Mooege.Core.GS.Actors
         /// <returns></returns>
         public override bool Reveal(Players.Player player)
         {
+            if (player.RevealedObjects.ContainsKey(this.DynamicID)) return false; // already revealed
             //Start triggered conversation
-            if (this.TriggeredConversation != null)
+            if (this.TrigerredConversation != null)
             {
-                StartConversation(this.World, this.TriggeredConversation.Id);
-                Logger.Debug("triggered conversation: {0}", this.TriggeredConversation.Id);
+                StartConversation(this.World, this.TrigerredConversation.Id);
+                Logger.Debug("triggered conversation: {0}", this.TrigerredConversation.Id);
             }
-            if (this.TriggeredConversation1 != null)
+            if (this.TrigerredConversation1 != null)
             {
-                StartConversation(this.World, this.TriggeredConversation1.Id);
-                Logger.Debug("triggered conversation: {0}", this.TriggeredConversation1.Id);
+                StartConversation(this.World, this.TrigerredConversation1.Id);
+                Logger.Debug("triggered conversation: {0}", this.TrigerredConversation1.Id);
+            }
+            if (this.TriggeredActor != null)
+            {
+                //TODO: Verify spawn position?
+
             }
 
-            
-            return false;
+            return true;
         }
     }
 }
