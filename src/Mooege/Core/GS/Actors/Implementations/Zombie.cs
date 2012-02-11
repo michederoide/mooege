@@ -19,6 +19,7 @@
 using Mooege.Core.GS.Map;
 using Mooege.Core.GS.Common.Types.TagMap;
 using Mooege.Net.GS.Message;
+using Mooege.Core.GS.AI.Brains;
 
 namespace Mooege.Core.GS.Actors.Implementations
 {
