@@ -29,6 +29,7 @@ using Mooege.Common.Logging;
 using System.Threading.Tasks;
 using System.Threading;
 using Mooege.Core.GS.Common.Types.TagMap;
+using Mooege.Core.GS.Actors;
 
 
 namespace Mooege.Core.GS.QuestEvents.Implementations
@@ -46,49 +47,52 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
         List<uint> monstersAlive = new List<uint> { }; //We use this for the killeventlistener.
         public override void Execute(Map.World world)
         {
-            /*var WaitConversationTask = Task<bool>.Factory.StartNew(() => WaitConversation(world));
-            //Disable RumFord so he doesn't offer the quest. Somehow, hes supposed to mark it as readed and not offer it while theres no other quest available but he does,
-            //so you can trigger the event multiple times while the event is already running, therefor, we disable his interaction till the event is done.-Wesko
+            //var WaitConversationTask = Task<bool>.Factory.StartNew(() => WaitConversation(world));
+            ////Disable RumFord so he doesn't offer the quest. Somehow, hes supposed to mark it as readed and not offer it while theres no other quest available but he does,
+            ////so you can trigger the event multiple times while the event is already running, therefor, we disable his interaction till the event is done.-Wesko
 
-            setActorOperable(world, 3739, false);
-            WaitConversationTask.ContinueWith(delegate
-            {
-                //Start the conversation between RumFord & Guard.
-                StartConversation(world, 198199);
-                var WaitConversationTask2 = Task<bool>.Factory.StartNew(() => WaitConversation(world));
-                //After Conversations ends!.
-                WaitConversationTask2.ContinueWith(delegate
-                {
-                    var wave1Actors = world.GetActorsInGroup("GizmoGroup1");
+            //setActorOperable(world, 3739, false);
+            //WaitConversationTask.ContinueWith(delegate
+            //{
+            //    //Start the conversation between RumFord & Guard.
+            //    StartConversation(world, 198199);
+            //    var WaitConversationTask2 = Task<bool>.Factory.StartNew(() => WaitConversation(world));
+            //    //After Conversations ends!.
+            //    WaitConversationTask2.ContinueWith(delegate
+            //    {
+            //        var wave1Actors = world.GetActorsInGroup("GizmoGroup1");
 
-                    foreach (var actor in wave1Actors)
-                    {
-                        actor.Spawn();
-                    }
-                });
-            });
-            //Run Kill Event Listener
-            var ListenerFirstWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup1"));
-            ListenerFirstWaveTask.ContinueWith(delegate //Once killed:
+            //        foreach (var actor in wave1Actors)
+            //        {
+            //            actor.Spawn();
+            //        }
+            //    });
+            //});
+            ////Run Kill Event Listener
+            //var ListenerFirstWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup1"));
+            //ListenerFirstWaveTask.ContinueWith(delegate //Once killed:
+            //{
+            //    //Wave three: Skinnies + RumFord conversation #2 "They Keep Comming!".
+            //    StartConversation(world, 80088);
+            var wave2Actors = world.GetActorsInGroup("GizmoGroup2");
+            foreach (var actor in wave2Actors)
             {
-                //Wave three: Skinnies + RumFord conversation #2 "They Keep Comming!".
-                StartConversation(world, 80088);
-                var wave2Actors = world.GetActorsInGroup("GizmoGroup2");
-                foreach (var actor in wave2Actors)
+                if (actor is Spawner)
                 {
-                    actor.Spawn();
+                    (actor as Spawner).Spawn();
                 }
+            }
 
-                var ListenerThirdWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup2"));
-                ListenerThirdWaveTask.Wait();
-                Task.WaitAll();
+            //    var ListenerThirdWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup2"));
+            //    ListenerThirdWaveTask.Wait();
+            //    Task.WaitAll();
 
-                //Event done we advance the quest and play last conversation #3.
-                world.Game.Quests.Advance(87700);
-                Logger.Debug("Event finished");
-                StartConversation(world, 151102);
-                setActorOperable(world, 3739, true);
-            });*/
+            //    //Event done we advance the quest and play last conversation #3.
+            //    world.Game.Quests.Advance(87700);
+            //    Logger.Debug("Event finished");
+            //    StartConversation(world, 151102);
+            //    setActorOperable(world, 3739, true);
+            //});
         }
 
         //This is the way we Listen for mob killing events.
