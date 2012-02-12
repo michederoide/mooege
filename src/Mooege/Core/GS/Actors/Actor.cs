@@ -46,6 +46,8 @@ namespace Mooege.Core.GS.Actors
     {
         protected static readonly Logger Logger = LogManager.CreateLogger();
 
+        public event EventHandler ActorKilled;
+
         /// <summary>
         /// ActorSNO.
         /// </summary>
@@ -250,6 +252,15 @@ namespace Mooege.Core.GS.Actors
             if (_questRange != null)
                 foreach (var quest in World.Game.Quests)
                     quest.OnQuestProgress -= quest_OnQuestProgress;
+
+
+
+            //remove actor from world
+            this.World.Leave(this);
+
+            //TODO: Find a better place to call this
+            if (ActorKilled != null)
+                ActorKilled(this, null);
 
             base.Destroy();
         }

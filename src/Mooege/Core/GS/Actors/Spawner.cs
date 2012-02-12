@@ -80,6 +80,16 @@ namespace Mooege.Core.GS.Actors
                 Vector3D = this.Position
             };
 
+            //TODO: Verify if groups need to really be added to target.
+            //HACK
+            if (Group1Hash != -1 && !((Mooege.Common.MPQ.FileFormats.Actor)ActorToSpawnSNO.Target).TagMap.ContainsKey(MarkerKeys.Group1Hash))
+            {
+                ((Mooege.Common.MPQ.FileFormats.Actor)ActorToSpawnSNO.Target).TagMap.Add(MarkerKeys.Group1Hash, new TagMapEntry(MarkerKeys.Group1Hash.ID, Group1Hash, 5));
+            }
+            if (Group2Hash != -1 && !((Mooege.Common.MPQ.FileFormats.Actor)ActorToSpawnSNO.Target).TagMap.ContainsKey(MarkerKeys.Group2Hash))
+            {
+                ((Mooege.Common.MPQ.FileFormats.Actor)ActorToSpawnSNO.Target).TagMap.Add(MarkerKeys.Group2Hash, new TagMapEntry(MarkerKeys.Group2Hash.ID, Group2Hash, 5));
+            }
             Mooege.Core.GS.Generators.WorldGenerator.loadActor(ActorToSpawnSNO, location, this.World, ((Mooege.Common.MPQ.FileFormats.Actor)ActorToSpawnSNO.Target).TagMap);
 
             //once target spawned this can be destroyed

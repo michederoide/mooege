@@ -29,7 +29,7 @@ using Mooege.Common.Logging;
 using System.Threading.Tasks;
 using System.Threading;
 using Mooege.Core.GS.Common.Types.TagMap;
-using Mooege.Core.GS.Actors;
+
 
 
 namespace Mooege.Core.GS.QuestEvents.Implementations
@@ -75,14 +75,14 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
             //    //Wave three: Skinnies + RumFord conversation #2 "They Keep Comming!".
             //StartConversation(world, 80088);
             //TODO: FInd what triggers this
-            var wave2Actors = world.GetActorsInGroup("GizmoGroup2");
-            foreach (var actor in wave2Actors)
-            {
-                if (actor is Spawner)
-                {
-                    (actor as Spawner).Spawn();
-                }
-            }
+            //var wave2Actors = world.GetActorsInGroup("GizmoGroup2");
+            //foreach (var actor in wave2Actors)
+            //{
+            //    if (actor is Spawner)
+            //    {
+            //        (actor as Spawner).Spawn();
+            //    }
+            //}
             //TODO: Find what triggers this
             StartConversation(world, 80088);
             //    var ListenerThirdWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup2"));

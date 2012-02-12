@@ -58,7 +58,7 @@ namespace Mooege.Core.GS.Games
         /// Dictionary that tracks world.
         /// NOTE: This tracks by WorldSNO rather than by DynamicID; this.Objects _does_ still contain the world since it is a DynamicObject
         /// </summary>
-        private readonly ConcurrentDictionary<int, World> _worlds;
+        public readonly ConcurrentDictionary<int, World> _worlds;
 
         /// <summary>
         /// Starting world's sno id.

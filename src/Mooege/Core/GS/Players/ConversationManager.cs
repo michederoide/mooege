@@ -343,6 +343,8 @@ namespace Mooege.Core.GS.Players
         private Player player;
         private Dictionary<int, Conversation> openConversations = new Dictionary<int, Conversation>();
         private int linesPlayedTotal = 0;
+
+        //TODO: Quests should subscribe to conversation ended event instead of conversation notifying the quest
         private QuestProgressHandler quests;
 
         internal Language ClientLanguage { get { return Language.enUS; } }
