@@ -21,6 +21,7 @@ namespace Mooege.Core.GS.Games.Scripts
         public override void Execute()
         {
             base.Execute();
+            Logger.Warn("Unimplemented Execute Method for script: {0}", this);
             //TODO: Enter implementation here
         }
     }
