@@ -73,7 +73,7 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
             //ListenerFirstWaveTask.ContinueWith(delegate //Once killed:
             //{
             //    //Wave three: Skinnies + RumFord conversation #2 "They Keep Comming!".
-            //    StartConversation(world, 80088);
+            //StartConversation(world, 80088);
             var wave2Actors = world.GetActorsInGroup("GizmoGroup2");
             foreach (var actor in wave2Actors)
             {
@@ -82,7 +82,7 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
                     (actor as Spawner).Spawn();
                 }
             }
-
+            StartConversation(world, 80088);
             //    var ListenerThirdWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup2"));
             //    ListenerThirdWaveTask.Wait();
             //    Task.WaitAll();

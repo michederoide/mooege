@@ -73,6 +73,16 @@ namespace Mooege.Core.GS.Actors
         }
 
         /// <summary>
+        /// First Group hash for the actor
+        /// </summary>
+        public int Group1Hash = -1;
+
+        /// <summary>
+        /// Second Group hash for the actor
+        /// </summary>
+        public int Group2Hash = -1;
+
+        /// <summary>
         /// Returns true if actor is already spawned in the world.
         /// </summary>
         public bool Spawned { get; private set; }
@@ -209,6 +219,8 @@ namespace Mooege.Core.GS.Actors
             this.Size = new Size(1, 1);
             this.GBHandle = new GBHandle { Type = -1, GBID = -1 }; // Seems to be the default. /komiga
             this.CollFlags = this.ActorData.ActorCollisionData.ColFlags.I3;
+
+
 
             this.Tags = tags;
             this.ReadTags();
@@ -514,22 +526,11 @@ namespace Mooege.Core.GS.Actors
             // Send Attributes
             Attributes.SendMessage(player.InGameClient);
 
-            // Actor group
-            int group1Hash = -1;
-            int group2Hash = -1;
-            if (Tags != null)
-            {
-                if (Tags.ContainsKey(MarkerKeys.Group1Hash))
-                    group1Hash = Tags[MarkerKeys.Group1Hash];
-                if (Tags.ContainsKey(MarkerKeys.Group2Hash))
-                    group2Hash = Tags[MarkerKeys.Group2Hash];
-            }
-
             player.InGameClient.SendMessage(new ACDGroupMessage
             {
                 ActorID = DynamicID,
-                Group1Hash = group1Hash,
-                Group2Hash = group2Hash,
+                Group1Hash = this.Group1Hash,
+                Group2Hash = this.Group2Hash,
             });
 
             // Reveal actor (creates actor and makes it visible to the player)
@@ -550,6 +551,9 @@ namespace Mooege.Core.GS.Actors
                 }
 
             }
+
+            if (this.snoTriggeredConversation != -1)
+                Logger.Trace("Start new conversation: {0}", snoTriggeredConversation);
 
             return true;
         }
@@ -773,7 +777,11 @@ namespace Mooege.Core.GS.Actors
             if (this.Tags.ContainsKey(MarkerKeys.TriggeredConversation))
                 snoTriggeredConversation = Tags[MarkerKeys.TriggeredConversation].Id;
 
-
+            // Actor group
+            if (this.Tags.ContainsKey(MarkerKeys.Group1Hash))
+                this.Group1Hash = Tags[MarkerKeys.Group1Hash];
+            if (this.Tags.ContainsKey(MarkerKeys.Group2Hash))
+                this.Group2Hash = Tags[MarkerKeys.Group2Hash];
         }
 
         #endregion
