@@ -20,6 +20,11 @@ namespace Mooege.Core.GS.Actors
             get { return ActorType.Gizmo; }
         }
 
+        /// <summary>
+        /// Script to be triggered on actor spawned
+        /// </summary>
+        public SNOHandle OnActorSpawnedScript { get; private set; }
+
         public Spawner(World world, int snoId, TagMap tags)
             : base(world, snoId, tags)
         {
@@ -31,6 +36,9 @@ namespace Mooege.Core.GS.Actors
             //TODO: Find why Tags is not the same as Actor.Data.TagMap
             if (Tags.ContainsKey(MarkerKeys.SpawnActor))
                 this.ActorToSpawnSNO = Tags[MarkerKeys.SpawnActor];
+
+            if (Tags.ContainsKey(MarkerKeys.OnActorSpawnedScript))
+                this.OnActorSpawnedScript = Tags[MarkerKeys.OnActorSpawnedScript];
             
         }
          
@@ -62,7 +70,11 @@ namespace Mooege.Core.GS.Actors
         {
             if (this.ActorToSpawnSNO == null)
             {
-                Logger.Debug("Triggered spawner with no ActorToSpawnSNO found.");
+                if (this.OnActorSpawnedScript != null)
+                {
+                    this.World.Game.Scripts[OnActorSpawnedScript.Id].Execute();
+                }
+                Logger.Debug("Triggered spawner with no ActorToSpawnSNO or Script found.");
                 //Try revealing this
                 foreach (var player in this.World.Players.Values)
                 {
