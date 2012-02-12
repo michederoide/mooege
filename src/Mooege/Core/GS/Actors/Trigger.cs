@@ -101,6 +101,7 @@ namespace Mooege.Core.GS.Actors
         public override bool Reveal(Players.Player player)
         {
             if (player.RevealedObjects.ContainsKey(this.DynamicID)) return false; // already revealed
+            player.RevealedObjects.Add(this.DynamicID, this);
             //Start triggered conversation
             if (this.TriggeredConversation != null)
             {
