@@ -32,6 +32,7 @@ using Mooege.Net.GS.Message;
 using Mooege.Net.GS.Message.Definitions.Game;
 using Mooege.Net.GS.Message.Definitions.Player;
 using Mooege.Net.GS.Message.Fields;
+using Mooege.Core.GS.Games.Scripts;
 
 namespace Mooege.Core.GS.Games
 {
@@ -134,6 +135,7 @@ namespace Mooege.Core.GS.Games
         public uint NewWorldID { get { return _lastWorldID++; } }
 
         public QuestManager Quests { get; private set; }
+        public ScriptManager Scripts { get; private set; }
         public AI.Pather Pathfinder { get; private set; }
 
         /// <summary>
@@ -148,6 +150,7 @@ namespace Mooege.Core.GS.Games
             this._worlds = new ConcurrentDictionary<int, World>();
             this.StartingWorldSNOId = 71150; // FIXME: This must be set according to the game settings (start quest/act). Better yet, track the player's save point and toss this stuff. /komiga
             this.Quests = new QuestManager(this);
+            this.Scripts = new ScriptManager(this);
 
             this._tickWatch = new Stopwatch();
             var loopThread = new Thread(Update) { IsBackground = true, CurrentCulture = CultureInfo.InvariantCulture }; ; // create the game update thread.

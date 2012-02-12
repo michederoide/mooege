@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -318,6 +318,9 @@
     <Compile Include="Core\GS\QuestEvents\Implementations\151087.cs" />
     <Compile Include="Core\GS\QuestEvents\Implementations\151123.cs" />
     <Compile Include="Core\GS\QuestEvents\QuestEvent.cs" />
+    <Compile Include="Core\GS\Scripts\Implementations\200883.cs" />
+    <Compile Include="Core\GS\Scripts\Script.cs" />
+    <Compile Include="Core\GS\Scripts\ScriptManager.cs" />
     <Compile Include="Core\GS\Ticker\SteppedTickTimer.cs" />
     <Compile Include="Core\GS\Ticker\TickTimer.cs" />
     <Compile Include="Core\GS\Web\GSWebService.cs" />

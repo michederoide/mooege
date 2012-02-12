@@ -52,6 +52,7 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
 
             var transformActors = Task<bool>.Factory.StartNew(() => HoudiniVsZombies(world, 204605));
             transformActors.Wait();
+            //find what triggers this
             var zombieWave = Task<bool>.Factory.StartNew(() => LaunchWave(ActorsVector3D, world, 203121));
             zombieWave.Wait();
             var ListenerZombie = Task<bool>.Factory.StartNew(() => OnKillListener(monstersAlive, world));

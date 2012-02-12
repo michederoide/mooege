@@ -90,11 +90,10 @@ namespace Mooege.Core.GS.Games
                             {
                                 actor.ActorKilled += new EventHandler(actor_ActorKilled);
                             }
-                        }
-
-
-
-                        
+                        }                        
+                    }
+                    if (this.objective.ObjectiveType == Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.KillMonster)
+                    {
                     }
                 }
 
