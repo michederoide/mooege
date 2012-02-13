@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -591,7 +591,7 @@ namespace Mooege.Core.GS.Players
             _owner.Attributes[GameAttribute.Rune_D, powerSNOId] = rune.Attributes[GameAttribute.Rune_D];
             _owner.Attributes[GameAttribute.Rune_E, powerSNOId] = rune.Attributes[GameAttribute.Rune_E];
             // position of rune is read from mpq as INDEX of skill in skill kit - loaded in helper /xsochor
-            rune.SetInventoryLocation(16, RuneHelper.GetRuneIndexForPower(powerSNOId), 0);
+            rune.SetInventoryLocation(15, RuneHelper.GetRuneIndexForPower(powerSNOId), 0);
         }
 
         /// <summary>
