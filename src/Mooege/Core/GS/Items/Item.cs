@@ -162,14 +162,9 @@ namespace Mooege.Core.GS.Items
             // level requirement
             // Attributes[GameAttribute.Requirement, 38] = definition.RequiredLevel;
 
-            Attributes[GameAttribute.Item_Quality_Level] = (int)ItemDefinition.Quality;
-            if (Item.IsArmor(this.ItemType) || Item.IsWeapon(this.ItemType) || Item.IsOffhand(this.ItemType) || Item.IsAccessory(this.ItemType))
-            {
-                if (ItemDefinition.Quality == ItemTable.ItemQuality.Invalid)
-                    Attributes[GameAttribute.Item_Quality_Level] = RandomHelper.Next(6);
-                else
-                    Attributes[GameAttribute.Item_Quality_Level] = (int)ItemDefinition.Quality;
-            }
+            Attributes[GameAttribute.Item_Quality_Level] = 1;
+            if (Item.IsArmor(this.ItemType) || Item.IsWeapon(this.ItemType) || Item.IsOffhand(this.ItemType))
+                Attributes[GameAttribute.Item_Quality_Level] = RandomHelper.Next(6);
             if (this.ItemType.Flags.HasFlag(ItemFlags.AtLeastMagical) && Attributes[GameAttribute.Item_Quality_Level] < 3)
                 Attributes[GameAttribute.Item_Quality_Level] = 3;
 

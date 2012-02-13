@@ -38,8 +38,6 @@ namespace Mooege.Core.GS.Items
         public static readonly Logger Logger = LogManager.CreateLogger();
 
         private static readonly Dictionary<int, ItemTable> Items = new Dictionary<int, ItemTable>();
-        private static readonly Dictionary<int, ItemTable> Equips = new Dictionary<int, ItemTable>();
-        private static readonly Dictionary<int, ItemTable> AtLeastMagic = new Dictionary<int, ItemTable>();
         private static readonly Dictionary<int, Type> GBIDHandlers = new Dictionary<int, Type>();
         private static readonly Dictionary<int, Type> TypeHandlers = new Dictionary<int, Type>();
         private static readonly HashSet<int> AllowedItemTypes = new HashSet<int>();
@@ -52,8 +50,6 @@ namespace Mooege.Core.GS.Items
         static ItemGenerator()
         {
             LoadItems();
-            LoadEquips();
-            LoadAtLeastMagics();
             LoadHandlers();
             SetAllowedTypes();
         }
@@ -104,53 +100,6 @@ namespace Mooege.Core.GS.Items
             }
         }
 
-        private static void LoadEquips()
-        {
-            HashSet<int> EquipTypes = new HashSet<int>();
-
-            foreach (var itemtype in ItemGroup.ItemTypes.Values)
-            {
-                if (itemtype.Flags.HasFlag(ItemFlags.NotEquipable1)) continue;
-                if (itemtype.Flags.HasFlag(ItemFlags.NotEquipable2)) continue;
-                if (itemtype.Flags.HasFlag(ItemFlags.Unknown)) continue;
-                if (itemtype.Flags.HasFlag(ItemFlags.AtLeastMagical)) continue;
-                if (itemtype.Name.ToLower().Contains("gold")) continue;
-
-                EquipTypes.Add(itemtype.Hash);
-            }
-
-            foreach (var item in Items.Values)
-            {
-                if (!EquipTypes.Contains(item.ItemType1)) continue;
-                if (item.Name.ToLower().Contains("unique")) continue;
-                if (item.Name.ToLower().Contains("debug")) continue;
-
-                Equips.Add(item.Hash, item);
-            }
-        }
-
-        private static void LoadAtLeastMagics()
-        {
-            HashSet<int> MagicTypes = new HashSet<int>();
-            foreach (var itemtype in ItemGroup.ItemTypes.Values)
-            {
-                if (itemtype.Flags.HasFlag(ItemFlags.AtLeastMagical))
-                {
-                    MagicTypes.Add(itemtype.Hash);
-                }
-            }
-
-            foreach (var item in Items.Values)
-            {
-                if (MagicTypes.Contains(item.ItemType1))
-                {
-                    if (item.Name.ToLower().Contains("unique")) continue;
-
-                    AtLeastMagic.Add(item.Hash, item);
-                }
-            }
-        }
-
         private static void SetAllowedTypes()
         {
             foreach (int hash in ItemGroup.SubTypesToHashList("Weapon"))
@@ -188,49 +137,6 @@ namespace Mooege.Core.GS.Items
         {
             var itemDefinition = GetRandom(Items.Values.ToList());
             return CreateItem(owner, itemDefinition);
-        }
-
-        public static Item GenerateDrop(Mooege.Core.GS.Actors.Actor owner, Mooege.Core.GS.Actors.Monster monster)
-        {
-            ItemTable.ItemQuality quality = ItemTable.ItemQuality.Inferior;
-            int level = monster.Attributes[GameAttribute.Level];
-            int drop_window = level / 2;
-            int rQuality = RandomHelper.Next(100) + drop_window;
-            List<ItemTable> PickItem = new List<ItemTable>();
-            PickItem = Equips.Values.ToList();
-
-            //roll for normal
-            if (rQuality > 30) quality = ItemTable.ItemQuality.Normal;
-            if (rQuality > 60) quality = ItemTable.ItemQuality.Superior;
-            if (rQuality > (85 - Math.Max(level / 3, 1))) //roll for magic
-            {
-                rQuality = RandomHelper.Next(100);
-                drop_window = Math.Max(level / 3, 1);
-                quality = ItemTable.ItemQuality.Magic1;
-                if (rQuality > (100 - drop_window * 3)) quality = ItemTable.ItemQuality.Magic2;
-                if (rQuality > (100 - drop_window * 2)) quality = ItemTable.ItemQuality.Magic3;
-                if (rQuality > (100 - drop_window)) //roll for rare+legendary
-                {
-                    rQuality = RandomHelper.Next(100);
-                    drop_window = Math.Max((level / 2) - 10, 1);
-                    quality = ItemTable.ItemQuality.Rare4;
-                    if (rQuality > (100 - drop_window * 3)) quality = ItemTable.ItemQuality.Rare5;
-                    if (rQuality > (100 - drop_window * 2)) quality = ItemTable.ItemQuality.Rare6;
-                    if (rQuality > (100 - drop_window)) quality = ItemTable.ItemQuality.Legendary;
-                }
-            }
-
-            if (quality > ItemTable.ItemQuality.Superior)
-                PickItem.AddRange(AtLeastMagic.Values.ToList());
-
-            var itemDefinition = GetDrop(PickItem, monster);
-            if (itemDefinition == null)
-                return null;
-
-            itemDefinition.Quality = quality;
-            Item item = CreateItem(owner, itemDefinition);
-            Logger.Info("level = {0} | itemname = {1}", item.ItemLevel, itemDefinition.Name);
-            return item;
         }
 
         private static ItemTable GetDrop(List<ItemTable> pool, Mooege.Core.GS.Actors.Monster monster)
@@ -290,7 +196,6 @@ namespace Mooege.Core.GS.Items
                 if (itemDefinition.Name.ToLower().Contains("crafted")) continue;
                 if (itemDefinition.Name.ToLower().Contains("debug")) continue;
                 if (itemDefinition.Name.ToLower().Contains("missing")) continue; //I believe I've seen a missing item before, may have been affix though. //Wetwlly
-                if (itemDefinition.Name.ToLower().Contains("dye")) continue; //TODO: Fix these from crashing in-game when hovering over icon //Wetwlly
                 if ((itemDefinition.ItemType1 == StringHashHelper.HashItemName("Book")) && (itemDefinition.BaseGoldValue == 0)) continue; // i hope it catches all lore with npc spawned /xsochor
 
                 if (!GBIDHandlers.ContainsKey(itemDefinition.Hash) &&
@@ -352,28 +257,6 @@ namespace Mooege.Core.GS.Items
 
             var item = (Item)Activator.CreateInstance(type, new object[] { player.World, definition });
             //player.GroundItems[item.DynamicID] = item;
-
-            return item;
-        }
-
-        public static Item DropGold(Player player)
-        {
-            int Min = Math.Max(player.Attributes[GameAttribute.Level] - 10, 1);
-            int Max = player.Attributes[GameAttribute.Level] + 3;
-            int amount = RandomHelper.Next(Min, Max);
-            String goldname = "Gold1";
-
-            if (amount > 15)
-                goldname = "Gold2";
-            if (amount > 50)
-                goldname = "Gold3";
-            if (amount > 100)
-                goldname = "Gold4";
-            if (amount > 250)
-                goldname = "Gold5";
-
-            var item = Cook(player, goldname);
-            item.Attributes[GameAttribute.Gold] = amount;
 
             return item;
         }
