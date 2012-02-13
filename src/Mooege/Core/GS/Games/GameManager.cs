@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2011 mooege project
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ namespace Mooege.Core.GS.Games
 {
     public static class GameManager
     {
-        static readonly Logger Logger = LogManager.CreateLogger();
+        private static readonly Logger Logger = LogManager.CreateLogger();
         private static readonly Dictionary<int, Game> Games = new Dictionary<int, Game>();
 
         public static Game CreateGame(int gameId)
@@ -74,6 +74,7 @@ namespace Mooege.Core.GS.Games
                 // Generate Update for Client
                 gameClient.BnetClient.Account.CurrentGameAccount.NotifyUpdate();
                 //save hero to db after player data was updated in toon
+                toon.Items = p.Inventory.GetInventoryGrid().Items;
                 toon.SaveToDB();
             }
 

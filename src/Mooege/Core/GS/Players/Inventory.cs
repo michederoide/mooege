@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2011 mooege project
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,19 +60,19 @@ namespace Mooege.Core.GS.Players
         {
             this._owner = owner;
             this._equipment = new Equipment(owner);
-            this._inventoryGrid = new InventoryGrid(owner, owner.Attributes[GameAttribute.Backpack_Slots]/10, 10);
+            this._inventoryGrid = new InventoryGrid(owner, owner.Attributes[GameAttribute.Backpack_Slots] / 10, 10);
             this._stashGrid = new InventoryGrid(owner, owner.Attributes[GameAttribute.Shared_Stash_Slots]/7, 7, (int) EquipmentSlotId.Stash);
             this._skillSocketRunes = new uint[6];
         }
 
         private void AcceptMoveRequest(Item item)
         {
-           /* _owner.InGameClient.SendMessage(new ACDInventoryPositionMessage()
+            _owner.InGameClient.SendMessage(new ACDInventoryPositionMessage()
             {
                 ItemId = item.DynamicID,
                 InventoryLocation = item.InventoryLocationMessage,
                 Field2 = 1 // what does this do?  // 0 - source item not disappearing from inventory, 1 - Moving, any other possibilities? its an int32
-            }); */
+            });
         }
 
 
@@ -92,11 +92,27 @@ namespace Mooege.Core.GS.Players
 
              //player.InGameClient.SendMessage(message);
              player.World.BroadcastGlobal(message);
+
          }
 
         public D3.Hero.VisualEquipment GetVisualEquipment()
         {
             return this._equipment.GetVisualEquipmentForToon();   
+        }
+
+        public void CreateItems(){
+            if (_owner.Toon.ItemsTable != null)
+             {
+                 foreach (KeyValuePair<uint, KeyValuePair<ItemTable, Vector2D>> i in _owner.Toon.ItemsTable)
+                 {
+                     Item item = new Item(_owner.World, i.Value.Key);
+                     item.SetInventoryLocation(0, i.Value.Value.X, i.Value.Value.Y);
+                     item.Owner = _owner;
+                     item.World.Leave(item);
+                     this._inventoryGrid.AddItem(item, i.Value.Value.Y, i.Value.Value.X);
+                 }
+
+             }
         }
 
 
@@ -181,7 +197,7 @@ namespace Mooege.Core.GS.Players
             this._equipment.EquipItem(item, slot);
         }
 
-        private List<Item> FindSameItems(int gbid)
+        public List<Item> FindSameItems(int gbid)
         {
             return _inventoryGrid.Items.Values.Where(i => i.GBHandle.GBID == gbid).ToList();
         }
@@ -613,6 +629,10 @@ namespace Mooege.Core.GS.Players
         public int GetGoldAmount()
         {
             return _equipment.Gold();
+        }
+
+        public InventoryGrid GetInventoryGrid(){
+            return _inventoryGrid;
         }
     }
 }

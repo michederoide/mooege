@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 mooege project
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -412,8 +412,8 @@ namespace Mooege.Core.GS.Players
             this.Attributes[GameAttribute.Movement_Scalar] = 1f;
             this.Attributes[GameAttribute.Walking_Rate_Total] = 0.2797852f;
             this.Attributes[GameAttribute.Walking_Rate] = 0.2797852f;
-            this.Attributes[GameAttribute.Running_Rate_Total] = 1.3f;//0.3598633f;
-            this.Attributes[GameAttribute.Running_Rate] = 1.3f;//0.3598633f;
+            this.Attributes[GameAttribute.Running_Rate_Total] = 0.3598633f;
+            this.Attributes[GameAttribute.Running_Rate] = 0.3598633f;
             this.Attributes[GameAttribute.Sprinting_Rate_Total] = 3.051758E-05f;
             this.Attributes[GameAttribute.Strafing_Rate_Total] = 3.051758E-05f;
 
@@ -674,11 +674,11 @@ namespace Mooege.Core.GS.Players
             // so we can have a basic precaution for hacks & exploits /raist.
             if (message.Position != null)
             {
-                if (!client.Player.World.CheckLocationForFlag(message.Position, Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.AllowWalk))
-                {
-                    Logger.Info("Account: " + client.BnetClient.Account.Name + " Attempted to move to an unwalkable location");
-                    return;
-                }
+                if (!client.Player.World.CheckLocationForFlag(message.Position,Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.AllowWalk))
+                    {
+                        Logger.Info("Account: " + client.BnetClient.Account.Name + " Attempted to move to an unwalkable location");
+                        return;
+                    }
                 /*else
                 {
                     var ActorsInRange = GetActorsInRange(3f);
@@ -884,6 +884,7 @@ namespace Mooege.Core.GS.Players
             });
 
             this.Inventory.SendVisualInventory(player);
+            this.Inventory.CreateItems();
 
             if (this == player) // only send this to player itself. Warning: don't remove this check or you'll make the game start crashing! /raist.
             {
@@ -1731,7 +1732,6 @@ namespace Mooege.Core.GS.Players
             // play lore to player
             InGameClient.SendMessage(new Mooege.Net.GS.Message.Definitions.Quest.LoreMessage
             {
-                Id = (int)(Opcodes.LoreMessage),
                 LoreSNOId = loreSNOId
             });
             if (!HasLore(loreSNOId))

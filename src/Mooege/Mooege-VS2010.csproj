@@ -134,6 +134,7 @@
     <Compile Include="Core\GS\Actors\Implementations\Minions\ZombieDog.cs" />
     <Compile Include="Core\GS\Actors\Minion.cs" />
     <Compile Include="Core\GS\Actors\Spawner.cs" />
+    <Compile Include="Core\GS\Actors\Trigger.cs" />
     <Compile Include="Core\GS\AI\Brains\AggressiveNPCBrain.cs" />
     <Compile Include="Core\GS\AI\Brains\MinionBrain.cs" />
     <Compile Include="Core\GS\AI\Pathfinder.cs" />
@@ -317,6 +318,9 @@
     <Compile Include="Core\GS\QuestEvents\Implementations\151087.cs" />
     <Compile Include="Core\GS\QuestEvents\Implementations\151123.cs" />
     <Compile Include="Core\GS\QuestEvents\QuestEvent.cs" />
+    <Compile Include="Core\GS\Scripts\Implementations\200883.cs" />
+    <Compile Include="Core\GS\Scripts\Script.cs" />
+    <Compile Include="Core\GS\Scripts\ScriptManager.cs" />
     <Compile Include="Core\GS\Ticker\SteppedTickTimer.cs" />
     <Compile Include="Core\GS\Ticker\TickTimer.cs" />
     <Compile Include="Core\GS\Web\GSWebService.cs" />
@@ -411,9 +415,11 @@
     <Compile Include="Net\GS\Message\Definitions\Conversation\RequestCloseConversationWindowMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Conversation\UpdateConvAutoAdvanceMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Inventory\InventoryRequestQuickMoveMessage.cs" />
+    <Compile Include="Net\GS\Message\Definitions\Misc\HeartbeatMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Misc\ShrineActivatedMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Misc\NephalemAltarWindowClosedMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Misc\PlayerBannerMessage.cs" />
+    <Compile Include="Net\GS\Message\Definitions\Player\LoadCompleteMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Player\PlayerTranslateFacingMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Tutorial\TutorialMessage.cs" />
     <Compile Include="Net\GS\Message\Definitions\Hireling\HirelingDismissMessage.cs" />

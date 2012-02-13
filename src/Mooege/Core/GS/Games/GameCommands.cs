@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2011 mooege project
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -159,6 +159,29 @@ namespace Mooege.Core.GS.Games
         }
     }
 
+    //[CommandGroup("killall", "Kills monsters in range.")]
+    //public class KillAllCommand : CommandGroup
+    //{
+    //    [DefaultCommand]
+    //    public string KillAll(string[] @params, MooNetClient invokerClient)
+    //    {
+    //        if (invokerClient == null)
+    //            return "You can not invoke this command from console.";
+
+    //        if (invokerClient.InGameClient == null)
+    //            return "You can only invoke this command while ingame.";
+
+    //        var player = invokerClient.InGameClient.Player;
+
+    //        var monstersInRange = player.GetActorsInRange<Monster>();
+    //        foreach (var monster in monstersInRange)
+    //        {
+    //            monster.Die(player);
+    //        }
+
+    //        return string.Format("Killed {0} monsters in range.", monstersInRange.Count);
+    //    }
+    //}
 
     [CommandGroup("setlevel", "Set the Level for your character.")]
     public class LevelUpCommand : CommandGroup

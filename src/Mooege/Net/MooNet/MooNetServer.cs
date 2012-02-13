@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2011 mooege project
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,6 +56,7 @@ namespace Mooege.Net.MooNet
 
             if (!this.Listen(Config.Instance.BindIP, Config.Instance.Port)) return;
             Logger.Info("MooNet-Server is listening on {0}:{1}...", Config.Instance.BindIP, Config.Instance.Port);
+            Logger.Debug("Mooege has completed loading!" + " You can log in now.");
         }
     }
 }

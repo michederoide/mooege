@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2011 mooege project
+/*
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -94,6 +94,7 @@ namespace Mooege.Net.GS
                     Field1 = 0x4BB91A16,
                     SNOPackHash = message.SNOPackHash,
                 });
+
 
                 client.SendMessage(new GameSetupMessage // should be the current tick for the game /raist.
                 {

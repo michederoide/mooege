@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2011 mooege project
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,12 +32,13 @@ using Mooege.Net.GS.Message;
 using Mooege.Net.GS.Message.Definitions.Game;
 using Mooege.Net.GS.Message.Definitions.Player;
 using Mooege.Net.GS.Message.Fields;
+using Mooege.Core.GS.Games.Scripts;
 
 namespace Mooege.Core.GS.Games
 {
     public class Game : IMessageConsumer
     {
-        static readonly Logger Logger = LogManager.CreateLogger();
+        private static readonly Logger Logger = LogManager.CreateLogger();
 
         /// <summary>
         /// The game id.
@@ -58,7 +59,7 @@ namespace Mooege.Core.GS.Games
         /// Dictionary that tracks world.
         /// NOTE: This tracks by WorldSNO rather than by DynamicID; this.Objects _does_ still contain the world since it is a DynamicObject
         /// </summary>
-        private readonly ConcurrentDictionary<int, World> _worlds;
+        public readonly ConcurrentDictionary<int, World> _worlds;
 
         /// <summary>
         /// Starting world's sno id.
@@ -134,6 +135,7 @@ namespace Mooege.Core.GS.Games
         public uint NewWorldID { get { return _lastWorldID++; } }
 
         public QuestManager Quests { get; private set; }
+        public ScriptManager Scripts { get; private set; }
         public AI.Pather Pathfinder { get; private set; }
 
         /// <summary>
@@ -148,6 +150,7 @@ namespace Mooege.Core.GS.Games
             this._worlds = new ConcurrentDictionary<int, World>();
             this.StartingWorldSNOId = 71150; // FIXME: This must be set according to the game settings (start quest/act). Better yet, track the player's save point and toss this stuff. /komiga
             this.Quests = new QuestManager(this);
+            this.Scripts = new ScriptManager(this);
 
             this._tickWatch = new Stopwatch();
             var loopThread = new Thread(Update) { IsBackground = true, CurrentCulture = CultureInfo.InvariantCulture }; ; // create the game update thread.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 mooege project
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,9 @@ using Mooege.Core.MooNet.Objects;
 using Mooege.Net.MooNet;
 using Mooege.Core.GS.Players;
 using Mooege.Core.GS.Skills;
+using Mooege.Core.GS.Items;
+using Mooege.Common.MPQ.FileFormats;
+using Mooege.Core.GS.Common.Types.Math;
 
 
 namespace Mooege.Core.MooNet.Toons
@@ -115,6 +118,9 @@ namespace Mooege.Core.MooNet.Toons
         public IntPresenceField Field7
             = new IntPresenceField(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Hero, 7, 0, 0);
 
+        public ByteStringPresenceField<D3.Items.ItemList> HeroItemns
+            = new ByteStringPresenceField<D3.Items.ItemList>(FieldKeyHelper.Program.D3, FieldKeyHelper.OriginatingClass.Hero, 8, 0);
+
 
 
         #endregion
@@ -156,6 +162,13 @@ namespace Mooege.Core.MooNet.Toons
         /// Gold amount for toon.
         /// </summary>
         public int GoldAmount { get; set; }
+
+        /// <summary>
+        /// Items in inventory.
+        /// </summary>
+        public Dictionary<uint, Item> Items { get; set; }
+
+        public Dictionary<uint, KeyValuePair<ItemTable, Vector2D>> ItemsTable { get; set; }
 
         /// <summary>
         /// Settings for toon.
@@ -249,21 +262,21 @@ namespace Mooege.Core.MooNet.Toons
 
         #region c-tor and setfields
 
-        public Toon(ulong persistentId, string name, int hashCode, byte @class, byte gender, byte level, long accountId, uint timePlayed, int goldAmount) // Toon with given persistent ID
+        public Toon(ulong persistentId, string name, int hashCode, byte @class, byte gender, byte level, long accountId, uint timePlayed, int goldAmount, Dictionary<uint, Item> items) // Toon with given persistent ID
             : base(persistentId)
         {
             this.HeroClassField.transformDelegate += HeroClassFieldTransform;
-            this.SetFields(name, hashCode, (int)@class, (ToonFlags)gender, level, GameAccountManager.GetAccountByPersistentID((ulong)accountId), timePlayed, goldAmount);
+            this.SetFields(name, hashCode, (int)@class, (ToonFlags)gender, level, GameAccountManager.GetAccountByPersistentID((ulong)accountId), timePlayed, goldAmount, items);
         }
 
         public Toon(string name, int hashCode, int classHash, ToonFlags flags, byte level, GameAccount account) // Toon with **newly generated** persistent ID
             : base(StringHashHelper.HashIdentity(name + "#" + hashCode.ToString("D3")))
         {
             this.HeroClassField.transformDelegate += HeroClassFieldTransform;
-            this.SetFields(name, hashCode, Toon.GetClassFromHash(classHash), flags, level, account, 0, 0);
+            this.SetFields(name, hashCode, Toon.GetClassFromHash(classHash), flags, level, account, 0, 0, new Dictionary<uint, Item>());
         }
 
-        private void SetFields(string name, int hashCode, int @class, ToonFlags flags, byte level, GameAccount owner, uint timePlayed, int goldAmount)
+        private void SetFields(string name, int hashCode, int @class, ToonFlags flags, byte level, GameAccount owner, uint timePlayed, int goldAmount, Dictionary<uint, Item> items)
         {
             this.D3EntityID = D3.OnlineService.EntityId.CreateBuilder().SetIdHigh((ulong)EntityIdHelper.HighIdType.ToonId).SetIdLow(this.PersistentID).Build();
 
@@ -278,6 +291,7 @@ namespace Mooege.Core.MooNet.Toons
             this.GoldAmount = goldAmount;
             this.Field6.Value = 99999999999999999;
             this.Field7.Value = 99999999999999999;
+            this.Items = items;
 
             var visualItems = new[]
             {                                
@@ -437,14 +451,27 @@ namespace Mooege.Core.MooNet.Toons
                         var itemCmd = new SQLiteCommand(itemQuery, DBManager.Connection);
                         itemCmd.ExecuteNonQuery();
                     }
-
-
-                    //save other inventory
-
-                    //save stash
-
-                    //save gold
                 }
+
+                //save other inventory
+                if (Items != null)
+                {
+                    if (ItemDeletDb())
+                    {
+                        foreach (Item itemDefinition in Items.Values)
+                        {
+                            var itemQuery =
+                                    string.Format(
+                                    "INSERT INTO inventory (toon_id, inventory_loc_x, inventory_loc_y, inventory_slot, item_entity_id) VALUES({0},{1},{2},{3},{4})",
+                                    this.PersistentID, itemDefinition.GetInventoryLocation().X, itemDefinition.GetInventoryLocation().Y, -1, itemDefinition.GBHandle.GBID);
+                            var itemCmd = new SQLiteCommand(itemQuery, DBManager.Connection);
+                            itemCmd.ExecuteNonQuery();
+                        }
+                        UpdateItemsValue();
+                    }
+                }
+
+                //save stash
             }
             catch (Exception e)
             {
@@ -500,6 +527,22 @@ namespace Mooege.Core.MooNet.Toons
             return reader.HasRows;
         }
 
+        private void UpdateItemsValue()
+        {
+            ItemsTable = new Dictionary<uint, KeyValuePair<ItemTable, Vector2D>>();
+            foreach (Item i in Items.Values)
+            {
+                var x = i.InventoryLocation.X;
+                var y = i.InventoryLocation.Y;
+                var gbid = i.GBHandle.GBID;
+                ItemTable it = ItemGenerator.GetItemDefinition(gbid);
+                Vector2D v2d = new Vector2D(x, y);
+                if (!ItemsTable.ContainsKey((uint)gbid))
+                    ItemsTable.Add((uint)gbid, new KeyValuePair<ItemTable, Vector2D>(it, v2d));
+            }
+            this.ItemsTable = ItemsTable;
+        }
+
         private bool VisualItemExistsInDb(int slot)
         {
             var query =
@@ -509,6 +552,17 @@ namespace Mooege.Core.MooNet.Toons
             var cmd = new SQLiteCommand(query, DBManager.Connection);
             var reader = cmd.ExecuteReader();
             return reader.HasRows;
+        }
+
+        private bool ItemDeletDb()
+        {
+            var query =
+                string.Format(
+                    "delete from inventory where toon_id = {0} and inventory_slot = -1",
+                    this.PersistentID);
+            var cmd = new SQLiteCommand(query, DBManager.Connection);
+            var reader = cmd.ExecuteReader();
+            return true;
         }
     }
         #endregion

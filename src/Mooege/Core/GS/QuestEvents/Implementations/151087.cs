@@ -1,4 +1,22 @@
-﻿using System;
+﻿/*
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +29,7 @@ using Mooege.Common.Logging;
 using System.Threading.Tasks;
 using System.Threading;
 using Mooege.Core.GS.Common.Types.TagMap;
+
 
 
 namespace Mooege.Core.GS.QuestEvents.Implementations
@@ -28,49 +47,54 @@ namespace Mooege.Core.GS.QuestEvents.Implementations
         List<uint> monstersAlive = new List<uint> { }; //We use this for the killeventlistener.
         public override void Execute(Map.World world)
         {
-            /*var WaitConversationTask = Task<bool>.Factory.StartNew(() => WaitConversation(world));
-            //Disable RumFord so he doesn't offer the quest. Somehow, hes supposed to mark it as readed and not offer it while theres no other quest available but he does,
-            //so you can trigger the event multiple times while the event is already running, therefor, we disable his interaction till the event is done.-Wesko
+            //var WaitConversationTask = Task<bool>.Factory.StartNew(() => WaitConversation(world));
+            ////Disable RumFord so he doesn't offer the quest. Somehow, hes supposed to mark it as readed and not offer it while theres no other quest available but he does,
+            ////so you can trigger the event multiple times while the event is already running, therefor, we disable his interaction till the event is done.-Wesko
 
-            setActorOperable(world, 3739, false);
-            WaitConversationTask.ContinueWith(delegate
-            {
-                //Start the conversation between RumFord & Guard.
-                StartConversation(world, 198199);
-                var WaitConversationTask2 = Task<bool>.Factory.StartNew(() => WaitConversation(world));
-                //After Conversations ends!.
-                WaitConversationTask2.ContinueWith(delegate
-                {
-                    var wave1Actors = world.GetActorsInGroup("GizmoGroup1");
+            //setActorOperable(world, 3739, false);
+            //WaitConversationTask.ContinueWith(delegate
+            //{
+            //    //Start the conversation between RumFord & Guard.
+            //    StartConversation(world, 198199);
+            //    var WaitConversationTask2 = Task<bool>.Factory.StartNew(() => WaitConversation(world));
+            //    //After Conversations ends!.
+            //    WaitConversationTask2.ContinueWith(delegate
+            //    {
+            //        var wave1Actors = world.GetActorsInGroup("GizmoGroup1");
 
-                    foreach (var actor in wave1Actors)
-                    {
-                        actor.Spawn();
-                    }
-                });
-            });
-            //Run Kill Event Listener
-            var ListenerFirstWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup1"));
-            ListenerFirstWaveTask.ContinueWith(delegate //Once killed:
-            {
-                //Wave three: Skinnies + RumFord conversation #2 "They Keep Comming!".
-                StartConversation(world, 80088);
-                var wave2Actors = world.GetActorsInGroup("GizmoGroup2");
-                foreach (var actor in wave2Actors)
-                {
-                    actor.Spawn();
-                }
+            //        foreach (var actor in wave1Actors)
+            //        {
+            //            actor.Spawn();
+            //        }
+            //    });
+            //});
+            ////Run Kill Event Listener
+            //var ListenerFirstWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup1"));
+            //ListenerFirstWaveTask.ContinueWith(delegate //Once killed:
+            //{
+            //    //Wave three: Skinnies + RumFord conversation #2 "They Keep Comming!".
+            //StartConversation(world, 80088);
+            //TODO: FInd what triggers this
+            //var wave2Actors = world.GetActorsInGroup("GizmoGroup2");
+            //foreach (var actor in wave2Actors)
+            //{
+            //    if (actor is Spawner)
+            //    {
+            //        (actor as Spawner).Spawn();
+            //    }
+            //}
+            //TODO: Find what triggers this
+            StartConversation(world, 80088);
+            //    var ListenerThirdWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup2"));
+            //    ListenerThirdWaveTask.Wait();
+            //    Task.WaitAll();
 
-                var ListenerThirdWaveTask = Task<bool>.Factory.StartNew(() => OnKillListener(world, "GizmoGroup2"));
-                ListenerThirdWaveTask.Wait();
-                Task.WaitAll();
-
-                //Event done we advance the quest and play last conversation #3.
-                world.Game.Quests.Advance(87700);
-                Logger.Debug("Event finished");
-                StartConversation(world, 151102);
-                setActorOperable(world, 3739, true);
-            });*/
+            //    //Event done we advance the quest and play last conversation #3.
+            //    world.Game.Quests.Advance(87700);
+            //    Logger.Debug("Event finished");
+            //    StartConversation(world, 151102);
+            //    setActorOperable(world, 3739, true);
+            //});
         }
 
         //This is the way we Listen for mob killing events.

@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2011 mooege project
+/*
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,7 +107,8 @@ namespace Mooege.Core.GS.Actors
                             return new StartingPoint(world, snoId, tags);
                         case GizmoGroup.Spawner:
                             return new Spawner(world, snoId, tags);
-
+                        case GizmoGroup.Trigger:
+                            return new Trigger(world, snoId, tags);
                         case GizmoGroup.ActChangeTempObject:
                         case GizmoGroup.Banner:
                         case GizmoGroup.CathedralIdol:
@@ -124,7 +125,7 @@ namespace Mooege.Core.GS.Actors
                         case GizmoGroup.Sign:
 
                         case GizmoGroup.TownPortal:
-                        case GizmoGroup.Trigger:
+
                         case GizmoGroup.WeirdGroup57:
                             //Logger.Info("GizmoGroup {0} has no proper implementation, using default gizmo instead", actorData.TagMap[ActorKeys.GizmoGroup]);
                             return CreateGizmo(world, snoId, tags);

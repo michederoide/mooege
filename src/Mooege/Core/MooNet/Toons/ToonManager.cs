@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2011 mooege project
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,9 @@ using System.Linq;
 using Mooege.Common.Logging;
 using Mooege.Common.Storage;
 using Mooege.Core.MooNet.Accounts;
+using Mooege.Core.GS.Items;
+using Mooege.Common.MPQ.FileFormats;
+using Mooege.Core.GS.Common.Types.Math;
 
 namespace Mooege.Core.MooNet.Toons
 {
@@ -111,14 +114,16 @@ namespace Mooege.Core.MooNet.Toons
 
             while (reader.Read())
             {
+                var itemCreate = new Dictionary<uint, Item>();
                 var databaseId = (ulong)reader.GetInt64(0);
                 //TODO: Move this to toon class only create a toon with id and call load from DB
-                var toon = new Toon(databaseId, reader.GetString(1), (int)reader.GetInt32(6), reader.GetByte(2), reader.GetByte(3), reader.GetByte(4), reader.GetInt64(5), (uint)reader.GetInt32(7), (int)reader.GetInt32(8));
+                var toon = new Toon(databaseId, reader.GetString(1), (int)reader.GetInt32(6), reader.GetByte(2), reader.GetByte(3), reader.GetByte(4), reader.GetInt64(5), (uint)reader.GetInt32(7), (int)reader.GetInt32(8),null);
                 //add visual equipment
                 //TODO: Load all visualEquipment at once
                 D3.Hero.VisualItem[] visualItems = new D3.Hero.VisualItem[8];
-                var itemQuery = string.Format("SELECT * from inventory WHERE toon_id = {0}", databaseId);
-                var itemCmd = new SQLiteCommand(itemQuery, DBManager.Connection);
+                var vItemQuery =
+                    string.Format("SELECT * from inventory WHERE toon_id = {0} and inventory_slot <> -1", databaseId);
+                var itemCmd = new SQLiteCommand(vItemQuery, DBManager.Connection);
                 var itemReader = itemCmd.ExecuteReader();
                 if (itemReader.HasRows)
                 {
@@ -133,6 +138,30 @@ namespace Mooege.Core.MooNet.Toons
                     }
 
                     toon.HeroVisualEquipmentField.Value = D3.Hero.VisualEquipment.CreateBuilder().AddRangeVisualItem(visualItems).Build();
+                }
+
+                //add inventory items
+                var itemQuery =
+                    string.Format("SELECT * from inventory WHERE toon_id = {0} and inventory_slot = -1", databaseId);
+                itemCmd = new SQLiteCommand(itemQuery, DBManager.Connection);
+                itemReader = itemCmd.ExecuteReader();
+                if (itemReader.HasRows)
+                {
+                    uint count = 0;
+                    toon.ItemsTable = new Dictionary<uint, KeyValuePair<ItemTable, Vector2D>>();
+                    while (itemReader.Read())
+                    {
+                        var x = (int)itemReader.GetInt64(1);
+                        var y = (int)itemReader.GetInt64(2);
+                        var slot = (int)itemReader.GetInt64(3);
+                        var gbid = (int)itemReader.GetInt64(4);
+                        ItemTable it = ItemGenerator.GetItemDefinition(gbid);
+                        Vector2D v2d = new Vector2D(x,y);
+                        toon.ItemsTable.Add((uint)gbid,new KeyValuePair<ItemTable, Vector2D>(it,v2d));
+                        count++;
+                    }
+
+                    toon.Items = itemCreate;
                 }
 
 

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2011 mooege project
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ namespace Mooege.Core.GS.Items
         public ItemState CurrentState { get; set; }
 
         public int EquipmentSlot { get; private set; }
-        public Vector2D InventoryLocation { get; private set; } // Column, row; NOTE: Call SetInventoryLocation() instead of setting fields on this
+        public Vector2D InventoryLocation { get; set; } // Column, row; NOTE: Call SetInventoryLocation() instead of setting fields on this
 
         public override int Quality
         {
@@ -384,6 +384,11 @@ namespace Mooege.Core.GS.Items
                     player.InGameClient.SendMessage(this.ACDInventoryPositionMessage);
                 }
             }
+        }
+
+        public Vector2D GetInventoryLocation()
+        {
+            return this.InventoryLocation;
         }
 
         public void SetNewWorld(World world)

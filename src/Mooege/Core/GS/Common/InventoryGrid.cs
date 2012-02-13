@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2011 mooege project
+ * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ namespace Mooege.Core.GS.Common
         public int EquipmentSlot { get; private set; }
         public int Rows { get { return _backpack.GetLength(0); } }
         public int Columns { get { return _backpack.GetLength(1); } }
-        public Dictionary<uint, Item> Items {get; private set;}
+        public Dictionary<uint, Item> Items {get; set;}
         private uint[,] _backpack;
 
         private readonly Actor _owner; // Used, because most information is not in the item class but Actors managed by the world
@@ -61,6 +61,14 @@ namespace Mooege.Core.GS.Common
             this._backpack = new uint[rows, columns];
             this._owner = owner;
             this.Items = new Dictionary<uint, Item>();
+            this.EquipmentSlot = slot;
+        }
+
+        public InventoryGrid(Actor owner, int rows, int columns, Dictionary<uint, Item> items, int slot = 0)
+        {
+            this._backpack = new uint[rows, columns];
+            this._owner = owner;
+            this.Items = items;
             this.EquipmentSlot = slot;
         }
 
