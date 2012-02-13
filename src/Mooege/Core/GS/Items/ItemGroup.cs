@@ -26,7 +26,7 @@ namespace Mooege.Core.GS.Items
 {
     public static class ItemGroup
     {
-        public static Dictionary<int, ItemTypeTable> ItemTypes = new Dictionary<int, ItemTypeTable>();
+        private static Dictionary<int, ItemTypeTable> ItemTypes = new Dictionary<int, ItemTypeTable>();
 
         static ItemGroup()
         {

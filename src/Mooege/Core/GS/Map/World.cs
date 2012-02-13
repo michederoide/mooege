@@ -373,7 +373,7 @@ namespace Mooege.Core.GS.Map
         public void SpawnGold(Actor source, Player player)
         {
             // TODO: Gold should be spawned for all players in range. /raist.
-            var item = ItemGenerator.DropGold(player); // somehow the actual ammount is not shown on ground /raist.
+            var item = ItemGenerator.CreateGold(player, RandomHelper.Next(1000, 3000)); // somehow the actual ammount is not shown on ground /raist.
             DropItem(source, player, item);
         }
 
