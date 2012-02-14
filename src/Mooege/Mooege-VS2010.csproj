@@ -318,7 +318,7 @@
     <Compile Include="Core\GS\QuestEvents\Implementations\151087.cs" />
     <Compile Include="Core\GS\QuestEvents\Implementations\151123.cs" />
     <Compile Include="Core\GS\QuestEvents\QuestEvent.cs" />
-    <Compile Include="Core\GS\Scripts\Implementations\200883.cs" />
+    <Compile Include="Core\GS\Scripts\Implementations\GameScripts.cs" />
     <Compile Include="Core\GS\Scripts\Script.cs" />
     <Compile Include="Core\GS\Scripts\ScriptManager.cs" />
     <Compile Include="Core\GS\Ticker\SteppedTickTimer.cs" />
