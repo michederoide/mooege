@@ -391,6 +391,11 @@ namespace Mooege.Core.GS.Players
         /// <param name="snoConversation">SnoID of the conversation</param>
         public void StartConversation(int snoConversation)
         {
+            //So 140617 not found conversation its actually 100913 Player_EnteredGame_Float.cnv, checked this with Beta.
+            //Todo: Find out why it tries to trigger a none existant conversation.
+            if (snoConversation == 140617)
+                snoConversation = 100913;
+
             if (!Mooege.Common.MPQ.MPQStorage.Data.Assets[Common.Types.SNO.SNOGroup.Conversation].ContainsKey(snoConversation))
             {
                 logger.Warn("Conversation not found: {0}", snoConversation);
@@ -399,10 +404,11 @@ namespace Mooege.Core.GS.Players
 
             if (!openConversations.ContainsKey(snoConversation))
             {
+                logger.Debug("Triggered conversation:" + snoConversation);
                 Conversation newConversation = new Conversation(snoConversation, player, this);
                 newConversation.Start();
                 newConversation.ConversationEnded += new EventHandler(ConversationEnded);
- 
+
                 lock (openConversations)
                 {
                     openConversations.Add(snoConversation, newConversation);
