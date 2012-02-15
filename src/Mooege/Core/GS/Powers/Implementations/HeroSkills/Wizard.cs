@@ -1321,77 +1321,91 @@ namespace Mooege.Core.GS.Powers.Implementations
 
     //TODO: Rune_B -> mirror images
     #region Teleport
+     #region Teleport
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.Teleport)]
     public class WizardTeleport : PowerScript
     {
         public override IEnumerable<TickTimer> Run()
         {
-            UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
-            if (!(Rune_E > 0 || Rune_D > 0))
-            {
-                StartCooldown(EvalTag(PowerKeys.CooldownTime));
-            }
-
-            if (Rune_D > 0)
+            if (!User.World.CheckLocationForFlag(TargetPosition, Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.AllowWalk))
             {
                 TeleRevertBuff buff = User.World.BuffManager.GetFirstBuff<TeleRevertBuff>(User);
-                if (buff != null)
-                {
-                    User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
-                    yield return WaitSeconds(0.3f);
-                    User.Teleport(buff.OrigSpot);
-                    User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
-                    buff.Remove(); // Ensures that you can only revert the teleport once.
-                }
-                else
-                {
-                    Vector3D OrigSpot;
-                    Actor OrigTele;
-                    OrigSpot = new Vector3D(User.Position.X, User.Position.Y, User.Position.Z);
-                    OrigTele = SpawnProxy(OrigSpot, WaitSeconds(ScriptFormula(18)));
-                    OrigTele.PlayEffectGroup(RuneSelect(170231, 205685, 205684, 191913, 192074, 192151));
-                    OrigTele.PlayEffectGroup(206679);
-                    AddBuff(User, new TeleRevertBuff(OrigSpot, OrigTele));
-                    yield return WaitSeconds(0.3f);
-                    User.Teleport(TargetPosition);
-                    User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
-                }
-
+                Logger.Info("Try to Teleport to unwalkable location");
+                User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
+                yield return WaitSeconds(0.3f);
+                User.Teleport(buff.OrigSpot);
+                User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
+                buff.Remove(); // Ensures that you can only revert the teleport once.
             }
             else
             {
-                SpawnProxy(User.Position).PlayEffectGroup(RuneSelect(170231, 205685, 205684, 191913, 192074, 192151));  // alt cast efg: 170231
-                yield return WaitSeconds(0.3f);
-                User.Teleport(TargetPosition);
-                //MDZ says this might work just as 191849.
-                User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
-            }
-
-            if (Rune_A > 0)
-            {
-                User.PlayEffectGroup(170289);
-                AttackPayload attack = new AttackPayload(this);
-                attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(1));
-                attack.AddWeaponDamage(ScriptFormula(2), DamageType.Physical);
-                attack.OnHit = hitPayload =>
+                UsePrimaryResource(EvalTag(PowerKeys.ResourceCost));
+                if (!(Rune_E > 0 || Rune_D > 0))
                 {
-                    Knockback(hitPayload.Target, ScriptFormula(4), ScriptFormula(5), ScriptFormula(6));
-                };
-                attack.Apply();
+                    StartCooldown(EvalTag(PowerKeys.CooldownTime));
+                }
 
-            }
-            if (Rune_B > 0)
-            {
-                //Rune_B - Summon 2 mirror images for 15 |4second:seconds; on arrival.
-                //SF(7,8,9,10,11)
-            }
-            if (Rune_C > 0)
-            {
-                AddBuff(User, new TeleDmgReductionBuff());
-            }
-            if (Rune_E > 0)
-            {
-                AddBuff(User, new TeleCoolDownBuff());
+                if (Rune_D > 0)
+                {
+                    TeleRevertBuff buff = User.World.BuffManager.GetFirstBuff<TeleRevertBuff>(User);
+                    if (buff != null)
+                    {
+                        User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
+                        yield return WaitSeconds(0.3f);
+                        User.Teleport(buff.OrigSpot);
+                        User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
+                        buff.Remove(); // Ensures that you can only revert the teleport once.
+                    }
+                    else
+                    {
+                        Vector3D OrigSpot;
+                        Actor OrigTele;
+                        OrigSpot = new Vector3D(User.Position.X, User.Position.Y, User.Position.Z);
+                        OrigTele = SpawnProxy(OrigSpot, WaitSeconds(ScriptFormula(18)));
+                        OrigTele.PlayEffectGroup(RuneSelect(170231, 205685, 205684, 191913, 192074, 192151));
+                        OrigTele.PlayEffectGroup(206679);
+                        AddBuff(User, new TeleRevertBuff(OrigSpot, OrigTele));
+                        yield return WaitSeconds(0.3f);
+                        User.Teleport(TargetPosition);
+                        User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
+                    }
+
+                }
+                else
+                {
+                    SpawnProxy(User.Position).PlayEffectGroup(RuneSelect(170231, 205685, 205684, 191913, 192074, 192151));  // alt cast efg: 170231
+                    yield return WaitSeconds(0.3f);
+                    User.Teleport(TargetPosition);
+                    //MDZ says this might work just as 191849.
+                    User.PlayEffectGroup(RuneSelect(170232, 170232, 170232, 192053, 192080, 192152));
+                }
+
+                if (Rune_A > 0)
+                {
+                    User.PlayEffectGroup(170289);
+                    AttackPayload attack = new AttackPayload(this);
+                    attack.Targets = GetEnemiesInRadius(User.Position, ScriptFormula(1));
+                    attack.AddWeaponDamage(ScriptFormula(2), DamageType.Physical);
+                    attack.OnHit = hitPayload =>
+                    {
+                        Knockback(hitPayload.Target, ScriptFormula(4), ScriptFormula(5), ScriptFormula(6));
+                    };
+                    attack.Apply();
+
+                }
+                if (Rune_B > 0)
+                {
+                    //Rune_B - Summon 2 mirror images for 15 |4second:seconds; on arrival.
+                    //SF(7,8,9,10,11)
+                }
+                if (Rune_C > 0)
+                {
+                    AddBuff(User, new TeleDmgReductionBuff());
+                }
+                if (Rune_E > 0)
+                {
+                    AddBuff(User, new TeleCoolDownBuff());
+                }
             }
         }
         [ImplementsPowerBuff(1)]
@@ -1431,7 +1445,7 @@ namespace Mooege.Core.GS.Powers.Implementations
 
             public override void Init()
             {
-                Timeout = WaitSeconds(ScriptFormula(18));
+                Timeout = WaitSeconds(ScriptFormula(1));
             }
             public override bool Apply()
             {
@@ -1460,89 +1474,6 @@ namespace Mooege.Core.GS.Powers.Implementations
             {
                 base.Remove();
                 StartCooldown(WaitSeconds(ScriptFormula(20)));
-            }
-        }
-    }
-    #endregion
-
-    //Complete, attributes need to be checked.
-    #region SpectralBlade
-    [ImplementsPowerSNO(Skills.Skills.Wizard.Signature.SpectralBlade)]
-    public class WizardSpectralBlade : PowerScript
-    {
-        public override IEnumerable<TickTimer> Run()
-        {
-
-            //No more Resouce Cost
-            //these are changed around to actually identify with their rune color : visual effects
-            User.PlayEffectGroup(19343);
-
-            TargetPosition = PowerMath.TranslateDirection2D(User.Position, TargetPosition, User.Position, 9f);
-
-            for (int n = 0; n < 3; ++n)
-            {
-                AttackPayload attack = new AttackPayload(this);
-                attack.Targets = GetEnemiesInRadius(TargetPosition, ScriptFormula(3));
-                //oddly enough this seems to be the script formula the way it should be, but damage doesnt go as far as effect
-                //attack.Targets = GetEnemiesInArcDirection(User.Position, TargetPosition, ScriptFormula(3), ScriptFormula(2));
-                attack.AddWeaponDamage(ScriptFormula(21), DamageType.Physical);
-                attack.OnHit = hitPayload =>
-                {
-                    if (Rune_A > 0)
-                    {
-                        AddBuff(hitPayload.Target, new BleedEffect());
-                    }
-
-                    if (Rune_C > 0)
-                    {
-                        if (Rand.NextDouble() < ScriptFormula(19))
-                        {
-                            Knockback(Target, ScriptFormula(14));
-                            AddBuff(hitPayload.Target, new DebuffSlowed(0.6f, WaitSeconds(ScriptFormula(11))));
-                        }
-                    }
-                    if (Rune_D > 0)
-                    {
-                        GeneratePrimaryResource(ScriptFormula(13));
-                    }
-                    if (Rune_E > 0)
-                    {
-                        if (hitPayload.IsCriticalHit)
-                        {
-                            float Damage = hitPayload.TotalDamage;
-                            float HealingAmount = Damage * ScriptFormula(15);
-                            User.Attributes[GameAttribute.Hitpoints_Granted] += HealingAmount;
-                            User.Attributes.BroadcastChangedIfRevealed();
-                        }
-                    }
-                };
-                attack.Apply();
-                yield return WaitSeconds(0.2f);
-            }
-        }
-        [ImplementsPowerBuff(2)]
-        class BleedEffect : PowerBuff
-        {
-            const float _damageRate = 1f;
-            TickTimer _damageTimer = null;
-
-            public override void Init()
-            {
-                Timeout = WaitSeconds(ScriptFormula(6));
-            }
-            public override bool Update()
-            {
-                if (base.Update())
-                    return true;
-                if (_damageTimer == null || _damageTimer.TimedOut)
-                {
-                    _damageTimer = WaitSeconds(_damageRate);
-
-                    AttackPayload bleed = new AttackPayload(this);
-                    bleed.AddWeaponDamage(ScriptFormula(4), DamageType.Physical);
-                    bleed.Apply();
-                }
-                return false;
             }
         }
     }
