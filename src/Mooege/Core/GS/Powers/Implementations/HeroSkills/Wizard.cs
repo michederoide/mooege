@@ -1321,7 +1321,6 @@ namespace Mooege.Core.GS.Powers.Implementations
 
     //TODO: Rune_B -> mirror images
     #region Teleport
-     #region Teleport
     [ImplementsPowerSNO(Skills.Skills.Wizard.Utility.Teleport)]
     public class WizardTeleport : PowerScript
     {
