@@ -23,6 +23,11 @@ namespace Mooege.Core.GS.Games.Scripts
         {
             base.Execute();
             Logger.Warn("Unimplemented Execute Method for script: {0}", this);
+            foreach (var player in game.Players)
+            {
+                //show me the goodies
+            }
+
             //TODO: Enter implementation here
         }
     }

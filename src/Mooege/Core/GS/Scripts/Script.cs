@@ -50,6 +50,7 @@ namespace Mooege.Core.GS.Games.Scripts
         {
             this.SNOId = SNOId;
             this.ScriptName = ScriptName;
+            this.game = game;
         }
 
         public Script(Game game, Mooege.Common.MPQ.Asset script)
