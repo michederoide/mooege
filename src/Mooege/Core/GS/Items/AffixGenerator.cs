@@ -47,7 +47,9 @@ namespace Mooege.Core.GS.Items
                         if (affixDef.Name.Contains("REQ")) continue; // crashes the client // dark0ne
                         if (affixDef.Name.Contains("Sockets")) continue; // crashes the client // dark0ne
                         if (affixDef.Name.Contains("Will")) continue; // not in game // dark0ne
-
+                        if (affixDef.AffixLevel == 0) continue; // seems like those are broken /H_DANILO
+                        if (affixDef.AffixLevel == 100) continue; // seems like those are broken /H_DANILO
+                        
                         AffixList.Add(affixDef);
                     }
                 }

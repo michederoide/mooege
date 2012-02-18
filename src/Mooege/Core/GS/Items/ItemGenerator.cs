@@ -54,6 +54,11 @@ namespace Mooege.Core.GS.Items
             SetAllowedTypes();
         }
 
+        public static ItemTable GetDefinitionFromGBID(int Gbid)
+        {
+            return (from pair in Items where pair.Value.Hash == Gbid select pair.Value).FirstOrDefault();
+        }
+
         private static void LoadHandlers()
         {
             foreach (var type in Assembly.GetExecutingAssembly().GetTypes())
@@ -134,6 +139,30 @@ namespace Mooege.Core.GS.Items
             return CreateItem(owner, itemDefinition);
         }
 
+        private static ItemTable GetDrop(List<ItemTable> pool, Mooege.Core.GS.Actors.Monster monster)
+        {
+            var found = false;
+            ItemTable itemDefinition = null;
+            while (!found)
+            {
+                if (pool.Count == 0)
+                    return null;
+
+                int r = RandomHelper.Next(0, pool.Count() - 1);
+                itemDefinition = pool[r];
+                pool.Remove(pool[r]);
+
+                if (itemDefinition.SNOActor == -1) continue;
+                if (itemDefinition.Name.ToLower().Contains("debug")) continue;
+                if (itemDefinition.Name.ToLower().Contains("missing")) continue;
+                if (itemDefinition.ItemLevel > monster.Attributes[GameAttribute.Level] + 2) continue;
+                if (itemDefinition.ItemLevel < monster.Attributes[GameAttribute.Level] - 2) continue;
+
+                found = true;
+            }
+            return itemDefinition;
+        }
+
         // generates a random item from given type category.
         // we can also set a difficulty mode parameter here, but it seems current db doesnt have nightmare or hell-mode items with valid snoId's /raist.
         public static Item GenerateRandom(Mooege.Core.GS.Actors.Actor player, ItemTypeTable type)
@@ -166,6 +195,7 @@ namespace Mooege.Core.GS.Items
                 if (itemDefinition.Name.ToLower().Contains("unique")) continue;
                 if (itemDefinition.Name.ToLower().Contains("crafted")) continue;
                 if (itemDefinition.Name.ToLower().Contains("debug")) continue;
+                if (itemDefinition.Name.ToLower().Contains("missing")) continue; //I believe I've seen a missing item before, may have been affix though. //Wetwlly
                 if ((itemDefinition.ItemType1 == StringHashHelper.HashItemName("Book")) && (itemDefinition.BaseGoldValue == 0)) continue; // i hope it catches all lore with npc spawned /xsochor
 
                 if (!GBIDHandlers.ContainsKey(itemDefinition.Hash) &&
@@ -217,6 +247,12 @@ namespace Mooege.Core.GS.Items
         {
             int hash = StringHashHelper.HashItemName(name);
             ItemTable definition = Items[hash];
+            return CookFromDefinition(player, definition);
+        }
+
+        // Allows cooking a custom item.
+        public static Item CookFromDefinition(Player player, ItemTable definition)
+        {
             Type type = GetItemClass(definition);
 
             var item = (Item)Activator.CreateInstance(type, new object[] { player.World, definition });

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,8 @@ namespace Mooege.Common.MPQ.FileFormats
 
         public World(MpqFile file)
         {
+            if (file.Size == 0)
+                return;
             var stream = file.Open();
 
             this.Header = new Header(stream);
@@ -98,7 +100,7 @@ namespace Mooege.Common.MPQ.FileFormats
     public class SceneParams : ISerializableData
     {
         public List<SceneChunk> SceneChunks = new List<SceneChunk>();
-        public int ChunkCount { get; private set; }
+        public int ChunkCount { get; set; }
 
         public void Read(MpqFileStream stream)
         {
@@ -110,9 +112,9 @@ namespace Mooege.Common.MPQ.FileFormats
 
     public class SceneChunk : ISerializableData
     {
-        public SNOHandle SNOHandle { get; private set; }
-        public PRTransform PRTransform { get; private set; }
-        public SceneSpecification SceneSpecification { get; private set; }
+        public SNOHandle SNOHandle { get; set; }
+        public PRTransform PRTransform { get; set; }
+        public SceneSpecification SceneSpecification { get; set; }
 
         public void Read(MpqFileStream stream)
         {
@@ -158,21 +160,40 @@ namespace Mooege.Common.MPQ.FileFormats
             this.TagMap = stream.ReadSerializedItem<TagMap>();
             stream.Position += (2 * 4);
         }
+    }     
+
+    public enum TileExits
+    {
+        West = 1,
+        East = 2,
+        North = 4,
+        South = 8,
+    }
+
+    public enum TileTypes
+    {
+        Normal = 100,
+        EventTile1 = 101, // Jar of souls? more? Deadend?
+        EventTile2 = 102, // 1000 dead
+        Entrance = 200,
+        UEntrance1 = 201, // Defiled crypt what there?
+        Exit = 300,
+        Filler = 401
     }
 
     public class TileInfo : ISerializableData
     {
         [PersistentProperty("Int0")]
-        public int Int0 { get; private set; }
+        public int ExitDirectionBits { get; private set; }
 
         [PersistentProperty("Int1")]
-        public int Int1 { get; private set; }
+        public int TileType { get; private set; }
 
         [PersistentProperty("SNOScene")]
         public int SNOScene { get; private set; }
 
         [PersistentProperty("Int2")]
-        public int Int2 { get; private set; }
+        public int Probability { get; private set; }
 
         [PersistentProperty("TagMap")]
         public TagMap TagMap { get; private set; }
@@ -182,15 +203,25 @@ namespace Mooege.Common.MPQ.FileFormats
 
         public void Read(MpqFileStream stream)
         {
-            Int0 = stream.ReadValueS32();
-            Int1 = stream.ReadValueS32();
+            ExitDirectionBits = stream.ReadValueS32();
+            TileType = stream.ReadValueS32();
             SNOScene = stream.ReadValueS32();
-            Int2 = stream.ReadValueS32();
+            Probability = stream.ReadValueS32();
             this.TagMap = stream.ReadSerializedItem<TagMap>();
 
             stream.Position += (2 * 4);
             CustomTileInfo = new CustomTileInfo(stream);
         }
+    }
+
+    public enum CommandType
+    {
+        Waypoint = 0, 
+        BridleEntrance = 1, 
+        AddExit = 2, 
+        AddHub = 3, 
+        AddSpoke = 4, 
+        Group = 9, //used in DRLG to group tiles together     
     }
 
     public class DRLGCommand : ISerializableData
@@ -199,7 +230,7 @@ namespace Mooege.Common.MPQ.FileFormats
         public string Name { get; private set; }
 
         [PersistentProperty("I0")]
-        public int Int0 { get; private set; }
+        public int CommandType { get; private set; }
 
         [PersistentProperty("TagMap")]
         public TagMap TagMap { get; private set; }
@@ -207,7 +238,7 @@ namespace Mooege.Common.MPQ.FileFormats
         public void Read(MpqFileStream stream)
         {
             this.Name = stream.ReadString(128, true);
-            Int0 = stream.ReadValueS32();
+            CommandType = stream.ReadValueS32();
             this.TagMap = stream.ReadSerializedItem<TagMap>();
             stream.Position += (3 * 4);
         }

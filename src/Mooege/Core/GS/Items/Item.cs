@@ -67,7 +67,7 @@ namespace Mooege.Core.GS.Items
         public ItemState CurrentState { get; set; }
 
         public int EquipmentSlot { get; private set; }
-        public Vector2D InventoryLocation { get; private set; } // Column, row; NOTE: Call SetInventoryLocation() instead of setting fields on this
+        public Vector2D InventoryLocation { get; set; } // Column, row; NOTE: Call SetInventoryLocation() instead of setting fields on this
 
         public override int Quality
         {
@@ -163,9 +163,9 @@ namespace Mooege.Core.GS.Items
             // Attributes[GameAttribute.Requirement, 38] = definition.RequiredLevel;
 
             Attributes[GameAttribute.Item_Quality_Level] = 1;
-            if (Item.IsArmor(this.ItemType) || Item.IsWeapon(this.ItemType)|| Item.IsOffhand(this.ItemType))
+            if (Item.IsArmor(this.ItemType) || Item.IsWeapon(this.ItemType) || Item.IsOffhand(this.ItemType))
                 Attributes[GameAttribute.Item_Quality_Level] = RandomHelper.Next(6);
-            if(this.ItemType.Flags.HasFlag(ItemFlags.AtLeastMagical) && Attributes[GameAttribute.Item_Quality_Level] < 3)
+            if (this.ItemType.Flags.HasFlag(ItemFlags.AtLeastMagical) && Attributes[GameAttribute.Item_Quality_Level] < 3)
                 Attributes[GameAttribute.Item_Quality_Level] = 3;
 
             Attributes[GameAttribute.ItemStackQuantityLo] = 1;
@@ -286,11 +286,25 @@ namespace Mooege.Core.GS.Items
         {
             return new VisualItem()
             {
+                //From D3.Hero.VisualItem
+                //private static readonly string[] _visualItemFieldNames = new string[] { "dye_type", "effect_level", "gbid", "item_effect_type" };
                 GbId = this.GBHandle.GBID,
                 Field1 = Attributes[GameAttribute.DyeType],
                 Field2 = 0,
                 Field3 = -1
             };
+        }
+
+        //TODO: Move to proper D3.Hero.Visual item classes
+        public D3.Hero.VisualItem GetVisualItem()
+        {
+            var visualItem = D3.Hero.VisualItem.CreateBuilder()
+                .SetGbid(this.GBHandle.GBID)
+                .SetDyeType (Attributes[GameAttribute.DyeType])
+                .SetEffectLevel(0)
+                .SetItemEffectType(-1)
+                .Build();
+            return visualItem;
         }
 
         #region Is*
@@ -365,6 +379,11 @@ namespace Mooege.Core.GS.Items
                     player.InGameClient.SendMessage(this.ACDInventoryPositionMessage);
                 }
             }
+        }
+
+        public Vector2D GetInventoryLocation()
+        {
+            return this.InventoryLocation;
         }
 
         public void SetNewWorld(World world)

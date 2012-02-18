@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,10 @@ using Mooege.Net.GS;
 using Mooege.Common.MPQ.FileFormats;
 using Mooege.Net.GS.Message.Definitions.ACD;
 using Mooege.Core.GS.Common.Types.Math;
+using Mooege.Core.GS.QuestEvents;
 using Mooege.Core.GS.Games;
+using Mooege.Core.GS.QuestEvents.Implementations;
+
 
 /*
  * a few notes to the poor guy who wants to improve the conversation system:
@@ -65,7 +68,7 @@ namespace Mooege.Core.GS.Players
     /// <summary>
     /// Wraps a conversation asset and manages the whole conversation
     /// </summary>
-    class Conversation
+    public class Conversation
     {
         Logger logger = new Logger("Conversation");
         public event EventHandler ConversationEnded;
@@ -122,7 +125,7 @@ namespace Mooege.Core.GS.Players
         {
             var actors = (from a in player.RevealedObjects.Values where a is Mooege.Core.GS.Actors.Actor && (a as Mooege.Core.GS.Actors.Actor).ActorSNO.Id == sno select a);
             if (actors.Count() > 1)
-                logger.Warn("Found more than one actors in range");
+                logger.Warn(String.Format("More than one actor: {0}", sno));
             if (actors.Count() == 0)
             {
                 logger.Warn("Actor not found, using player actor instead");
@@ -193,7 +196,7 @@ namespace Mooege.Core.GS.Players
                 {
                     Mooege.Core.GS.Actors.Actor speaker1 = GetSpeaker(currentLineNode.Speaker1);
                     Mooege.Core.GS.Actors.Actor speaker2 = GetSpeaker(currentLineNode.Speaker2);
-                    
+
                     Vector3D translation = speaker2.Position - speaker1.Position;
                     Vector2F flatTranslation = new Vector2F(translation.X, translation.Y);
 
@@ -243,6 +246,14 @@ namespace Mooege.Core.GS.Players
             {
                 SNOConversation = asset.Header.SNOId
             });
+
+            //TODO: Handle each conversation type
+            if (this.asset.ConversationType == ConversationTypes.QuestEvent)
+            {
+                logger.Debug("Handling conversation type event for Conversation: {0}", this.SNOId);
+                if (this.manager.QuestEventDict.ContainsKey((uint)this.SNOId))
+                    this.manager.QuestEventDict[(uint)this.SNOId].Execute(this.player.World);
+            }
 
             if (ConversationEnded != null)
                 ConversationEnded(this, null);
@@ -298,19 +309,20 @@ namespace Mooege.Core.GS.Players
                     Field1 = 0x00000000,
                     Field2 = false,
                     Field3 = true,
+                    Field4 = false,
                     LineID = currentLineNode.LineID,
                     Speaker = currentLineNode.Speaker1,
-                    Field5 = -1,
-                    TextClass = currentLineNode.Speaker1 == Speaker.Player ? (Class)player.Toon.VoiceClassID : Class.None,
-                    Gender = (player.Toon.Gender == 0) ? VoiceGender.Male : VoiceGender.Female,
+                    Field7 = -1,
                     AudioClass = (Class)player.Toon.VoiceClassID,
+                    Gender = (player.Toon.Gender == 0) ? VoiceGender.Male : VoiceGender.Female,
+                    TextClass = currentLineNode.Speaker1 == Speaker.Player ? (Class)player.Toon.VoiceClassID : Class.None,
                     SNOSpeakerActor = GetSpeaker(currentLineNode.Speaker1).ActorSNO.Id,
-                    Name = player.Toon.Name,
-                    Field11 = 0x00000000,  // is this field I1? and if...what does it do?? 2 for level up -farmy
+                    Name = player.Toon.HeroNameField.Value,
+                    Field13 = 0x00000000,  // is this field I1? and if...what does it do?? 2 for level up -farmy
                     AnimationTag = currentLineNode.AnimationTag,
                     Duration = duration,
                     Id = currentUniqueLineID,
-                    Field15 = 0x00000000        // dont know, 0x32 for level up
+                    Field17 = 0x00000000        // dont know, 0x32 for level up
                 },
                 Duration = duration,
             }, true);
@@ -323,12 +335,16 @@ namespace Mooege.Core.GS.Players
     /// </summary>
     public class ConversationManager
     {
+        public Dictionary<uint, QuestEvent> QuestEventDict = new Dictionary<uint, QuestEvent>();
+
         Logger logger = new Logger("ConversationManager");
         internal enum Language { Invalid, Global, enUS, enGB, enSG, esES, esMX, frFR, itIT, deDE, koKR, ptBR, ruRU, zhCN, zTW, trTR, plPL, ptPT }
 
         private Player player;
         private Dictionary<int, Conversation> openConversations = new Dictionary<int, Conversation>();
         private int linesPlayedTotal = 0;
+
+        //TODO: Quests should subscribe to conversation ended event instead of conversation notifying the quest
         private QuestProgressHandler quests;
 
         internal Language ClientLanguage { get { return Language.enUS; } }
@@ -342,6 +358,14 @@ namespace Mooege.Core.GS.Players
         {
             this.player = player;
             this.quests = quests;
+            InitQuestEvents();
+        }
+
+        private void InitQuestEvents()
+        {
+            this.QuestEventDict.Add(151087, new _151087());
+            this.QuestEventDict.Add(151123, new _151123());
+            this.QuestEventDict.Add(198503, new _198503());
         }
 
         /// <summary>
@@ -361,13 +385,17 @@ namespace Mooege.Core.GS.Players
                 conversation.Stop();
         }
 
-
         /// <summary>
         /// Starts and plays a conversation
         /// </summary>
         /// <param name="snoConversation">SnoID of the conversation</param>
         public void StartConversation(int snoConversation)
         {
+            //So 140617 not found conversation its actually 100913 Player_EnteredGame_Float.cnv, checked this with Beta.
+            //Todo: Find out why it tries to trigger a none existant conversation.
+            if (snoConversation == 140617)
+                snoConversation = 100913;
+
             if (!Mooege.Common.MPQ.MPQStorage.Data.Assets[Common.Types.SNO.SNOGroup.Conversation].ContainsKey(snoConversation))
             {
                 logger.Warn("Conversation not found: {0}", snoConversation);
@@ -376,6 +404,7 @@ namespace Mooege.Core.GS.Players
 
             if (!openConversations.ContainsKey(snoConversation))
             {
+                logger.Debug("Triggered conversation:" + snoConversation);
                 Conversation newConversation = new Conversation(snoConversation, player, this);
                 newConversation.Start();
                 newConversation.ConversationEnded += new EventHandler(ConversationEnded);
@@ -403,6 +432,19 @@ namespace Mooege.Core.GS.Players
 
             if (conversation.ConvPiggyBack != -1)
                 StartConversation(conversation.ConvPiggyBack);
+
+            _conversationTrigger = true;
+        }
+
+        /// <summary>
+        /// Returns true when the conversation playing finishes.
+        /// </summary>
+        private bool _conversationTrigger = false;
+        public bool ConversationRunning()
+        {
+            var status = _conversationTrigger;
+            _conversationTrigger = false;
+            return status;
         }
 
         /// <summary>
@@ -440,6 +482,12 @@ namespace Mooege.Core.GS.Players
                         conversation.Interrupt();
                 }
 
+                //          Requires some check if openConversations[tmpMessage.SNOConversaion] exists before preceeding.
+                //          Error occured when forcing conversaion closed. (Pressing 'x' in convo)
+                //             [03.02.2012 23:50:26.462] [Debug] [Game]: Unhandled exception caught: - [Exception] System.Collections.Generic.KeyNotFoundException: The given key was not present in the dictionary.
+                //               at System.Collections.Generic.Dictionary`2.get_Item(TKey key)
+                //               at Mooege.Core.GS.Players.ConversationManager.Consume(GameClient client, GameMessage message) in C:\Users\James\Documents\Visual Studio 2010\Projects\mooege\src\Mooege\Core\GS\Players\ConversationManager.cs:line 468
+                //               at Mooege.Core.GS.Games.Game.Route(GameClient client, GameMessage message) in C:\Users\James\Documents\Visual Studio 2010\Projects\mooege\src\Mooege\Core\GS\Games\Game.cs:line 215
                 if (message is UpdateConvAutoAdvanceMessage)
                 {
                     UpdateConvAutoAdvanceMessage tmpMessage = (UpdateConvAutoAdvanceMessage)message;

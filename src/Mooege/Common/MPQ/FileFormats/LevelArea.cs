@@ -40,6 +40,10 @@ namespace Mooege.Common.MPQ.FileFormats
 
         public LevelArea(MpqFile file)
         {
+            if (file.Size == 0 || file.Size == 48) // Fixes crash on A4_dun_DIablo_Arena_Phase3 - DarkLotus
+            {
+                return;
+            }
             var stream = file.Open();
             this.Header = new Header(stream);
             this.I0 = new int[4];

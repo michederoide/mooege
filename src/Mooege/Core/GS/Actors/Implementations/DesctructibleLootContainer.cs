@@ -26,21 +26,24 @@ using TreasureClass = Mooege.Common.MPQ.FileFormats.TreasureClass;
 
 namespace Mooege.Core.GS.Actors.Implementations
 {
-    /// <summary>
+   /// <summary>
     /// Class that implements behaviour for killable gizmos.
     /// Play die animation on click, then set idle animation, drop loot and remove from server
     /// </summary>
-    class DesctructibleLootContainer : Gizmo
+    /// TODO: Implement a proper way to be able to target Gizmos with spells, cause Gizmons AINT monsters!.
+    class DesctructibleLootContainer : Monster
     {
         private TreasureClass TreasureClass;
 
         public DesctructibleLootContainer(World world, int snoId, TagMap tags)
             : base(world, snoId, tags)
         {
-            if(ActorData.TagMap.ContainsKey(ActorKeys.LootTreasureClass))
+            if (ActorData.TagMap.ContainsKey(ActorKeys.LootTreasureClass))
                 TreasureClass = (TreasureClass)ActorData.TagMap[ActorKeys.LootTreasureClass].Target;
+            base.Attributes[GameAttribute.Experience_Granted] = 0;
+            this.Attributes[GameAttribute.Hitpoints_Cur] = 1;
+            base.Attributes[GameAttribute.DropsNoLoot] = true;
         }
-
 
         public void ReceiveDamage(Actor source, float damage /* critical, type */)
         {
@@ -98,6 +101,5 @@ namespace Mooege.Core.GS.Actors.Implementations
         {
             ReceiveDamage(player, 100);
         }
-
     }
 }

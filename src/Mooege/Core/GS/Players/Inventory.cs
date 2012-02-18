@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+using Mooege.Common;
 using Mooege.Common.Logging;
 using Mooege.Core.GS.Items;
 using Mooege.Net.GS;
@@ -27,8 +28,14 @@ using Mooege.Core.GS.Common;
 using Mooege.Common.MPQ.FileFormats;
 using Mooege.Net.GS.Message.Definitions.Stash;
 using Mooege.Core.GS.Objects;
+using Mooege.Common.Helpers;
+using Mooege.Net.GS.Message.Definitions.Misc;
 using System.Collections.Generic;
 using System.Linq;
+using Mooege.Core.GS.Items.Implementations;
+using Mooege.Core.MooNet.Toons;
+using Mooege.Core.GS.Common.Types.Math;
+using System;
 
 namespace Mooege.Core.GS.Players
 {
@@ -40,6 +47,9 @@ namespace Mooege.Core.GS.Players
         // Access by ID
         private readonly Player _owner; // Used, because most information is not in the item class but Actors managed by the world
 
+        //Values for buying new slots on stash
+        private readonly int[] _stashBuyValue = { 10000, 50000, 250000, 500000 };
+
         private Equipment _equipment;
         private InventoryGrid _inventoryGrid;
         private InventoryGrid _stashGrid;
@@ -50,19 +60,19 @@ namespace Mooege.Core.GS.Players
         {
             this._owner = owner;
             this._equipment = new Equipment(owner);
-            this._inventoryGrid = new InventoryGrid(owner, owner.Attributes[GameAttribute.Backpack_Slots]/10, 10);
+            this._inventoryGrid = new InventoryGrid(owner, owner.Attributes[GameAttribute.Backpack_Slots] / 10, 10);
             this._stashGrid = new InventoryGrid(owner, owner.Attributes[GameAttribute.Shared_Stash_Slots]/7, 7, (int) EquipmentSlotId.Stash);
             this._skillSocketRunes = new uint[6];
         }
 
         private void AcceptMoveRequest(Item item)
         {
-           /* _owner.InGameClient.SendMessage(new ACDInventoryPositionMessage()
+            _owner.InGameClient.SendMessage(new ACDInventoryPositionMessage()
             {
                 ItemId = item.DynamicID,
                 InventoryLocation = item.InventoryLocationMessage,
                 Field2 = 1 // what does this do?  // 0 - source item not disappearing from inventory, 1 - Moving, any other possibilities? its an int32
-            }); */
+            });
         }
 
 
@@ -82,7 +92,28 @@ namespace Mooege.Core.GS.Players
 
              //player.InGameClient.SendMessage(message);
              player.World.BroadcastGlobal(message);
+
          }
+
+        public D3.Hero.VisualEquipment GetVisualEquipment()
+        {
+            return this._equipment.GetVisualEquipmentForToon();   
+        }
+
+        public void CreateItems(){
+            if (_owner.Toon.ItemsTable != null)
+             {
+                 foreach (KeyValuePair<uint, KeyValuePair<ItemTable, Vector2D>> i in _owner.Toon.ItemsTable)
+                 {
+                     Item item = new Item(_owner.World, i.Value.Key);
+                     item.SetInventoryLocation(0, i.Value.Value.X, i.Value.Value.Y);
+                     item.Owner = _owner;
+                     item.World.Leave(item);
+                     this._inventoryGrid.AddItem(item, i.Value.Value.Y, i.Value.Value.X);
+                 }
+
+             }
+        }
 
 
         public bool HasInventorySpace(Item item)
@@ -155,7 +186,18 @@ namespace Mooege.Core.GS.Players
             return success;
         }
 
-        private List<Item> FindSameItems(int gbid)
+        /// <summary>
+        /// Used for equiping item after game starts
+        /// TOOD: Needs rewrite
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="slot"></param>
+        public void EquipItem(Item item, int slot)
+        {
+            this._equipment.EquipItem(item, slot);
+        }
+
+        public List<Item> FindSameItems(int gbid)
         {
             return _inventoryGrid.Items.Values.Where(i => i.GBHandle.GBID == gbid).ToList();
         }
@@ -412,10 +454,19 @@ namespace Mooege.Core.GS.Players
 
         private void OnBuySharedStashSlots(RequestBuySharedStashSlotsMessage requestBuySharedStashSlotsMessage)
         {
-            // TODO: Take that money away ;)
-            _owner.Attributes[GameAttribute.Shared_Stash_Slots] += 14;
-            _owner.Attributes.BroadcastChangedIfRevealed();
-            _stashGrid.ResizeGrid(_owner.Attributes[GameAttribute.Shared_Stash_Slots] / 7, 7);
+            int amount = 2500;
+
+            if (_stashGrid.Rows % 10 == 0)
+            {
+                amount = _stashBuyValue[_stashGrid.Rows / 10 - 1];
+            }
+            if (_equipment.ContainsGoldAmount(amount))
+            {
+                _equipment.RemoveGoldAmount(amount);
+                _owner.Attributes[GameAttribute.Shared_Stash_Slots] += 14;
+                _owner.Attributes.BroadcastChangedIfRevealed();
+                _stashGrid.ResizeGrid(_owner.Attributes[GameAttribute.Shared_Stash_Slots] / 7, 7);
+            }
         }
 
         // TODO: The inventory's gold item should not be created here. /komiga
@@ -573,6 +624,15 @@ namespace Mooege.Core.GS.Players
         public void AddGoldAmount(int amount)
         {
             _equipment.AddGoldAmount(amount);
+        }
+
+        public int GetGoldAmount()
+        {
+            return _equipment.Gold();
+        }
+
+        public InventoryGrid GetInventoryGrid(){
+            return _inventoryGrid;
         }
     }
 }

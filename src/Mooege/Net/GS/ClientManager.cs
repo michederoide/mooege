@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -84,7 +84,7 @@ namespace Mooege.Net.GS
                 client.BnetClient.InGameClient = client;
 
                 client.Player = new Player(game.StartingWorld, client, toon);
-                Logger.Info("Player {0}[PlayerIndex: {1}] connected.", client.Player.Toon.Name, client.Player.PlayerIndex);
+                Logger.Info("Player {0}[PlayerIndex: {1}] connected.", client.Player.Toon.HeroNameField.Value, client.Player.PlayerIndex);
 
                 client.SendMessage(new VersionsMessage(message.SNOPackHash));
 
@@ -94,6 +94,7 @@ namespace Mooege.Net.GS
                     Field1 = 0x4BB91A16,
                     SNOPackHash = message.SNOPackHash,
                 });
+
 
                 client.SendMessage(new GameSetupMessage // should be the current tick for the game /raist.
                 {

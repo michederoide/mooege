@@ -148,7 +148,19 @@ namespace Mooege.Core.GS.Powers
                                         VectorWithoutZ(beamEnd - beamStart),
                                         circle);
         }
+        public static bool CircleInBeam(Circle circle, System.Windows.Point BeamStart, System.Windows.Point BeamEnd, float beamThickness)
+        {
+            // NOTE: right now this does everything in 2d, ignoring Z
 
+            // offset start beam position by beam thickness
+            Vector3D beamEnd = new Vector3D((float)BeamEnd.X, (float)BeamEnd.Y, 0);
+            Vector3D beamStart = new Vector3D((float)BeamStart.X, (float)BeamStart.Y, 0);
+            beamStart = TranslateDirection2D(beamStart, beamEnd, beamStart, beamThickness);
+
+            return MovingCircleCollides(new Circle(beamStart.X, beamStart.Y, beamThickness),
+                                        VectorWithoutZ(beamEnd - beamStart),
+                                        circle);
+        }
         public static bool PointInRectangle(Vector2F point, float r1x, float r1y,
                                                             float r2x, float r2y,
                                                             float r3x, float r3y,

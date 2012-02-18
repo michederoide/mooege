@@ -19,10 +19,11 @@
 using Mooege.Core.GS.Map;
 using Mooege.Net.GS.Message;
 using Mooege.Core.GS.Common.Types.TagMap;
+using Mooege.Core.GS.Objects;
 
 namespace Mooege.Core.GS.Actors
 {
-    public class NPC : Living
+    public class NPC : Living, IUpdateable
     {
         public override ActorType ActorType { get { return ActorType.Monster; } }
 
@@ -32,6 +33,14 @@ namespace Mooege.Core.GS.Actors
             this.Field2 = 0x9;
             this.Field7 = 2;
             this.Attributes[GameAttribute.Is_NPC] = true;
+        }
+
+        public void Update(int tickCounter)
+        {
+            if (this.Brain == null)
+                return;
+
+            this.Brain.Update(tickCounter);
         }
     }
 }

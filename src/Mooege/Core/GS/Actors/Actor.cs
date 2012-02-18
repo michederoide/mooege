@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,6 +30,7 @@ using Mooege.Core.GS.Objects;
 using Mooege.Core.GS.Players;
 using Mooege.Core.GS.Map;
 using Mooege.Net.GS.Message;
+using Mooege.Net.GS.Message.Definitions.Actor;
 using Mooege.Net.GS.Message.Fields;
 using Mooege.Net.GS.Message.Definitions.ACD;
 using Mooege.Net.GS.Message.Definitions.Misc;
@@ -43,7 +44,9 @@ namespace Mooege.Core.GS.Actors
 {
     public abstract class Actor : WorldObject
     {
-        private static readonly Logger Logger = LogManager.CreateLogger();
+        protected static readonly Logger Logger = LogManager.CreateLogger();
+
+        public event EventHandler ActorKilled;
 
         /// <summary>
         /// ActorSNO.
@@ -70,6 +73,16 @@ namespace Mooege.Core.GS.Actors
         {
             get { return this.World.QuadTree.Query<Scene>(this.Bounds).FirstOrDefault(); }
         }
+
+        /// <summary>
+        /// First Group hash for the actor
+        /// </summary>
+        public int Group1Hash = -1;
+
+        /// <summary>
+        /// Second Group hash for the actor
+        /// </summary>
+        public int Group2Hash = -1;
 
         /// <summary>
         /// Returns true if actor is already spawned in the world.
@@ -127,9 +140,10 @@ namespace Mooege.Core.GS.Actors
         /// <summary>
         /// The QuestRange specifies the visibility of an actor, depending on quest progress
         /// </summary>
-        private Mooege.Common.MPQ.FileFormats.QuestRange _questRange;
+        protected Mooege.Common.MPQ.FileFormats.QuestRange _questRange;
 
         protected Mooege.Common.MPQ.FileFormats.ConversationList ConversationList;
+        public Vector3D CheckPointPosition { get; set; }
 
         /// <summary>
         /// Returns true if actor has world location.
@@ -201,20 +215,23 @@ namespace Mooege.Core.GS.Actors
             this.NameSNOId = snoId;
             this.Quality = 0;
 
-            if(ActorData.TagMap.ContainsKey(ActorKeys.TeamID))
+            if (ActorData.TagMap.ContainsKey(ActorKeys.TeamID))
                 this.Attributes[GameAttribute.TeamID] = ActorData.TagMap[ActorKeys.TeamID];
             this.Spawned = false;
             this.Size = new Size(1, 1);
             this.GBHandle = new GBHandle { Type = -1, GBID = -1 }; // Seems to be the default. /komiga
             this.CollFlags = this.ActorData.ActorCollisionData.ColFlags.I3;
 
+
+
             this.Tags = tags;
             this.ReadTags();
 
             // Listen for quest progress if the actor has a QuestRange attached to it
-            foreach(var quest in World.Game.Quests)
-                if(_questRange != null)
+            foreach (var quest in World.Game.Quests)
+                if (_questRange != null)
                     quest.OnQuestProgress += new Games.Quest.QuestProgressDelegate(quest_OnQuestProgress);
+            //TODO: This should not be called for spawner gizmo
             UpdateQuestRangeVisbility();
         }
 
@@ -235,7 +252,16 @@ namespace Mooege.Core.GS.Actors
             if (_questRange != null)
                 foreach (var quest in World.Game.Quests)
                     quest.OnQuestProgress -= quest_OnQuestProgress;
-   
+
+
+
+            //remove actor from world
+            this.World.Leave(this);
+
+            //TODO: Find a better place to call this
+            if (ActorKilled != null)
+                ActorKilled(this, null);
+
             base.Destroy();
         }
 
@@ -248,9 +274,11 @@ namespace Mooege.Core.GS.Actors
                 return;
 
             this.Position = position;
+            this.CheckPointPosition = position;
 
             if (this.World != null) // if actor got into a new world.
                 this.World.Enter(this); // let him enter first.
+
         }
 
         public virtual void BeforeChangeWorld()
@@ -281,7 +309,7 @@ namespace Mooege.Core.GS.Actors
                 this.World.Enter(this); // let him enter first.
 
             AfterChangeWorld();
-
+            this.CheckPointPosition = position;
             world.BroadcastIfRevealed(this.ACDWorldPositionMessage, this);
         }
 
@@ -301,7 +329,7 @@ namespace Mooege.Core.GS.Actors
         }
 
         #endregion
-        
+
         #region Movement/Translation
 
         public void TranslateFacing(Vector3D target, bool immediately = false)
@@ -445,6 +473,7 @@ namespace Mooege.Core.GS.Actors
         private void UpdateQuestRangeVisbility()
         {
             if (_questRange != null)
+
                 Visible = World.Game.Quests.IsInQuestRange(_questRange);
             else
                 Visible = true;
@@ -467,7 +496,7 @@ namespace Mooege.Core.GS.Actors
                 ActorID = this.DynamicID,
                 ActorSNOId = this.ActorSNO.Id,
                 Field2 = this.Field2,
-                Field3 =  this.HasWorldLocation ? 0 : 1,
+                Field3 = this.HasWorldLocation ? 0 : 1,
                 WorldLocation = this.HasWorldLocation ? this.WorldLocationMessage : null,
                 InventoryLocation = this.HasWorldLocation ? null : this.InventoryLocationMessage,
                 GBHandle = this.GBHandle,
@@ -508,12 +537,11 @@ namespace Mooege.Core.GS.Actors
             // Send Attributes
             Attributes.SendMessage(player.InGameClient);
 
-            // Actor group
             player.InGameClient.SendMessage(new ACDGroupMessage
             {
                 ActorID = DynamicID,
-                Field1 = -1,
-                Field2 = -1,
+                Group1Hash = this.Group1Hash,
+                Group2Hash = this.Group2Hash,
             });
 
             // Reveal actor (creates actor and makes it visible to the player)
@@ -524,6 +552,19 @@ namespace Mooege.Core.GS.Actors
             {
                 Name = this.ActorSNO
             });
+
+            //Play spawn animation
+            if (AnimationSet != null)
+            {
+                if (this.AnimationSet.GetAnimationTag(Mooege.Common.MPQ.FileFormats.AnimationTags.Spawn) != -1)
+                {
+                    this.PlayActionAnimation(this.AnimationSet.Animations[(int)Mooege.Common.MPQ.FileFormats.AnimationTags.Spawn], 1f, 131);
+                }
+
+            }
+
+            if (this.snoTriggeredConversation != -1)
+                Logger.Trace("Start new conversation: {0}", snoTriggeredConversation);
 
             return true;
         }
@@ -638,7 +679,7 @@ namespace Mooege.Core.GS.Actors
 
         #region events
 
-        private void quest_OnQuestProgress(Quest quest)
+        protected virtual void quest_OnQuestProgress(Quest quest)
         {
             UpdateQuestRangeVisbility();
         }
@@ -665,7 +706,7 @@ namespace Mooege.Core.GS.Actors
 
         public virtual void OnTeleport()
         {
-            
+
         }
 
         /// <summary>
@@ -724,7 +765,7 @@ namespace Mooege.Core.GS.Actors
 
             // load scale from actor data and override it with marker tags if one is set
             this.Scale = ActorData.TagMap.ContainsKey(ActorKeys.Scale) ? ActorData.TagMap[ActorKeys.Scale] : 1;
-            this.Scale = Tags.ContainsKey(MarkerKeys.Scale) ? Tags[MarkerKeys.Scale] : this.Scale ;
+            this.Scale = Tags.ContainsKey(MarkerKeys.Scale) ? Tags[MarkerKeys.Scale] : this.Scale;
 
 
             if (Tags.ContainsKey(MarkerKeys.QuestRange))
@@ -747,7 +788,11 @@ namespace Mooege.Core.GS.Actors
             if (this.Tags.ContainsKey(MarkerKeys.TriggeredConversation))
                 snoTriggeredConversation = Tags[MarkerKeys.TriggeredConversation].Id;
 
-
+            // Actor group
+            if (this.Tags.ContainsKey(MarkerKeys.Group1Hash))
+                this.Group1Hash = Tags[MarkerKeys.Group1Hash];
+            if (this.Tags.ContainsKey(MarkerKeys.Group2Hash))
+                this.Group2Hash = Tags[MarkerKeys.Group2Hash];
         }
 
         #endregion

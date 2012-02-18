@@ -21,6 +21,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Mooege.Net.GS.Message.Definitions.Quest;
 using Mooege.Core.GS.Common.Types.SNO;
+using Mooege.Common.Logging;
+//TODO: Remove this once trigger for spawning groups is found
+using Mooege.Core.GS.Actors;
 
 namespace Mooege.Core.GS.Games
 {
@@ -52,17 +55,73 @@ namespace Mooege.Core.GS.Games
                 private Mooege.Common.MPQ.FileFormats.QuestStepObjective objective;
                 private QuestStep questStep;
 
-                public QuestObjective(Mooege.Common.MPQ.FileFormats.QuestStepObjective objective, QuestStep questStep, int id)
+                private Game game;
+
+                //For debug only
+                Logger logger = new Logger("QuestObjective");
+
+                public QuestObjective(Game game, Mooege.Common.MPQ.FileFormats.QuestStepObjective objective, QuestStep questStep, int id)
                 {
                     ID = id;
                     this.objective = objective;
                     this.questStep = questStep;
+                    this.game = game;
+
+                    //TODO: Rewrite all this as quests should subscribe to events and not objects notify quests
+                    if (this.objective.ObjectiveType == Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.KillGroup)
+                    {
+                        logger.Debug("KillGroup objective");
+                        foreach( var world in game._worlds.Values)
+                        {
+                            //subscribe to each actor in group destroy/kill event
+                            var spawnerGroupActors = world.GetActorsInGroup(this.objective.Group1Name);
+                            //
+                            foreach (var actor in spawnerGroupActors)
+                            {
+                                if (actor is Spawner)
+                                {
+                                    (actor as Spawner).Spawn();
+                                }
+
+                            }
+
+                            var groupActors = world.GetActorsInGroup(this.objective.Group1Name);
+                            foreach (var actor in groupActors)
+                            {
+                                actor.ActorKilled += new EventHandler(actor_ActorKilled);
+                            }
+                        }                        
+                    }
+                    if (this.objective.ObjectiveType == Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.KillMonster)
+                    {
+                    }
+                }
+
+                void actor_ActorKilled(object sender, EventArgs e)
+                {
+                    //TODO: Hack until group managers are added or notificaitons can be subscribed to full groups instead of individual actors
+                    if (this.ObjectiveType == Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.KillGroup)
+                    {
+                        //verify there are no more actors in the group
+                        foreach (var world in game._worlds.Values)
+                        {
+                            if (world.GetActorsInGroup(this.objective.Group1Name).Count > 1)
+                            {
+                                //TODO: Find out why this actor is still in world and where it is spawned during the 87700 quest
+                                //Modify check to 0 once solved
+                                //[0]: {[Actor] [Type: Monster] SNOId:218339 DynamicId: 2200 Position: x:3066.031 y:2929.006 z:59.07556 Name: ZombieSkinny_Custom_A}
+                                logger.Debug("Group mob count: {0}", world.GetActorsInGroup(this.objective.Group1Name).Count);
+                                return;
+                            }
+                        }
+                        this.Notify(Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.KillGroup);
+                    }
                 }
 
                 /// <summary>
                 /// Notifies the objective, that an event occured. The objective checks if that event matches the event it waits for
                 /// </summary>
-                public void Notify(Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType type, int value)
+                public void Notify(Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType type, int value = -1)
                 {
                     if (type != objective.ObjectiveType) return;
                     switch (type)
@@ -80,11 +139,13 @@ namespace Mooege.Core.GS.Games
                                 questStep.UpdateCounter(this);
                             }
                             break;
-
+                        case Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.KillGroup:
+                            Counter++;
+                            questStep.UpdateCounter(this);
+                            break;
                         case Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.EnterTrigger:
                         case Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.EventReceived:
                         case Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.GameFlagSet:
-                        case Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.KillGroup:
                         case Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.PlayerFlagSet:
                         case Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.PossessItem:
                         case Mooege.Common.MPQ.FileFormats.QuestStepObjectiveType.TimedEventExpired:
@@ -138,7 +199,7 @@ namespace Mooege.Core.GS.Games
                 _quest.StepCompleted(_questStep.StepObjectiveSets[index].FollowUpStepID);
             }
 
-            public QuestStep(Mooege.Common.MPQ.FileFormats.IQuestStep assetQuestStep, Quest quest)
+            public QuestStep(Game game, Mooege.Common.MPQ.FileFormats.IQuestStep assetQuestStep, Quest quest)
             {
                 _questStep = assetQuestStep;
                 _quest = quest;
@@ -148,7 +209,7 @@ namespace Mooege.Core.GS.Games
                     ObjectivesSets.Add(new ObjectiveSet()
                     {
                         FollowUpStepID = objectiveSet.FollowUpStepID,
-                        Objectives = new List<QuestObjective>(from objective in objectiveSet.StepObjectives select new QuestObjective(objective, this, c++))
+                        Objectives = new List<QuestObjective>(from objective in objectiveSet.StepObjectives select new QuestObjective(game, objective, this, c++))
                     });
                 c = 0;
 
@@ -158,7 +219,7 @@ namespace Mooege.Core.GS.Games
 
                     if (step.StepBonusObjectiveSets != null)
                         foreach (var objectiveSet in step.StepBonusObjectiveSets)
-                            bonusObjectives.Add(new List<QuestObjective>(from objective in objectiveSet.StepBonusObjectives select new QuestObjective(objective, this, c++)));
+                            bonusObjectives.Add(new List<QuestObjective>(from objective in objectiveSet.StepBonusObjectives select new QuestObjective(game, objective, this, c++)));
                 }
             }
 
@@ -174,7 +235,7 @@ namespace Mooege.Core.GS.Games
         public event QuestProgressDelegate OnQuestProgress;
         private Mooege.Common.MPQ.FileFormats.Quest asset = null;
         public SNOHandle SNOHandle { get; set; }
-        private Game game { get; set; }
+        protected Game game { get; set; }
         public QuestStep CurrentStep { get; set; }
         private List<int> completedSteps = new List<int>();           // this list has to be saved if quest progress should be saved. It is required to keep track of questranges
 
@@ -183,7 +244,7 @@ namespace Mooege.Core.GS.Games
             this.game = game;
             SNOHandle = new SNOHandle(SNOGroup.Quest, SNOQuest);
             asset = SNOHandle.Target as  Mooege.Common.MPQ.FileFormats.Quest;
-            CurrentStep = new QuestStep(asset.QuestUnassignedStep, this);
+            CurrentStep = new QuestStep(game, asset.QuestUnassignedStep, this);
         }
 
         // 
@@ -209,7 +270,7 @@ namespace Mooege.Core.GS.Games
                     Failed = false
                 });
             completedSteps.Add(CurrentStep.QuestStepID);
-            CurrentStep = (from step in asset.QuestSteps where step.ID == FollowUpStepID select new QuestStep(step, this)).FirstOrDefault();
+            CurrentStep = (from step in asset.QuestSteps where step.ID == FollowUpStepID select new QuestStep(game, step, this)).FirstOrDefault();
             if (OnQuestProgress != null)
                 OnQuestProgress(this);
         }

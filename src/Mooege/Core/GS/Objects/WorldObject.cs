@@ -118,9 +118,6 @@ namespace Mooege.Core.GS.Objects
         /// </summary>
         public override void Destroy()
         {
-            if (this is Actor)
-                this.World.Leave(this as Actor);
-
             this.World.Game.EndTracking(this);
             this.World = null;
         }

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@ using Mooege.Common.Logging;
 using Mooege.Core.MooNet.Games;
 using Mooege.Core.MooNet.Helpers;
 using Mooege.Core.MooNet.Accounts;
+using Mooege.Core.MooNet.Toons;
 using Mooege.Net.MooNet;
 
 namespace Mooege.Core.MooNet.Services
@@ -80,23 +81,25 @@ namespace Mooege.Core.MooNet.Services
 
             // find the game.
             var gameFound = GameFactoryManager.FindGame(this.Client, request, ++GameFactoryManager.RequestIdCounter);
+            //TODO: Find out why on rejoin game this is null
+            if (Client.CurrentChannel != null)
+            {
+                //TODO: All these ChannelState updates can be moved to functions someplace else after packet flow is discovered and working -Egris
+                //Send current JoinPermission to client before locking it
+                var channelStatePermission = bnet.protocol.channel.ChannelState.CreateBuilder()
+                    .AddAttribute(bnet.protocol.attribute.Attribute.CreateBuilder()
+                    .SetName("D3.Party.JoinPermissionPreviousToLock")
+                    .SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue(1).Build())
+                    .Build()).Build();
 
-            //TODO: All these ChannelState updates can be moved to functions someplace else after packet flow is discovered and working -Egris
-            //Send current JoinPermission to client before locking it
-            var channelStatePermission = bnet.protocol.channel.ChannelState.CreateBuilder()
-                .AddAttribute(bnet.protocol.attribute.Attribute.CreateBuilder()
-                .SetName("D3.Party.JoinPermissionPreviousToLock")
-                .SetValue(bnet.protocol.attribute.Variant.CreateBuilder().SetIntValue(1).Build())
-                .Build()).Build();
+                var notificationPermission = bnet.protocol.channel.UpdateChannelStateNotification.CreateBuilder()
+                    .SetAgentId(this.Client.Account.CurrentGameAccount.BnetEntityId)
+                    .SetStateChange(channelStatePermission)
+                    .Build();
 
-            var notificationPermission = bnet.protocol.channel.UpdateChannelStateNotification.CreateBuilder()
-                .SetAgentId(this.Client.Account.CurrentGameAccount.BnetEntityId)
-                .SetStateChange(channelStatePermission)
-                .Build();
-
-            this.Client.MakeTargetedRPC(Client.CurrentChannel, () =>
-                bnet.protocol.channel.ChannelSubscriber.CreateStub(this.Client).NotifyUpdateChannelState(null, notificationPermission, callback => { }));
-
+                this.Client.MakeTargetedRPC(Client.CurrentChannel, () =>
+                    bnet.protocol.channel.ChannelSubscriber.CreateStub(this.Client).NotifyUpdateChannelState(null, notificationPermission, callback => { }));
+            }
             var builder = bnet.protocol.game_master.FindGameResponse.CreateBuilder().SetRequestId(gameFound.RequestId);
             done(builder.Build());
 
@@ -127,12 +130,12 @@ namespace Mooege.Core.MooNet.Services
 
             if(gameFound.Started)
             {
-                Logger.Warn("Client {0} joining game with FactoryID:{1}", this.Client.Account.CurrentGameAccount.CurrentToon.Name, gameFound.FactoryID);
+                Logger.Warn("Client {0} joining game with FactoryID:{1}", this.Client.Account.CurrentGameAccount.CurrentToon.HeroNameField.Value, gameFound.FactoryID);
                 gameFound.JoinGame(clients, request.FactoryObjectId);
             }
             else
             {
-                Logger.Warn("Client {0} creating new game", this.Client.Account.CurrentGameAccount.CurrentToon.Name);
+                Logger.Warn("Client {0} creating new game", this.Client.Account.CurrentGameAccount.CurrentToon.HeroNameField.Value);
                 gameFound.StartGame(clients, request.FactoryObjectId);
             }
         }
@@ -141,7 +144,6 @@ namespace Mooege.Core.MooNet.Services
         {
             throw new NotImplementedException();
         }
-
         public override void GameEnded(IRpcController controller, bnet.protocol.game_master.GameEndedNotification request, Action<bnet.protocol.NO_RESPONSE> done)
         {
             throw new NotImplementedException();

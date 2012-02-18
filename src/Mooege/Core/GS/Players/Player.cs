@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,10 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
+using Mooege.Common;
 using Mooege.Common.Helpers.Math;
 using Mooege.Common.Logging;
 using Mooege.Core.GS.Common.Types.Math;
@@ -31,6 +31,8 @@ using Mooege.Core.GS.Skills;
 using Mooege.Core.MooNet.Toons;
 using Mooege.Net.GS;
 using Mooege.Net.GS.Message;
+using Mooege.Net.GS.Message.Definitions.Actor;
+using Mooege.Net.GS.Message.Definitions.Conversation;
 using Mooege.Net.GS.Message.Definitions.Misc;
 using Mooege.Net.GS.Message.Definitions.Pet;
 using Mooege.Net.GS.Message.Definitions.Waypoint;
@@ -43,8 +45,10 @@ using Mooege.Net.GS.Message.Definitions.Effect;
 using Mooege.Net.GS.Message.Definitions.Trade;
 using Mooege.Core.GS.Actors.Implementations;
 using Mooege.Net.GS.Message.Definitions.Artisan;
+using Mooege.Core.GS.Actors.Implementations.Artisans;
 using Mooege.Core.GS.Actors.Implementations.Hirelings;
 using Mooege.Net.GS.Message.Definitions.Hireling;
+using System;
 using Mooege.Common.Helpers;
 using Mooege.Net.GS.Message.Definitions.ACD;
 
@@ -183,7 +187,7 @@ namespace Mooege.Core.GS.Players
             this.PlayerIndex = Interlocked.Increment(ref this.InGameClient.Game.PlayerIndexCounter); // get a new playerId for the player and make it atomic.
             this.Toon = bnetToon;
             this.GBHandle.Type = (int)GBHandleType.Player;
-            this.GBHandle.GBID = this.Toon.ClassID;
+            this.GBHandle.GBID = this.Toon.HeroClassFieldTransform((int)this.Toon.HeroClassField.Value);
 
             this.Field2 = 0x00000009;
             this.Scale = this.ModelScale;
@@ -193,7 +197,7 @@ namespace Mooege.Core.GS.Players
             this.NameSNOId = -1;
             this.Field10 = 0x0;
 
-            this.SkillSet = new SkillSet(this.Toon.Class);
+            this.SkillSet = new SkillSet(this.Toon.Class,this.Toon);
             this.GroundItems = new Dictionary<uint, Item>();
             this.Conversations = new ConversationManager(this, this.World.Game.Quests);
             this.ExpBonusData = new ExpBonusData(this);
@@ -317,8 +321,8 @@ namespace Mooege.Core.GS.Players
 
             //Basic stats
             this.Attributes[GameAttribute.Level_Cap] = 13;
-            this.Attributes[GameAttribute.Level] = this.Toon.Level;
-            this.Attributes[GameAttribute.Experience_Next] = LevelBorders[this.Toon.Level];
+            this.Attributes[GameAttribute.Level] = (int)this.Toon.HeroLevelField.Value;
+            this.Attributes[GameAttribute.Experience_Next] = LevelBorders[(int)this.Toon.HeroLevelField.Value];
             this.Attributes[GameAttribute.Experience_Granted] = 1000;
             this.Attributes[GameAttribute.Armor_Total] = 0;
             this.Attributes[GameAttribute.Attack] = (int)this.InitialAttack;
@@ -336,11 +340,11 @@ namespace Mooege.Core.GS.Players
             this.Attributes[GameAttribute.Hitpoints_Max_Total] = GetMaxTotalHitpoints();
             this.Attributes[GameAttribute.Hitpoints_Cur] = this.Attributes[GameAttribute.Hitpoints_Max_Total];
 
-            //Resource
-            this.Attributes[GameAttribute.Resource_Cur, this.ResourceID] = 200f;
-            this.Attributes[GameAttribute.Resource_Max, this.ResourceID] = 200f;
-            this.Attributes[GameAttribute.Resource_Max_Total, this.ResourceID] = 200f;
-            this.Attributes[GameAttribute.Resource_Effective_Max, this.ResourceID] = 200f;
+            //Resource //TODO: Originals were 200f, this is so you can test skills.
+            this.Attributes[GameAttribute.Resource_Cur, this.ResourceID] = 300f;
+            this.Attributes[GameAttribute.Resource_Max, this.ResourceID] = 300f;
+            this.Attributes[GameAttribute.Resource_Max_Total, this.ResourceID] = 300f;
+            this.Attributes[GameAttribute.Resource_Effective_Max, this.ResourceID] = 300f;
             this.Attributes[GameAttribute.Resource_Regen_Total, this.ResourceID] = 3.051758E-05f;
             this.Attributes[GameAttribute.Resource_Type_Primary] = this.ResourceID;
 
@@ -372,7 +376,7 @@ namespace Mooege.Core.GS.Players
                     this.Attributes[GameAttribute.Resource_Cur, Discipline] = 30;
                     this.Attributes[GameAttribute.Resource_Max, Discipline] = 30;
                     this.Attributes[GameAttribute.Resource_Max_Total, Discipline] = 30;
-                    this.Attributes[GameAttribute.Resource_Effective_Max, Discipline] = 30f;
+                    this.Attributes[GameAttribute.Resource_Effective_Max, Discipline] = 30;
                     this.Attributes[GameAttribute.Resource_Type_Secondary] = Discipline;
                     break;
                 case ToonClass.Monk:
@@ -451,11 +455,16 @@ namespace Mooege.Core.GS.Players
             #endregion // Attributes
 
             // unlocking assigned skills
-            for (int i = 0; i < this.SkillSet.ActiveSkills.Length; i++)
+			
+           for (int i = 0; i < this.SkillSet.ActiveSkills.Length; i++)
             {
                 this.Attributes[GameAttribute.Skill, this.SkillSet.ActiveSkills[i]] = 1;
                 this.Attributes[GameAttribute.Skill_Total, this.SkillSet.ActiveSkills[i]] = 1;
+                
+				Logger.Debug("Value inside current Active Skills {0}",this.SkillSet.ActiveSkills[i]);
+				
             }
+		
 
             this.Inventory = new Inventory(this); // Here because it needs attributes /fasbat
         }
@@ -497,7 +506,11 @@ namespace Mooege.Core.GS.Players
 
         private void OnAssignActiveSkill(GameClient client, AssignActiveSkillMessage message)
         {
+			
             var oldSNOSkill = this.SkillSet.ActiveSkills[message.SkillIndex]; // find replaced skills SNO.
+            Logger.Debug("OnAssignActiveskill {0}:", this.SkillSet.ActiveSkills[message.SkillIndex]);
+            Logger.Debug("Skill Index {0}:", message.SkillIndex);
+			
             if (oldSNOSkill != -1)
             {
                 // if old power was socketted, pickup rune
@@ -520,14 +533,18 @@ namespace Mooege.Core.GS.Players
             this.Attributes[GameAttribute.Skill_Total, message.SNOSkill] = 1;
             this.Attributes.BroadcastChangedIfRevealed();
 
-            foreach (HotbarButtonData button in this.SkillSet.HotBarSkills.Where(button => button.SNOSkill == oldSNOSkill)) // loop through hotbar and replace the old skill with new one
+            /*foreach (HotbarButtonData button in this.SkillSet.HotBarSkills.Where(button => button.SNOSkill == oldSNOSkill)) // loop through hotbar and replace the old skill with new one
             {
                 button.SNOSkill = message.SNOSkill;
-            }
+            }*/
 
             this.SkillSet.ActiveSkills[message.SkillIndex] = message.SNOSkill;
+			this.SkillSet.UpdateAssignedSkill(message.SkillIndex,message.SNOSkill,this.Toon);
+			this.SkillSet.SwitchUpdateSkills(oldSNOSkill,message.SNOSkill,this.Toon);
             this.UpdateHeroState();
+			
         }
+
 
         private void OnAssignPassiveSkill(GameClient client, AssignPassiveSkillMessage message)
         {
@@ -550,7 +567,16 @@ namespace Mooege.Core.GS.Players
 
         private void OnPlayerChangeHotbarButtonMessage(GameClient client, PlayerChangeHotbarButtonMessage message)
         {
-            this.SkillSet.HotBarSkills[message.BarIndex] = message.ButtonData;
+            //this.SkillSet.HotBarSkills[message.BarIndex] = message.ButtonData;
+			
+			this.SkillSet.HotBarSkills[message.BarIndex].SNOSkill = message.ButtonData.SNOSkill;
+			
+            Logger.Debug("HB Skill changed {0}", message.ButtonData.SNOSkill);
+            Logger.Debug("HB Position {0}", message.BarIndex);
+            Logger.Debug("Char involved on HB change {0}", this.Toon.D3EntityID.IdLow);
+
+            this.SkillSet.UpdateHotbarSkills(message.BarIndex, message.ButtonData.SNOSkill,this.Toon);
+
         }
 
         /// <summary>
@@ -647,7 +673,24 @@ namespace Mooege.Core.GS.Players
             // here we should also be checking the position and see if it's valid. If not we should be resetting player to a good position with ACDWorldPositionMessage
             // so we can have a basic precaution for hacks & exploits /raist.
             if (message.Position != null)
+            {
+                if (!client.Player.World.CheckLocationForFlag(message.Position,Mooege.Common.MPQ.FileFormats.Scene.NavCellFlags.AllowWalk))
+                    {
+                        Logger.Info("Account: " + client.BnetClient.Account.Name + " Attempted to move to an unwalkable location");
+                        return;
+                    }
+                /*else
+                {
+                    var ActorsInRange = GetActorsInRange(3f);
+                    foreach (var actor in ActorsInRange)
+                    {
+                        Logger.Debug(actor.ToString());
+                    }
+                    Logger.Info("Current Position: {0}", this.Position);
+                }*/
                 this.Position = message.Position;
+            }
+                
 
             this.SetFacingRotation(message.Angle);
 
@@ -771,6 +814,39 @@ namespace Mooege.Core.GS.Players
 
             this.RevealScenesToPlayer(); // reveal scenes in players proximity.
             this.RevealActorsToPlayer(); // reveal actors in players proximity.
+
+            //This can't be in the c-tor
+            //TODO: Hack until proper equipment slots are set 
+            Dictionary<int, int> visualToSlotMapping = new Dictionary<int, int>();
+            visualToSlotMapping.Add(0, 1);
+            visualToSlotMapping.Add(1, 2);
+            visualToSlotMapping.Add(2, 7);
+            visualToSlotMapping.Add(3, 5);
+            visualToSlotMapping.Add(4, 4);
+            visualToSlotMapping.Add(5, 3);
+            visualToSlotMapping.Add(6, 8);
+            visualToSlotMapping.Add(7, 9);
+
+            Dictionary<int, Mooege.Common.MPQ.FileFormats.ItemTable> itemsToAdd = new Dictionary<int, Mooege.Common.MPQ.FileFormats.ItemTable>();
+            //get items
+            for (int slot = 0; slot < 8; slot++)
+            {
+                var gbid = this.Toon.HeroVisualEquipmentField.Value.GetVisualItem(slot).Gbid;
+                //if item equiped
+                if (gbid > 0)
+                {
+                    itemsToAdd.Add(slot, ItemGenerator.GetDefinitionFromGBID(gbid));
+                }
+            }
+
+            foreach (var pair in itemsToAdd)
+            {
+                this.Inventory.EquipItem(ItemGenerator.CookFromDefinition(this, pair.Value), visualToSlotMapping[pair.Key]);
+            }
+
+            //generate visual update message
+            this.Inventory.SendVisualInventory(this);
+            
         }
 
         public override void OnTeleport()
@@ -782,6 +858,9 @@ namespace Mooege.Core.GS.Players
         public override void OnLeave(World world)
         {
             this.Conversations.StopAll();
+            //save visual equipment
+            this.Toon.HeroVisualEquipmentField.Value = this.Inventory.GetVisualEquipment();
+            this.Toon.HeroLevelField.Value = this.Attributes[GameAttribute.Level];
         }
 
         public override bool Reveal(Player player)
@@ -805,6 +884,7 @@ namespace Mooege.Core.GS.Players
             });
 
             this.Inventory.SendVisualInventory(player);
+            this.Inventory.CreateItems();
 
             if (this == player) // only send this to player itself. Warning: don't remove this check or you'll make the game start crashing! /raist.
             {
@@ -852,6 +932,7 @@ namespace Mooege.Core.GS.Players
             this.InGameClient.SendMessage(new HeroStateMessage
             {
                 State = this.GetStateData()
+              
             });
         }
 
@@ -880,17 +961,17 @@ namespace Mooege.Core.GS.Players
                 switch (this.Toon.Class)
                 {
                     case ToonClass.Barbarian:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.DemonHunter:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.Monk:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.WitchDoctor:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.Wizard:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                 }
-                return 10f + (this.Toon.Level - 1) * 2;
+                return 10f + (this.Toon.HeroLevelField.Value - 1) * 2;
             }
         }
 
@@ -901,17 +982,17 @@ namespace Mooege.Core.GS.Players
                 switch (this.Toon.Class)
                 {
                     case ToonClass.Barbarian:
-                        return 9f + (this.Toon.Level - 1);
+                        return 9f + (this.Toon.HeroLevelField.Value - 1);
                     case ToonClass.DemonHunter:
-                        return 11f + ((this.Toon.Level - 1) * 2);
+                        return 11f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.Monk:
-                        return 11f + ((this.Toon.Level - 1) * 2);
+                        return 11f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.WitchDoctor:
-                        return 9f + ((this.Toon.Level - 1) * 2);
+                        return 9f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.Wizard:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                 }
-                return 10f + ((this.Toon.Level - 1) * 2);
+                return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
             }
         }
 
@@ -922,20 +1003,20 @@ namespace Mooege.Core.GS.Players
                 switch (this.Toon.Class)
                 {
                     case ToonClass.Barbarian:
-                        return 11f + ((this.Toon.Level - 1) * 2);
+                        return 11f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.DemonHunter:
                         // For DH and Wizard, half the levels (starting with the first) give 2 defense => (Level / 2) * 2
                         // and half give 1 defense => ((Level - 1) / 2) * 1
                         // Note: We can't cancel the twos in ((Level - 1) / 2) * 2 because of integer divison
-                        return 9f + (((this.Toon.Level / 2) * 2) + ((this.Toon.Level - 1) / 2));
+                        return 9f + (((this.Toon.HeroLevelField.Value / 2) * 2) + ((this.Toon.HeroLevelField.Value - 1) / 2));
                     case ToonClass.Monk:
-                        return 10f + ((this.Toon.Level - 1) * 2);
+                        return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.WitchDoctor:
-                        return 9f + ((this.Toon.Level - 1) * 2);
+                        return 9f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.Wizard:
-                        return 8f + (((this.Toon.Level / 2) * 2) + ((this.Toon.Level - 1) / 2));
+                        return 8f + (((this.Toon.HeroLevelField.Value / 2) * 2) + ((this.Toon.HeroLevelField.Value - 1) / 2));
                 }
-                return 10f + ((this.Toon.Level - 1) * 2);
+                return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
             }
         }
 
@@ -946,20 +1027,20 @@ namespace Mooege.Core.GS.Players
                 switch (this.Toon.Class)
                 {
                     case ToonClass.Barbarian:
-                        return 11f + ((this.Toon.Level - 1) * 2);
+                        return 11f + ((this.Toon.HeroLevelField.Value - 1) * 2);
                     case ToonClass.DemonHunter:
                         // For DH and Wizard, half the levels give 2 vit => ((Level - 1) / 2) * 2
                         // and half (starting with the first) give 1 vit => (Level / 2) * 1
                         // Note: We can't cancel the twos in ((Level - 1) / 2) * 2 because of integer divison
-                        return 9f + ((((this.Toon.Level - 1) / 2) * 2) + (this.Toon.Level / 2));
+                        return 9f + ((((this.Toon.HeroLevelField.Value - 1) / 2) * 2) + (this.Toon.HeroLevelField.Value / 2));
                     case ToonClass.Monk:
-                        return 9f + (this.Toon.Level - 1);
+                        return 9f + (this.Toon.HeroLevelField.Value - 1);
                     case ToonClass.WitchDoctor:
-                        return 10f + (this.Toon.Level - 1);
+                        return 10f + (this.Toon.HeroLevelField.Value - 1);
                     case ToonClass.Wizard:
-                        return 9f + ((((this.Toon.Level - 1) / 2) * 2) + (this.Toon.Level / 2));
+                        return 9f + ((((this.Toon.HeroLevelField.Value - 1) / 2) * 2) + (this.Toon.HeroLevelField.Value / 2));
                 }
-                return 10f + ((this.Toon.Level - 1) * 2);
+                return 10f + ((this.Toon.HeroLevelField.Value - 1) * 2);
             }
         }
 
@@ -1078,6 +1159,7 @@ namespace Mooege.Core.GS.Players
                 snoActiveSkills = this.SkillSet.ActiveSkills,
                 snoTraits = this.SkillSet.PassiveSkills,
                 SavePointData = new SavePointData { snoWorld = -1, SavepointId = -1, },
+                //m_SeenTutorials = this.SeenTutorials,
             };
         }
 
@@ -1575,13 +1657,13 @@ namespace Mooege.Core.GS.Players
         {
             if (amount > 0f)
             {
-                this.Attributes[GameAttribute.Resource_Cur, resourceID] = Math.Min(
+                this.Attributes[GameAttribute.Resource_Cur, resourceID] = (int)Math.Min(
                     this.Attributes[GameAttribute.Resource_Cur, resourceID] + amount,
                     this.Attributes[GameAttribute.Resource_Max, resourceID]);
             }
             else
             {
-                this.Attributes[GameAttribute.Resource_Cur, resourceID] = Math.Max(
+                this.Attributes[GameAttribute.Resource_Cur, resourceID] = (int)Math.Max(
                     this.Attributes[GameAttribute.Resource_Cur, resourceID] + amount,
                     0f);
             }
@@ -1605,18 +1687,23 @@ namespace Mooege.Core.GS.Players
             {
                 case ToonClass.Barbarian:
                     UsePrimaryResource(0.1f);
+                    AddPercentageHP(1); //Testing Purposes until All Healthglobes get fixed.
                     break;
                 case ToonClass.DemonHunter:
                     GeneratePrimaryResource(3f);
                     GenerateSecondaryResource(0.3f);
+                    AddPercentageHP(1); //Testing Purposes until All Healthglobes get fixed.
                     break;
                 case ToonClass.Monk:
+                    AddPercentageHP(1); //Testing Purposes until All Healthglobes get fixed.
                     break;
                 case ToonClass.WitchDoctor:
-                    GeneratePrimaryResource(1f);
+                    GeneratePrimaryResource(4f);
+                    AddPercentageHP(1); //Testing Purposes until All Healthglobes get fixed.
                     break;
                 case ToonClass.Wizard:
                     GeneratePrimaryResource(2f);
+                    AddPercentageHP(1); //Testing Purposes until All Healthglobes get fixed.
                     break;
             }
         }

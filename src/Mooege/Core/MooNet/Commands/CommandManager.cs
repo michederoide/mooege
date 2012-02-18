@@ -127,7 +127,7 @@ namespace Mooege.Core.MooNet.Commands
             output = "[mooege] " + output;
 
             //invokerClient.SendServerWhisper(output);
-
+            
             return true;
         }
 

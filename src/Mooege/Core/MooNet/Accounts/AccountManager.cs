@@ -22,6 +22,7 @@ using System.Data.SQLite;
 using System.Linq;
 using Mooege.Common.Logging;
 using Mooege.Common.Storage;
+using Mooege.Core.MooNet.Helpers;
 
 namespace Mooege.Core.MooNet.Accounts
 {
@@ -110,7 +111,15 @@ namespace Mooege.Core.MooNet.Accounts
 
                 var userLevel = reader.GetByte(6);
 
+                //Don't set all values in c-tor. 
                 var account = new Account(accountId, email, salt, passwordVerifier, battleTagName, hashCode, (Account.UserLevels)userLevel);
+
+                if (!reader.IsDBNull(7))
+                {
+                    var lastSelectedHeroId = reader.GetInt64(7);
+                    account.LastSelectedHeroField.Value = D3.OnlineService.EntityId.CreateBuilder().SetIdHigh((ulong)EntityIdHelper.HighIdType.ToonId + (ulong)lastSelectedHeroId).SetIdLow((ulong)lastSelectedHeroId).Build();
+                }
+
                 Accounts.Add(email, account);
             }
         }

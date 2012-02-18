@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011 - 2012 mooege project - http://www.mooege.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -83,11 +83,11 @@ namespace Mooege.Core.MooNet.Channels
             this.Identity = identity;
             this.Privileges = privs;
             this.Roles = new List<Role>();
-            AddRoles(roles);
             this.Info = bnet.protocol.AccountInfo.CreateBuilder()
                 .SetAccountStatus(bnet.protocol.AccountInfo.Types.AccountStatus.TRIAL)
                 .SetCountryId(21843)
                 .Build();
+            AddRoles(roles);
         }
 
         public void AddRoles(params Role[] roles)
